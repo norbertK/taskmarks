@@ -1,8 +1,12 @@
 
 # Taskmarks
 VSCode Extension - Persist bookmarks for different tasks.
+
 On big projects, coming back to a topic that I did not touch for some time, I often need time to 'find the right places'. Taskmarks makes it possible to keep those old bookmarks, and go back to them, whenever I need them.
+
 New topic - just add a new Task and keep them forever.
+
+Or copy a Task and share it with your co-workers. Or create a new one, to tell him or her: 'Please look here and here. Do we have a problem? / Could you please ...'
 
 ## Features / Command / Keyboard
 
