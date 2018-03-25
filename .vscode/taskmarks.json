@@ -1,0 +1,41 @@
+{
+	"activeTaskName": "default",
+	"tasks": [
+		{
+			"name": "default",
+			"activeFileName": "\\.vscode\\taskmarks.json",
+			"files": [
+				{
+					"filepath": "\\src\\extension.ts",
+					"marks": [
+						32
+					]
+				},
+				{
+					"filepath": "\\src\\Tasks.ts",
+					"marks": [
+						78
+					]
+				},
+				{
+					"filepath": "\\src\\Persist.ts",
+					"marks": [
+						116
+					]
+				}
+			]
+		},
+		{
+			"name": "testing Taskmarks",
+			"activeFileName": "\\src\\extension.ts",
+			"files": [
+				{
+					"filepath": "\\src\\DebLog.ts",
+					"marks": [
+						95
+					]
+				}
+			]
+		}
+	]
+}

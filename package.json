@@ -1,0 +1,95 @@
+{
+    "name": "taskmarks",
+    "displayName": "Taskmarks",
+    "description": "Persist bookmarks for different tasks.",
+    "version": "0.4.1",
+    "publisher": "nkode",
+    "engines": {
+        "vscode": "^1.19.0"
+    },
+    "license": "(MIT OR Apache-2.0)",
+    "categories": [
+        "Other"
+    ],
+    "keywords": [
+        "Bookmark, Remember, Places"
+    ],
+    "activationEvents": [
+        "*"
+    ],
+    "main": "./out/extension",
+    "contributes": {
+        "commands": [
+            {
+                "command": "taskmark.selectMarkFromList",
+                "title": "Taskmarks: Select Bookmark from List"
+            },
+            {
+                "command": "taskmark.selectTask",
+                "title": "Taskmarks: Select Active Task"
+            },
+            {
+                "command": "taskmark.createTask",
+                "title": "Taskmarks: Create new Task"
+            },
+            {
+                "command": "taskmark.toggleMark",
+                "title": "Taskmarks: Toggle Bookmark at Current Position"
+            },
+            {
+                "command": "taskmark.nextMark",
+                "title": "Taskmarks: Find next Bookmark"
+            },
+            {
+                "command": "taskmark.previousMark",
+                "title": "Taskmarks: Find previous Bookmark"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "taskmark.previousMark",
+                "key": "ctrl+shift+r",
+                "mac": "cmd+shift+r",
+                "when": "editorTextFocus"
+            },
+            {
+                "command": "taskmark.selectTask",
+                "key": "ctrl+shift+i",
+                "mac": "cmd+shift+i",
+                "when": "editorTextFocus"
+            },
+            {
+                "command": "taskmark.toggleMark",
+                "key": "ctrl+shift+t",
+                "mac": "cmd+shift+t",
+                "when": "editorTextFocus"
+            },
+            {
+                "command": "taskmark.nextMark",
+                "key": "ctrl+shift+z",
+                "mac": "cmd+shift+z",
+                "when": "editorTextFocus"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "@types/node": "^7.0.43",
+        "typescript": "^2.6.1",
+        "vscode": "^1.1.6"
+    },
+    "dependencies": {
+        "lodash": "^4.17.4"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/norbertK/taskmarks.git"
+    },
+    "homepage": "https://github.com/norbertK/taskmarks/blob/master/README.md"
+}

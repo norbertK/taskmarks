@@ -1,0 +1,10 @@
+node_modules/
+
+
+#Exclude tsc generated files
+*.map
+*.js
+
+yarn.lock
+vsc-extension-quickstart.md
+
