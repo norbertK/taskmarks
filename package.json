@@ -2,7 +2,7 @@
     "name": "taskmarks",
     "displayName": "Taskmarks",
     "description": "Persist bookmarks for different tasks.",
-    "version": "0.4.3",
+    "version": "0.4.4",
     "publisher": "NorbertKlein",
     "engines": {
         "vscode": "^1.19.0"

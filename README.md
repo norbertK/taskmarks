@@ -23,12 +23,7 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 ## Extension Settings
 ## Known Issues
 ## Release Notes
-
 ## Installing your Extension Locally
-So far, we need to copy it to a new folder under your local extensions folder:
-
-- Windows: %USERPROFILE%\.vscode\extensions
-- Mac/Linux: $HOME/.vscode/extensions
 
 See [CHANGELOG.md](https://github.com/norbertK/taskmarks/blob/master/CHANGELOG.md)
 
