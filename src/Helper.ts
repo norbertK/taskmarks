@@ -175,6 +175,7 @@ export class Helper {
     const activeTextEditor = vscode.window.activeTextEditor;
     let line = activeTextEditor.selection.active.line;
     let isDirty = activeTextEditor.document.isDirty;
+    log('toggleMark', 'isDirty === ' + isDirty);
 
     this._tasks.activeTask.toggle(Helper.activeEditor.document.fileName, line);
 

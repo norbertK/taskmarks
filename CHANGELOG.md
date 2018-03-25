@@ -4,8 +4,9 @@ All notable changes to the "taskmarks" extension will be documented in this file
 ## [0.4.1] - 2018-03-25
 ### First Version 'Good Enough' :-)
 
-## [Unreleased]
+## [Unreleased - Ideas]
 - copy Task to clipboard / insert new Task from clipboard (makes sharing some bookmarks much easier)
+- find better shortcuts and make them work outside the edit mode (eg 'goto next' should work always)
 - add debug points to task (toggle, switch all on or off)
 - work on next? first time next at end of file goes back to beginning
 - perhaps? be able to leave comments on tasks - for starters, just keep them in taskmarks.json

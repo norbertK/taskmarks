@@ -63,6 +63,7 @@ export class Task implements ITask {
 
   public toggle(path: string, lineNumber: number): boolean {
     const filePath = Helper.reducePath(path);
+    ind('toggle', 'filePath === ' + filePath + ', lineNumber === ' + lineNumber);
 
     let file: File = this._files.find(fm => fm.filepath === filePath);
 
@@ -73,6 +74,7 @@ export class Task implements ITask {
       this._files.push(file);
     }
 
+    out('toggle');
     return file.hasMarks();
   }
 
