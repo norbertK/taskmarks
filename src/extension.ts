@@ -11,7 +11,7 @@ function log(methodName: string, text: string) {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  const blackList = [];
+  const blackList: Array<string> = [];
   // blackList.push('extension.ts');
   // blackList.push('File');
   // blackList.push('Mark');
@@ -20,8 +20,8 @@ export function activate(context: vscode.ExtensionContext) {
   // blackList.push('Tasks');
   // blackList.push('Helper');
 
-  // DebLog.initLogfile('C:\\_work\\log\\debLog.txt', false, blackList);
-  // log('activate', 'Start Taskmarks');
+  DebLog.initLogfile('C:\\_work\\log\\debLog.txt', false, blackList);
+  log('activate', 'Start Taskmarks');
 
   Helper.init(context);
 

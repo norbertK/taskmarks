@@ -10,7 +10,7 @@ export class DebLog {
 
   private static _classBlacklist: Array<string>;
 
-  public static initLogfile(filePath, clear: boolean, classBlacklist: Array<string>) {
+  public static initLogfile(filePath: string, clear: boolean, classBlacklist: Array<string>) {
     disabled = false;
     this._classBlacklist = classBlacklist;
     WriteFile.init(filePath, clear);
@@ -33,7 +33,7 @@ export class DebLog {
 
   public static log(className: string, methodName: string, text: string): number {
     if (disabled) {
-      return;
+      return -1;
     }
     const foundInBlacklist = this._classBlacklist.find(cb => cb === className);
     if (!foundInBlacklist) {
@@ -79,7 +79,7 @@ export class DebLog {
 
 export function debIn(className: string, methodName: string, text: string): number {
   if (disabled) {
-    return;
+    return -1;
   }
   const count = DebLog.log(className, methodName, text);
   DebLog.indent();
@@ -95,7 +95,7 @@ export function debOut(className: string, methodName: string, text: string) {
 
 export function debLog(className: string, methodName: string, text: string): number {
   if (disabled) {
-    return;
+    return -1;
   }
   return DebLog.log(className, methodName, text);
 }
@@ -107,7 +107,7 @@ export function debBackFrom(count: number, className: string, methodName: string
   DebLog.backFrom(count, className, methodName, text);
 }
 
-function pad(num, size): string {
+function pad(num: number, size: number): string {
   var s = '00000' + num;
   return s.substr(s.length - size);
 }

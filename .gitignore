@@ -1,10 +1,4 @@
-node_modules/
-
-
-#Exclude tsc generated files
-*.map
-*.js
-
-yarn.lock
-vsc-extension-quickstart.md
-
+out
+node_modules
+.vscode-test/
+*.vsix

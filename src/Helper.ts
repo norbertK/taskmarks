@@ -20,19 +20,19 @@ function log(methodName: string, text = '') {
 
 export class Helper {
   private static _activeEditorLineCount: number;
-  private static _vscContext: vscode.ExtensionContext;
+  // private static _vscContext: vscode.ExtensionContext;
   private static _iconPath: string;
   private static _vscTextEditorDecorationType: vscode.TextEditorDecorationType;
   private static _activeEditor: vscode.TextEditor;
   private static _tasks: Tasks;
 
-  private static _basePath: string;
+  private static _basePath: string | undefined;
 
-  public static get basePath(): string {
+  public static get basePath(): string | undefined {
     return this._basePath;
   }
 
-  public static set basePath(basePath: string) {
+  public static set basePath(basePath: string | undefined) {
     this._basePath = basePath;
   }
 
@@ -43,12 +43,18 @@ export class Helper {
   public static init(context: vscode.ExtensionContext) {
     ind('init');
 
-    this._basePath = vscode.workspace.rootPath;
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+      vscode.window.showErrorMessage('Error loading vscode.workspace! Stop!');
+      return;
+    }
+
+    this._basePath = workspaceFolders[0].uri.toString();
 
     this._tasks = Tasks.instance();
     Persist.loadTasks(this._tasks);
 
-    this._vscContext = context;
+    // this._vscContext = context;
     this._iconPath = context.asAbsolutePath('images/bookmark.svg');
 
     this._vscTextEditorDecorationType = vscode.window.createTextEditorDecorationType({
@@ -182,6 +188,7 @@ export class Helper {
     if (!isDirty) {
       Persist.saveTasks();
     }
+
     this.refresh();
     out('toggleMark');
   }
@@ -224,7 +231,10 @@ export class Helper {
   }
 
   public static refresh() {
+    ind('refresh');
     if (!this._activeEditor || !this._tasks.activeTask.activeFile) {
+      log('refresh', 'no active editor or no active file -----------------');
+      out('refresh');
       return;
     }
 
@@ -239,6 +249,7 @@ export class Helper {
 
       this._activeEditor.setDecorations(this._vscTextEditorDecorationType, ranges);
     }
+    out('refresh');
   }
 
   public static showLine(line: number) {
