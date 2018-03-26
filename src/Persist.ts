@@ -123,8 +123,8 @@ export class Persist {
   public static get tasksDataFilePath(): string {
     if (!this._tasksDataFilePath) {
       if (!vscode.workspace.workspaceFolders) {
-        // todo stop taskmarks
-        return '';
+        vscode.window.showErrorMessage('Error loading vscode.workspace! Stop!');
+        throw new Error('Error loading vscode.workspace! Stop!');
       }
       this._tasksDataFilePath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.vscode', 'taskmarks.json');
     }
