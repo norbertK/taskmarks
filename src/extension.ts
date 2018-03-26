@@ -3,25 +3,20 @@
 import * as vscode from 'vscode';
 
 import { Helper } from './Helper';
-import { debLog, DebLog } from './DebLog';
-
-const className = 'extension.ts';
-function log(methodName: string, text: string) {
-  debLog(className, methodName, text);
-}
+// import { debLog, DebLog } from './DebLog';
 
 export function activate(context: vscode.ExtensionContext) {
-  const blackList: Array<string> = [];
-  // blackList.push('extension.ts');
-  // blackList.push('File');
-  // blackList.push('Mark');
-  // blackList.push('Persist');
-  // blackList.push('Task');
-  // blackList.push('Tasks');
-  // blackList.push('Helper');
+  // const blackList: Array<string> = [];
+  // // blackList.push('extension.ts');
+  // // blackList.push('File');
+  // // blackList.push('Mark');
+  // // blackList.push('Persist');
+  // // blackList.push('Task');
+  // // blackList.push('Tasks');
+  // // blackList.push('Helper');
 
-  DebLog.initLogfile('C:\\_work\\log\\debLog.txt', false, blackList);
-  log('activate', 'Start Taskmarks');
+  // DebLog.initLogfile('C:\\_work\\log\\debLog.txt', false, blackList);
+  // log('activate', 'Start Taskmarks');
 
   Helper.init(context);
 

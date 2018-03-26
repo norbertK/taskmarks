@@ -4,23 +4,11 @@ import * as _ from 'lodash';
 
 import { Mark } from './Mark';
 
-import { debLog, debIn, debOut } from './DebLog';
-const className = 'File';
-function ind(methodName: string, text = '') {
-  debIn(className, methodName, text);
-}
-function out(methodName: string, text = '') {
-  debOut(className, methodName, text);
-}
-function log(methodName: string, text = '') {
-  debLog(className, methodName, text);
-}
-
 export class File {
-  private _filepath: string;
-  private _marks: Array<Mark>;
+  private _filepath: string | undefined;
+  private _marks: Array<Mark> = [];
 
-  public get filepath(): string {
+  public get filepath(): string | undefined {
     return this._filepath;
   }
 
@@ -29,24 +17,32 @@ export class File {
   }
 
   public get marks(): Array<number> {
-    const marks: number[] = this._marks.map(mark => mark.lineNumber);
+    const marks: number[] = [];
+    this._marks.forEach(mark => {
+      if (mark.lineNumber !== undefined) {
+        marks.push(mark.lineNumber);
+      }
+    });
 
     return marks;
   }
 
   public get marksForPersist(): Array<number> {
-    const marks: number[] = this._marks.map(mark => mark.lineNumberForPersist);
+    const marks: number[] = [];
+    this._marks.forEach(mark => {
+      if (mark.lineNumberForPersist !== undefined) {
+        marks.push(mark.lineNumberForPersist);
+      }
+    });
 
     return marks;
   }
 
-  constructor(filePath: string, lineNumber: number) {
+  constructor(filePath: string | undefined, lineNumber: number) {
     this.initFile(filePath, lineNumber);
   }
 
-  private initFile(filePath: string, lineNumber: number) {
-    log('initFile', '(filePath: ' + filePath + ', lineNumber: ' + lineNumber + ')');
-
+  private initFile(filePath: string | undefined, lineNumber: number) {
     if (!this._filepath) {
       this._filepath = filePath;
     }
@@ -63,27 +59,20 @@ export class File {
   }
 
   public setMarksFromPersist(marks: Array<number>) {
-    ind('setMarksFromPersist');
     marks.forEach(async mark => {
       this.addMark(mark);
     });
-    out('setMarksFromPersist');
   }
 
   private addMark(mark: number) {
-    ind('addMark', '(' + mark + ')');
     this._marks.push(new Mark(this, mark, false));
-    out('addMark', '(' + mark + ')');
   }
 
   public toggleTask(lineNumber: number): boolean {
-    log('toggleTask', '(' + lineNumber + ')');
-
-    const mark: Mark = _.find(this._marks, mark => mark.lineNumber === lineNumber);
-    log('toggleTask', 'mark === ' + mark);
+    const mark: Mark | undefined = _.find(this._marks, (mark: Mark) => mark.lineNumber === lineNumber);
 
     if (mark) {
-      _.remove(this._marks, mark => mark.lineNumber === lineNumber);
+      _.remove(this._marks, (mark: Mark) => mark.lineNumber === lineNumber);
     } else {
       this.addMark(lineNumber);
     }
@@ -95,7 +84,7 @@ export class File {
     this._marks.forEach(mark => mark.unDirty());
   }
 
-  public  hasMarks(): boolean {
+  public hasMarks(): boolean {
     return this._marks.length > 0;
   }
 }

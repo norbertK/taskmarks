@@ -1,22 +1,23 @@
 'use strict';
 
 import * as vscode from 'vscode';
+
 import fs = require('fs');
 import path = require('path');
 
 import { File } from './File';
 import { Tasks } from './Tasks';
 
-export interface IPersistFile {
-  filepath: string;
+interface IPersistFile {
+  filepath: string | undefined;
   marks: Array<number>;
 }
-export interface IPersistTask {
+interface IPersistTask {
   name: string;
-  activeFileName: string;
+  activeFileName: string | undefined;
   files: Array<IPersistFile>;
 }
-export interface IPersistTasks {
+interface IPersistTasks {
   activeTaskName: string;
   tasks: Array<IPersistTask>;
 }
@@ -67,6 +68,10 @@ export class Persist {
       });
     });
 
+    if (!this.tasks.activeTask) {
+      out('saveTasks');
+      return;
+    }
     const persistTasks: IPersistTasks = {
       activeTaskName: this.tasks.activeTask.name,
       tasks: persistTaskArray
@@ -112,10 +117,15 @@ export class Persist {
         return newTasks;
       }
     }
+    return newTasks;
   }
 
   public static get tasksDataFilePath(): string {
     if (!this._tasksDataFilePath) {
+      if (!vscode.workspace.workspaceFolders) {
+        // todo stop taskmarks
+        return '';
+      }
       this._tasksDataFilePath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.vscode', 'taskmarks.json');
     }
 

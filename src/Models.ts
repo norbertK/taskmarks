@@ -4,11 +4,11 @@ import { File } from './File';
 
 export interface ITask {
   name: string;
-  activeFileName: string;
+  activeFileName: string | undefined;
   files: Array<File>;
 }
 
 export interface ITasks {
-  activeTask: ITask;
+  activeTask: ITask | undefined;
   allTasks: Array<ITask>;
 }

@@ -20,7 +20,7 @@ function log(methodName: string, text = '') {
 
 export class Task implements ITask {
   private _name: string;
-  private _activeFile: File;
+  private _activeFile: File | undefined;
   private _files: Ring<File>;
 
   constructor(name: string) {
@@ -32,15 +32,18 @@ export class Task implements ITask {
     return this._name;
   }
 
-  public get activeFileName(): string {
+  public get activeFileName(): string | undefined {
+    if (this._activeFile) {
     return this._activeFile.filepath;
+    }
+    return undefined;
   }
 
-  public get activeFile(): File {
+  public get activeFile(): File | undefined  {
     return this._activeFile;
   }
 
-  public set activeFile(file: File) {
+  public set activeFile(file: File | undefined ) {
     this._activeFile = file;
   }
 
@@ -65,10 +68,10 @@ export class Task implements ITask {
     const filePath = Helper.reducePath(path);
     ind('toggle', 'filePath === ' + filePath + ', lineNumber === ' + lineNumber);
 
-    let file: File = this._files.find(fm => fm.filepath === filePath);
+    let file: File | undefined  = this._files.find(fm => fm.filepath === filePath);
 
     if (file) {
-      const hasMarks = file.toggleTask(lineNumber);
+      file.toggleTask(lineNumber);
     } else {
       file = new File(filePath, lineNumber);
       this._files.push(file);
@@ -82,7 +85,7 @@ export class Task implements ITask {
     const filePath = Helper.reducePath(path);
     log('use', 'filePath === ' + filePath);
 
-    let file: File = this.getFile(filePath);
+    let file: File| undefined = this.getFile(filePath);
 
     if (!file) {
       file = new File(filePath, -1);
@@ -94,8 +97,8 @@ export class Task implements ITask {
     return file;
   }
 
-  public getFile(reducedFilePath: string): File {
-    let fileMark: File = this._files.find(fm => fm.filepath === reducedFilePath);
+  public getFile(reducedFilePath: string): File | undefined  {
+    let fileMark: File | undefined  = this._files.find(fm => fm.filepath === reducedFilePath);
 
     return fileMark;
   }

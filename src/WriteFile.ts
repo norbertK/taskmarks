@@ -1,8 +1,6 @@
 import fs = require('fs');
 import path = require('path');
 
-import * as _ from 'lodash';
-
 export class WriteFile {
   private static _filePath: string;
   private static stream: fs.WriteStream;

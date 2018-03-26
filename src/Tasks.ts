@@ -1,17 +1,12 @@
 'use strict';
 
-import * as vscode from 'vscode';
-import fs = require('fs');
-
 import * as _ from 'lodash';
 
 import { ITasks } from './Models';
 import { Task } from './Task';
-import { Persist } from './Persist';
 import { Helper } from './Helper';
-import { File } from './File';
 
-import { debLog, debIn, debOut } from './DebLog';
+import { debIn, debOut } from './DebLog';
 const className = 'Tasks';
 function ind(methodName: string, text = '') {
   debIn(className, methodName, text);
@@ -19,9 +14,9 @@ function ind(methodName: string, text = '') {
 function out(methodName: string, text = '') {
   debOut(className, methodName, text);
 }
-function log(methodName: string, text = '') {
-  debLog(className, methodName, text);
-}
+// function log(methodName: string, text = '') {
+//   debLog(className, methodName, text);
+// }
 
 export class Tasks implements ITasks {
   private static _instance: Tasks;
@@ -37,17 +32,17 @@ export class Tasks implements ITasks {
   }
 
   private _allTasks: Array<Task>;
-  private _activeTask: Task;
+  private _activeTask: Task | undefined;
 
   public get allTasks(): Array<Task> {
     return this._allTasks;
   }
 
-  public get activeTask(): Task {
+  public get activeTask(): Task | undefined {
     return this._activeTask;
   }
 
-  public set activeTask(task: Task) {
+  public set activeTask(task: Task | undefined) {
     this._activeTask = task;
   }
 
@@ -84,6 +79,9 @@ export class Tasks implements ITasks {
       return;
     }
 
+    if (!activeTask.activeFile) {
+      return;
+    }
     for (let mark of activeTask.activeFile.marks) {
       if (mark > currentline) {
         Helper.showLine(mark);
@@ -102,8 +100,9 @@ export class Tasks implements ITasks {
       return;
     }
 
-    let previousBookmark: number;
-
+    if (!activeTask.activeFile) {
+      return;
+    }
     for (let index = activeTask.activeFile.marks.length - 1; index > -1; index--) {
       const mark = activeTask.activeFile.marks[index];
 
@@ -118,7 +117,7 @@ export class Tasks implements ITasks {
 
   public nextDocument() {
     ind('nextDocument');
-    if (this.activeTask.files.length === 0) {
+    if (!this.activeTask || this.activeTask.files.length === 0) {
       out('nextDocument');
       return;
     }
@@ -128,7 +127,7 @@ export class Tasks implements ITasks {
   }
 
   public previousDocument() {
-    if (this.activeTask.files.length === 0) {
+    if (!this.activeTask || this.activeTask.files.length === 0) {
       return;
     }
 

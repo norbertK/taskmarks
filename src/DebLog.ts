@@ -2,6 +2,21 @@ import { WriteFile } from './WriteFile';
 
 var disabled = true;
 
+// import { debLog, debIn, debOut, backFrom } from './DebLog';
+// const className = 'File';
+// function ind(methodName: string, text = '') {
+//   debIn(className, methodName, text);
+// }
+// function out(methodName: string, text = '') {
+//   debOut(className, methodName, text);
+// }
+// function log(methodName: string, text = '') {
+//   debLog(className, methodName, text);
+// }
+// function backFrom(count: number, methodName: string, text = '') {
+//   debBackFrom(count, className, methodName, text);
+// }
+
 export class DebLog {
   private static _count = 0;
   private static _indentCounter = 0;

@@ -1,0 +1,10 @@
+{
+	"activeTaskName": "default",
+	"tasks": [
+		{
+			"name": "default",
+			"activeFileName": "\\src\\Persist.ts",
+			"files": []
+		}
+	]
+}
