@@ -4,7 +4,7 @@ All notable changes to the "taskmarks" extension will be documented in this file
 ## [0.4.6] - 2018-03-25
 ### Upgraded to newest vscode, but then found the error in my code :-(
 (vscode 1.19.0 to 1.21.0)
-toggle did not work, and I did not find the error
+toggle did not work - fixed
 
 ## [Unreleased - Ideas]
 - remove all unnecessary ' | undefined' that tslint wanted
