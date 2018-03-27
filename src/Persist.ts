@@ -11,7 +11,7 @@ import { Tasks } from './Tasks';
 import { Task } from './Task';
 
 interface IPersistFile {
-  filepath: string | undefined;
+  filepath: string;
   marks: Array<number>;
 }
 interface IPersistTask {

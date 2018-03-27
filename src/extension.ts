@@ -2,8 +2,9 @@
 
 import * as vscode from 'vscode';
 
+import { Persist } from './Persist';
 import { Helper } from './Helper';
-import { debLog, DebLog } from './DebLog';
+import { DebLog } from './DebLog';
 
 export function activate(context: vscode.ExtensionContext) {
   const blackList: Array<string> = [];
@@ -16,7 +17,6 @@ export function activate(context: vscode.ExtensionContext) {
   // // blackList.push('Helper');
 
   DebLog.initLogfile('C:\\_work\\log\\debLog.txt', false, blackList);
-  debLog('extension.ts', 'activate', 'Start Taskmarks');
 
   Helper.init(context);
 
@@ -41,12 +41,13 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(toggleMarkDisposable);
 
   let copyToClipboardDisposable = vscode.commands.registerCommand('taskmark.copyToClipboard', () => {
-    Helper.copyToClipboard();
+    Persist.copyToClipboard();
   });
   context.subscriptions.push(copyToClipboardDisposable);
 
   let pasteFromClipboardDisposable = vscode.commands.registerCommand('taskmark.pasteFromClipboard', () => {
-    Helper.pasteFromClipboard();
+    Persist.pasteFromClipboard();
+    Helper.refresh();
   });
   context.subscriptions.push(pasteFromClipboardDisposable);
 

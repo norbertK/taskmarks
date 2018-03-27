@@ -1,32 +1,26 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import fs = require('fs');
 
 import { Tasks } from './Tasks';
 import { Persist } from './Persist';
+import { DecoratorHelper } from './DecoratorHelper';
+import { DebLog } from './DebLog';
+import { PathHelper } from './PathHelper';
 
 export class Helper {
   private static _activeEditorLineCount: number;
-  private static _iconPath: string;
-  private static _vscTextEditorDecorationType: vscode.TextEditorDecorationType;
   private static _activeEditor: vscode.TextEditor | undefined;
   private static _tasks: Tasks;
-  private static _basePath: string;
-
-  public static get basePath(): string {
-    return this._basePath;
-  }
-
-  public static set basePath(basePath: string) {
-    this._basePath = basePath;
-  }
+  private static deb: DebLog;
 
   public static get activeEditor() {
     return this._activeEditor;
   }
 
   public static init(context: vscode.ExtensionContext) {
+    this.deb = new DebLog();
+    this.deb.log('init');
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders || workspaceFolders.length === 0) {
       vscode.window.showErrorMessage('Error loading vscode.workspace! Stop!');
@@ -35,12 +29,12 @@ export class Helper {
 
     const workspaceFolder: vscode.WorkspaceFolder = workspaceFolders[0];
     const uri: vscode.Uri = workspaceFolder.uri;
-    this._basePath = uri.fsPath;
+    PathHelper.basePath = uri.fsPath;
 
     this._tasks = Tasks.instance();
     Persist.loadTasks(this._tasks);
 
-    Helper.initDecorator(context);
+    DecoratorHelper.initDecorator(context);
 
     const activeTextEditor = vscode.window.activeTextEditor;
     if (!activeTextEditor) {
@@ -101,20 +95,11 @@ export class Helper {
       if (!activeTask) {
         return;
       }
-      var file = activeTask.getFile(this.reducePath(textDocument.fileName));
+      var file = activeTask.getFile(PathHelper.reducePath(textDocument.fileName));
       if (file) {
         file.unDirty();
       }
       Persist.saveTasks();
-    });
-  }
-
-  private static initDecorator(context: vscode.ExtensionContext) {
-    this._iconPath = context.asAbsolutePath('images/bookmark.svg');
-    this._vscTextEditorDecorationType = vscode.window.createTextEditorDecorationType({
-      gutterIconPath: this._iconPath,
-      overviewRulerLane: vscode.OverviewRulerLane.Full,
-      overviewRulerColor: 'rgba(196, 196, 0, 0.8)'
     });
   }
 
@@ -133,7 +118,7 @@ export class Helper {
       if (result && result.detail) {
         let mark = Number.parseInt(result.label);
 
-        Helper.openAndShow(result.detail, mark);
+        DecoratorHelper.openAndShow(result.detail, mark);
       }
     });
   }
@@ -203,21 +188,6 @@ export class Helper {
     this.refresh();
   }
 
-  public static filepath(path: string | undefined): string | undefined {
-    const pathWithBasePath = this.basePath + path;
-    const pwbExists = fs.existsSync(pathWithBasePath);
-    if (pwbExists) {
-      return pathWithBasePath;
-    }
-    if (path) {
-      const pExists = fs.existsSync(path);
-      if (pExists) {
-        return path;
-      }
-    }
-    return undefined;
-  }
-
   public static changeActiveFile(editor: vscode.TextEditor | undefined) {
     if (this._activeEditor === editor || !this._tasks.activeTask) {
       return;
@@ -230,108 +200,12 @@ export class Helper {
     }
   }
 
-  public static reducePath(filePath: string): string {
-    if (filePath.startsWith(this._basePath)) {
-      filePath = filePath.substring(this._basePath.length);
-    }
-    return filePath;
-  }
-
   public static refresh() {
-    if (!this._activeEditor || !this._tasks.activeTask || !this._tasks.activeTask.activeFile) {
-      return;
-    }
-
-    let ranges: vscode.Range[] = [];
-
-    const marks = this._tasks.activeTask.activeFile.marks;
-    if (marks.length > 0) {
-      for (let mark of marks) {
-        let vscRange = new vscode.Range(mark, 0, mark, 0);
-        ranges.push(vscRange);
+    if (this._activeEditor) {
+      const activeFile = this._tasks.activeTask.activeFile;
+      if (activeFile) {
+        DecoratorHelper.refresh(this._activeEditor, activeFile.marks);
       }
     }
-
-    this._activeEditor.setDecorations(this._vscTextEditorDecorationType, ranges);
-  }
-
-  public static showLine(line: number) {
-    const activeTextEditor = vscode.window.activeTextEditor;
-    if (!activeTextEditor) {
-      return;
-    }
-    let reviewType: vscode.TextEditorRevealType = vscode.TextEditorRevealType.InCenter;
-    if (line === activeTextEditor.selection.active.line) {
-      reviewType = vscode.TextEditorRevealType.InCenterIfOutsideViewport;
-    }
-    let vscSelection = new vscode.Selection(line, 0, line, 0);
-    activeTextEditor.selection = vscSelection;
-    activeTextEditor.revealRange(vscSelection, reviewType);
-  }
-
-  public static openAndShow(filepath: string | undefined, mark: number | undefined = undefined): void {
-    filepath = this.filepath(filepath);
-    if (!filepath) {
-      return;
-    }
-
-    vscode.workspace.openTextDocument(filepath).then(textDocument => {
-      if (textDocument) {
-        vscode.window.showTextDocument(textDocument).then(editor => {
-          if (mark) {
-            this.showLine(mark);
-          } else {
-            if (
-              !this._tasks.activeTask ||
-              !this._tasks.activeTask.activeFile ||
-              this._tasks.activeTask.activeFile.marks.length === 0
-            ) {
-              return;
-            }
-            this.showLine(this._tasks.activeTask.activeFile.marks[0]);
-          }
-        });
-      }
-    });
-  }
-
-  public static async getQuickPickItem(
-    path: string | undefined,
-    mark: number | undefined
-  ): Promise<vscode.QuickPickItem> {
-    return new Promise<vscode.QuickPickItem>((resolve, reject) => {
-      let filepath = Helper.filepath(path);
-      let quickPickItem: vscode.QuickPickItem;
-
-      if (!filepath) {
-        reject('File not found! - ' + path);
-        return;
-      }
-      if (!mark) {
-        reject('Mark not set! - ' + path);
-        return;
-      }
-      let uri: vscode.Uri = vscode.Uri.file(filepath);
-      vscode.workspace.openTextDocument(uri).then(doc => {
-        if (mark <= doc.lineCount) {
-          let lineText = doc.lineAt(mark).text;
-          quickPickItem = {
-            label: mark.toString(),
-            description: lineText,
-            detail: filepath
-          };
-          resolve(quickPickItem);
-        }
-      });
-    });
-  }
-
-  public static copyToClipboard(): void {
-    Persist.copyToClipboard();
-  }
-
-  public static pasteFromClipboard(): void {
-    Persist.pasteFromClipboard();
-    this.refresh();
   }
 }

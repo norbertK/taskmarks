@@ -2,31 +2,19 @@
 
 import { File } from './File';
 import { ITask } from './Models';
-import { Helper } from './Helper';
 import { Mark } from './Mark';
 import { Ring } from './Ring';
+import { DebLog } from './DebLog';
+import { PathHelper } from './PathHelper';
 
-import { debLog, debIn, debOut, debBackFrom } from './DebLog';
-const className = 'Task';
-function ind(methodName: string, text = '') {
-  debIn(className, methodName, text);
-}
-function out(methodName: string, text = '') {
-  debOut(className, methodName, text);
-}
-function log(methodName: string, text = '') {
-  debLog(className, methodName, text);
-}
-// function backFrom(count: number, methodName: string, text = '') {
-//   debBackFrom(count, className, methodName, text);
-// }
 
-export class Task implements ITask {
+export class Task extends DebLog implements ITask {
   private _name: string;
   private _activeFile: File | undefined;
   private _files: Ring<File>;
 
   constructor(name: string) {
+    super();
     this._name = name;
     this._files = new Ring();
   }
@@ -64,30 +52,30 @@ export class Task implements ITask {
   }
 
   public mergeWith(taskToMerge: Task): Task {
-    ind('mergeWith', 'with taskToMerge.name === ' + taskToMerge.name);
+    this.ind('mergeWith', 'with taskToMerge.name === ' + taskToMerge.name);
     let filesToAdd: Array<File> = [];
 
     taskToMerge._files.forEach(fileToMerge => {
-      log('mergeWith', 'look for file  fileToMerge.filepath === ' + fileToMerge.filepath);
+      this.log('mergeWith', 'look for file  fileToMerge.filepath === ' + fileToMerge.filepath);
       let file: File | undefined = this._files.find(fm => fm.filepath === fileToMerge.filepath);
 
       if (file) {
-        log('mergeWith', 'file found');
+        this.log('mergeWith', 'file found');
         file.mergeWith(fileToMerge);
       } else {
-        log('mergeWith', 'file not found');
+        this.log('mergeWith', 'file not found');
         filesToAdd.push(fileToMerge);
       }
     });
     filesToAdd.forEach(fileToAdd => {
       this.files.push(fileToAdd);
     });
-    out('mergeWith', 'with taskToMerge.name === ' + taskToMerge.name);
+    this.out();
     return this;
   }
 
   public toggle(path: string, lineNumber: number): boolean {
-    const filePath = Helper.reducePath(path);
+    const filePath = PathHelper.reducePath(path);
 
     let file: File | undefined = this._files.find(fm => fm.filepath === filePath);
 
@@ -102,7 +90,7 @@ export class Task implements ITask {
   }
 
   public use(path: string): File {
-    const filePath = Helper.reducePath(path);
+    const filePath = PathHelper.reducePath(path);
 
     let file: File | undefined = this.getFile(filePath);
 

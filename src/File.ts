@@ -3,27 +3,13 @@
 import * as _ from 'lodash';
 
 import { Mark } from './Mark';
+import { DebLog } from './DebLog';
 
-import { debLog, debIn, debOut, debBackFrom } from './DebLog';
-const className = 'File';
-function ind(methodName: string, text = '') {
-  debIn(className, methodName, text);
-}
-function out(methodName: string, text = '') {
-  debOut(className, methodName, text);
-}
-// function log(methodName: string, text = '') {
-//   debLog(className, methodName, text);
-// }
-// function backFrom(count: number, methodName: string, text = '') {
-//   debBackFrom(count, className, methodName, text);
-// }
-
-export class File {
-  private _filepath: string | undefined;
+export class File extends DebLog {
+  private _filepath: string;
   private _marks: Array<Mark> = [];
 
-  public get filepath(): string | undefined {
+  public get filepath(): string {
     return this._filepath;
   }
 
@@ -53,19 +39,14 @@ export class File {
     return marks;
   }
 
-  constructor(filePath: string | undefined, lineNumber: number) {
-    this.initFile(filePath, lineNumber);
-  }
+  constructor(filePath: string, lineNumber: number) {
+    super();
 
-  private initFile(filePath: string | undefined, lineNumber: number) {
-    if (!this._filepath) {
-      this._filepath = filePath;
-    }
+    this.className = 'File';
+    this._filepath = filePath;
+
     if (!this._marks) {
       this._marks = [];
-    }
-    if (this._filepath !== filePath) {
-      return;
     }
     if (lineNumber === -1) {
       return;
@@ -74,10 +55,11 @@ export class File {
   }
 
   public mergeWith(file: File): File {
-    ind('mergeWith', 'with file.filepath === ' + file.filepath + ' and marks: ' + file.marks);
+    this.ind('mergeWith', 'with file.filepath === ' + file.filepath + ' and marks: ' + file.marks);
     let diff = _.difference(file._marks, this._marks);
+    this.log('mergeWith', 'diff is ' + diff);
     this._marks.push(...diff);
-    out('mergeWith', 'with file.filepath === ' + file.filepath);
+    this.out();
     return this;
   }
 

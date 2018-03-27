@@ -2,15 +2,15 @@
 
 import * as vscode from 'vscode';
 
-import { Helper } from './Helper';
 import { File } from './File';
+import { PathHelper } from './PathHelper';
 
 export class Mark {
   private _isDirty: boolean;
   private _parent: File;
-  private _lineNumber: number | undefined;
+  private _lineNumber: number;
   private _quickPickItem: vscode.QuickPickItem | undefined;
-  private _dirtyLineNumber: number | undefined;
+  private _dirtyLineNumber: number;
   private _dirtyQuickPickItem: vscode.QuickPickItem | undefined;
 
   public get quickPickItem(): vscode.QuickPickItem | undefined {
@@ -24,14 +24,14 @@ export class Mark {
     return this._lineNumber;
   }
 
-  public get lineNumber(): number | undefined {
+  public get lineNumber(): number {
     if (this._isDirty) {
       return this._dirtyLineNumber;
     }
     return this._lineNumber;
   }
 
-  public set lineNumber(lineNumber: number | undefined) {
+  public set lineNumber(lineNumber: number) {
     this._isDirty = true;
     this.setLineNumber(lineNumber);
   }
@@ -39,17 +39,19 @@ export class Mark {
   public constructor(parent: File, lineNumber: number, dirty = true) {
     this._isDirty = dirty;
     this._parent = parent;
+    this._lineNumber = -1;
+    this._dirtyLineNumber = -1;
     this.setLineNumber(lineNumber);
   }
 
-  private setLineNumber(lineNumber: number | undefined) {
+  private setLineNumber(lineNumber: number) {
     if (this._isDirty) {
       this._dirtyLineNumber = lineNumber;
     } else {
       this._lineNumber = lineNumber;
     }
 
-    Helper.getQuickPickItem(this._parent.filepath, lineNumber)
+    this.getQuickPickItem(this._parent.filepath, lineNumber)
       .then(value => {
         this._quickPickItem = value;
       })
@@ -62,9 +64,37 @@ export class Mark {
       this._dirtyQuickPickItem = undefined;
 
       this._lineNumber = this._dirtyLineNumber;
-      this._dirtyLineNumber = undefined;
+      this._dirtyLineNumber = -1;
 
       this._isDirty = false;
     }
+  }
+
+  public async getQuickPickItem(filepath: string, mark: number): Promise<vscode.QuickPickItem> {
+    return new Promise<vscode.QuickPickItem>((resolve, reject) => {
+      let fullPath = PathHelper.getFullPath(filepath);
+      let quickPickItem: vscode.QuickPickItem;
+
+      if (!fullPath) {
+        reject('File not found! - ' + filepath);
+        return;
+      }
+      if (!mark) {
+        reject('Mark not set! - ' + filepath);
+        return;
+      }
+      let uri: vscode.Uri = vscode.Uri.file(fullPath);
+      vscode.workspace.openTextDocument(uri).then(doc => {
+        if (mark <= doc.lineCount) {
+          let lineText = doc.lineAt(mark).text;
+          quickPickItem = {
+            label: mark.toString(),
+            description: lineText,
+            detail: fullPath
+          };
+          resolve(quickPickItem);
+        }
+      });
+    });
   }
 }

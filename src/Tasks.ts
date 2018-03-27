@@ -4,24 +4,10 @@ import * as _ from 'lodash';
 
 import { ITasks } from './Models';
 import { Task } from './Task';
-import { Helper } from './Helper';
+import { DebLog } from './DebLog';
+import { DecoratorHelper } from './DecoratorHelper';
 
-import { debLog, debIn, debOut, debBackFrom } from './DebLog';
-const className = 'Tasks';
-function ind(methodName: string, text = '') {
-  debIn(className, methodName, text);
-}
-function out(methodName: string, text = '') {
-  debOut(className, methodName, text);
-}
-// function log(methodName: string, text = '') {
-//   debLog(className, methodName, text);
-// }
-// function backFrom(count: number, methodName: string, text = '') {
-//   debBackFrom(count, className, methodName, text);
-// }
-
-export class Tasks implements ITasks {
+export class Tasks extends DebLog implements ITasks {
   private static _instance: Tasks;
 
   public static instance(): Tasks {
@@ -33,36 +19,39 @@ export class Tasks implements ITasks {
   }
 
   private _allTasks: Array<Task>;
-  private _activeTask: Task | undefined;
+  private _activeTask: Task;
 
   public get allTasks(): Array<Task> {
     return this._allTasks;
   }
 
-  public get activeTask(): Task | undefined {
+  public get activeTask(): Task {
     return this._activeTask;
   }
 
-  public set activeTask(task: Task | undefined) {
+  public set activeTask(task: Task) {
     this._activeTask = task;
+  }
+
+  private constructor() {
+    super();
+    this._allTasks = [];
+    this._activeTask = this.use('default');
   }
 
   public setActiveTask(taskname: string) {
     let activeTask = _.find(this._allTasks, task => task.name === taskname);
-    this._activeTask = activeTask;
+    if (activeTask) {
+      this._activeTask = activeTask;
+    }
   }
 
   public addTask(task: Task) {
-    ind('addTask', 'with task.name === ' + task.name);
+    this.ind('addTask', 'with task.name === ' + task.name);
     let current = this.use(task.name);
 
     current.mergeWith(task);
-    out('addTask', 'with task.name === ' + task.name);
-  }
-
-  private constructor() {
-    this._allTasks = [];
-    this.use('default');
+    this.out();
   }
 
   public use(taskname: string): Task {
@@ -89,7 +78,7 @@ export class Tasks implements ITasks {
     }
     for (let mark of activeTask.activeFile.marks) {
       if (mark > currentline) {
-        Helper.showLine(mark);
+        DecoratorHelper.showLine(mark);
         return;
       }
     }
@@ -110,7 +99,7 @@ export class Tasks implements ITasks {
       const mark = activeTask.activeFile.marks[index];
 
       if (mark < currentline) {
-        Helper.showLine(mark);
+        DecoratorHelper.showLine(mark);
         return;
       }
     }
@@ -123,7 +112,16 @@ export class Tasks implements ITasks {
       return;
     }
 
-    Helper.openAndShow(this.activeTask.files.next.filepath);
+    let currentFile = this.activeTask.activeFile;
+    let nextFile = this.activeTask.files.next;
+    while (currentFile !== nextFile) {
+      if (nextFile.marks.length > 0) {
+        currentFile = nextFile;
+      } else {
+        nextFile = this.activeTask.files.next;
+      }
+    }
+    DecoratorHelper.openAndShow(currentFile.filepath, currentFile.marks[0]);
   }
 
   public previousDocument() {
@@ -131,7 +129,16 @@ export class Tasks implements ITasks {
       return;
     }
 
-    Helper.openAndShow(this.activeTask.files.previous.filepath);
+    let currentFile = this.activeTask.activeFile;
+    let previousFile = this.activeTask.files.previous;
+    while (currentFile !== previousFile) {
+      if (previousFile.marks.length > 0) {
+        currentFile = previousFile;
+      } else {
+        previousFile = this.activeTask.files.next;
+      }
+    }
+    DecoratorHelper.openAndShow(currentFile.filepath, currentFile.marks[0]);
   }
 
   public get taskNames(): Array<string> {
