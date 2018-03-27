@@ -6,7 +6,7 @@ import { ITasks } from './Models';
 import { Task } from './Task';
 import { Helper } from './Helper';
 
-import { debIn, debOut } from './DebLog';
+import { debLog, debIn, debOut, debBackFrom } from './DebLog';
 const className = 'Tasks';
 function ind(methodName: string, text = '') {
   debIn(className, methodName, text);
@@ -17,17 +17,18 @@ function out(methodName: string, text = '') {
 // function log(methodName: string, text = '') {
 //   debLog(className, methodName, text);
 // }
+// function backFrom(count: number, methodName: string, text = '') {
+//   debBackFrom(count, className, methodName, text);
+// }
 
 export class Tasks implements ITasks {
   private static _instance: Tasks;
 
   public static instance(): Tasks {
-    ind('instance');
     if (!this._instance) {
       this._instance = new Tasks();
     }
 
-    out('instance');
     return this._instance;
   }
 
@@ -51,13 +52,20 @@ export class Tasks implements ITasks {
     this._activeTask = activeTask;
   }
 
+  public addTask(task: Task) {
+    ind('addTask', 'with task.name === ' + task.name);
+    let current = this.use(task.name);
+
+    current.mergeWith(task);
+    out('addTask', 'with task.name === ' + task.name);
+  }
+
   private constructor() {
     this._allTasks = [];
     this.use('default');
   }
 
   public use(taskname: string): Task {
-    ind('use', 'taskname === ' + taskname);
     let task = _.find(this._allTasks, task => task.name === taskname);
 
     if (!task) {
@@ -67,15 +75,12 @@ export class Tasks implements ITasks {
     }
     this._activeTask = task;
 
-    out('use');
     return task;
   }
 
   public nextMark(activeFile: string, currentline: number) {
-    ind('nextMark');
     let activeTask = this.activeTask;
     if (!activeTask || !activeTask.files || activeTask.files.length === 0) {
-      out('nextMark');
       return;
     }
 
@@ -85,13 +90,11 @@ export class Tasks implements ITasks {
     for (let mark of activeTask.activeFile.marks) {
       if (mark > currentline) {
         Helper.showLine(mark);
-        out('nextMark');
         return;
       }
     }
 
     this.nextDocument();
-    out('nextMark');
   }
 
   public previousMark(activeFile: string, currentline: number) {
@@ -116,14 +119,11 @@ export class Tasks implements ITasks {
   }
 
   public nextDocument() {
-    ind('nextDocument');
     if (!this.activeTask || this.activeTask.files.length === 0) {
-      out('nextDocument');
       return;
     }
 
     Helper.openAndShow(this.activeTask.files.next.filepath);
-    out('nextDocument');
   }
 
   public previousDocument() {

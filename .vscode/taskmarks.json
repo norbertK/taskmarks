@@ -1,0 +1,19 @@
+{
+	"activeTaskName": "default",
+	"tasks": [
+		{
+			"name": "default",
+			"activeFileName": "\\.vscode\\taskmarks.json",
+			"files": [
+				{
+					"filepath": "\\src\\extension.ts",
+					"marks": [
+						12,
+						14,
+						16
+					]
+				}
+			]
+		}
+	]
+}

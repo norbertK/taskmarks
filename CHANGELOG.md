@@ -1,10 +1,8 @@
 # Changelog
 All notable changes to the "taskmarks" extension will be documented in this file.
 
-## [0.4.6] - 2018-03-25
-### Upgraded to newest vscode, but then found the error in my code :-(
-(vscode 1.19.0 to 1.21.0)
-toggle did not work - fixed
+## [0.5.1] - 2018-03-26
+### Copy to Clipboard and Paste from Clipboard added
 
 ## [Unreleased - Ideas]
 - remove all unnecessary ' | undefined' that tslint wanted
@@ -14,6 +12,11 @@ toggle did not work - fixed
 - add debug points to task (toggle, switch all on or off)
 - work on next? first time next at end of file goes back to beginning
 - perhaps? be able to leave comments on tasks - for starters, just keep them in taskmarks.json
+
+## [0.4.6] - 2018-03-25
+### Upgraded to newest vscode, but then found the error in my code :-(
+(vscode 1.19.0 to 1.21.0)
+toggle did not work - fixed
 
 ## [0.4.4] - 2018-03-25
 ### looking for error

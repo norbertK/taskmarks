@@ -3,10 +3,10 @@
 import * as vscode from 'vscode';
 
 import { Helper } from './Helper';
-// import { debLog, DebLog } from './DebLog';
+import { debLog, DebLog } from './DebLog';
 
 export function activate(context: vscode.ExtensionContext) {
-  // const blackList: Array<string> = [];
+  const blackList: Array<string> = [];
   // // blackList.push('extension.ts');
   // // blackList.push('File');
   // // blackList.push('Mark');
@@ -15,8 +15,8 @@ export function activate(context: vscode.ExtensionContext) {
   // // blackList.push('Tasks');
   // // blackList.push('Helper');
 
-  // DebLog.initLogfile('C:\\_work\\log\\debLog.txt', false, blackList);
-  // log('activate', 'Start Taskmarks');
+  DebLog.initLogfile('C:\\_work\\log\\debLog.txt', false, blackList);
+  debLog('extension.ts', 'activate', 'Start Taskmarks');
 
   Helper.init(context);
 
@@ -39,6 +39,16 @@ export function activate(context: vscode.ExtensionContext) {
     Helper.toggleMark();
   });
   context.subscriptions.push(toggleMarkDisposable);
+
+  let copyToClipboardDisposable = vscode.commands.registerCommand('taskmark.copyToClipboard', () => {
+    Helper.copyToClipboard();
+  });
+  context.subscriptions.push(copyToClipboardDisposable);
+
+  let pasteFromClipboardDisposable = vscode.commands.registerCommand('taskmark.pasteFromClipboard', () => {
+    Helper.pasteFromClipboard();
+  });
+  context.subscriptions.push(pasteFromClipboardDisposable);
 
   let nextMarkDisposable = vscode.commands.registerCommand('taskmark.nextMark', () => {
     Helper.nextMark();

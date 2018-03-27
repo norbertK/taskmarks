@@ -2,7 +2,7 @@
     "name": "taskmarks",
     "displayName": "Taskmarks",
     "description": "Persist bookmarks for different tasks.",
-    "version": "0.4.6",
+    "version": "0.5.1",
     "publisher": "NorbertKlein",
     "engines": {
         "vscode": "^1.21.0"
@@ -35,6 +35,14 @@
             {
                 "command": "taskmark.toggleMark",
                 "title": "Taskmarks: Toggle Bookmark at Current Position"
+            },
+            {
+                "command": "taskmark.copyToClipboard",
+                "title": "Taskmarks: Copy Active Task to Clipboard"
+            },
+            {
+                "command": "taskmark.pasteFromClipboard",
+                "title": "Taskmarks: Paste Clipboard to Active Task"
             },
             {
                 "command": "taskmark.nextMark",
@@ -80,14 +88,16 @@
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
+        "@types/clipboardy": "^1.1.0",
+        "@types/lodash": "^4.14.106",
         "@types/mocha": "^2.2.42",
         "@types/node": "^7.0.43",
-        "@types/lodash": "^4.14.106",
         "tslint": "^5.8.0",
         "typescript": "^2.6.1",
         "vscode": "^1.1.6"
     },
     "dependencies": {
+        "clipboardy": "^1.2.3",
         "lodash": "^4.17.5"
     },
     "repository": {

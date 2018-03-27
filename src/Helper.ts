@@ -281,7 +281,11 @@ export class Helper {
           if (mark) {
             this.showLine(mark);
           } else {
-            if (!this._tasks.activeTask || !this._tasks.activeTask.activeFile || this._tasks.activeTask.activeFile.marks.length === 0) {
+            if (
+              !this._tasks.activeTask ||
+              !this._tasks.activeTask.activeFile ||
+              this._tasks.activeTask.activeFile.marks.length === 0
+            ) {
               return;
             }
             this.showLine(this._tasks.activeTask.activeFile.marks[0]);
@@ -291,7 +295,10 @@ export class Helper {
     });
   }
 
-  public static async getQuickPickItem(path: string | undefined, mark: number | undefined): Promise<vscode.QuickPickItem> {
+  public static async getQuickPickItem(
+    path: string | undefined,
+    mark: number | undefined
+  ): Promise<vscode.QuickPickItem> {
     return new Promise<vscode.QuickPickItem>((resolve, reject) => {
       let filepath = Helper.filepath(path);
       let quickPickItem: vscode.QuickPickItem;
@@ -317,5 +324,14 @@ export class Helper {
         }
       });
     });
+  }
+
+  public static copyToClipboard(): void {
+    Persist.copyToClipboard();
+  }
+
+  public static pasteFromClipboard(): void {
+    Persist.pasteFromClipboard();
+    this.refresh();
   }
 }

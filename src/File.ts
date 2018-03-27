@@ -4,6 +4,21 @@ import * as _ from 'lodash';
 
 import { Mark } from './Mark';
 
+import { debLog, debIn, debOut, debBackFrom } from './DebLog';
+const className = 'File';
+function ind(methodName: string, text = '') {
+  debIn(className, methodName, text);
+}
+function out(methodName: string, text = '') {
+  debOut(className, methodName, text);
+}
+// function log(methodName: string, text = '') {
+//   debLog(className, methodName, text);
+// }
+// function backFrom(count: number, methodName: string, text = '') {
+//   debBackFrom(count, className, methodName, text);
+// }
+
 export class File {
   private _filepath: string | undefined;
   private _marks: Array<Mark> = [];
@@ -56,6 +71,14 @@ export class File {
       return;
     }
     this.toggleTask(lineNumber);
+  }
+
+  public mergeWith(file: File): File {
+    ind('mergeWith', 'with file.filepath === ' + file.filepath + ' and marks: ' + file.marks);
+    let diff = _.difference(file._marks, this._marks);
+    this._marks.push(...diff);
+    out('mergeWith', 'with file.filepath === ' + file.filepath);
+    return this;
   }
 
   public setMarksFromPersist(marks: Array<number>) {
