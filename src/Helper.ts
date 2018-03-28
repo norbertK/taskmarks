@@ -21,6 +21,7 @@ export class Helper {
   public static init(context: vscode.ExtensionContext) {
     this.deb = new DebLog();
     this.deb.log('init');
+
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders || workspaceFolders.length === 0) {
       vscode.window.showErrorMessage('Error loading vscode.workspace! Stop!');
@@ -32,21 +33,29 @@ export class Helper {
     PathHelper.basePath = uri.fsPath;
 
     this._tasks = Tasks.instance();
-    Persist.loadTasks(this._tasks);
+    Persist.initAndLoad(this._tasks);
 
     DecoratorHelper.initDecorator(context);
 
+    Helper.HandleEditorChange();
+    Helper.handleSave();
+    Helper.handleChange(context);
+
+    this.dumpTasksToLog();
+  }
+
+  private static HandleEditorChange() {
     const activeTextEditor = vscode.window.activeTextEditor;
-    if (!activeTextEditor) {
-      return;
+    if (activeTextEditor) {
+      this.changeActiveFile(activeTextEditor);
     }
-    this.changeActiveFile(activeTextEditor);
     vscode.window.onDidChangeActiveTextEditor(editor => {
       this.changeActiveFile(editor);
     }, null);
+  }
 
-    Helper.handleSave();
-    Helper.handleChange(context);
+  public static dumpTasksToLog(): any {
+    this._tasks.dumpToLog();
   }
 
   private static handleChange(context: vscode.ExtensionContext) {
@@ -180,6 +189,7 @@ export class Helper {
     let isDirty = activeTextEditor.document.isDirty;
 
     this._tasks.activeTask.toggle(activeTextEditor.document.fileName, line);
+    this._tasks.dumpToLog();
 
     if (!isDirty) {
       Persist.saveTasks();
@@ -190,10 +200,12 @@ export class Helper {
 
   public static changeActiveFile(editor: vscode.TextEditor | undefined) {
     if (this._activeEditor === editor || !this._tasks.activeTask) {
+      this.deb.log('changeActiveFile', 'nothing to do');
       return;
     }
     this._activeEditor = editor;
     if (editor) {
+      this.deb.log('changeActiveFile', 'changed to document ' + editor.document.fileName);
       this._activeEditorLineCount = editor.document.lineCount;
       this._tasks.activeTask.use(editor.document.uri.fsPath);
       this.refresh();
@@ -202,6 +214,7 @@ export class Helper {
 
   public static refresh() {
     if (this._activeEditor) {
+      this.deb.log('refresh');
       const activeFile = this._tasks.activeTask.activeFile;
       if (activeFile) {
         DecoratorHelper.refresh(this._activeEditor, activeFile.marks);

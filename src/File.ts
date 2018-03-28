@@ -41,7 +41,6 @@ export class File extends DebLog {
 
   constructor(filePath: string, lineNumber: number) {
     super();
-
     this.className = 'File';
     this._filepath = filePath;
 
@@ -91,5 +90,16 @@ export class File extends DebLog {
 
   public hasMarks(): boolean {
     return this._marks.length > 0;
+  }
+
+  public dumpToLog(indent: number): void {
+    indent++;
+    this.dump(indent, '--------------------------');
+    this.dump(indent, '---------- File ----------');
+    this.dump(indent, '_filepath - ' + this._filepath);
+    this._marks.forEach(mark => {
+      mark.dumpToLog(indent);
+    });
+    this.dump(indent, '');
   }
 }

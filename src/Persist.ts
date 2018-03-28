@@ -9,6 +9,7 @@ import { write, readSync } from 'clipboardy';
 import { File } from './File';
 import { Tasks } from './Tasks';
 import { Task } from './Task';
+import { DebLog } from './DebLog';
 
 interface IPersistFile {
   filepath: string;
@@ -27,6 +28,41 @@ interface IPersistTasks {
 export class Persist {
   private static tasks: Tasks;
   private static _tasksDataFilePath: string;
+  private static deb: DebLog;
+
+  public static initAndLoad(newTasks: Tasks): Tasks {
+    this.deb = new DebLog();
+    this.deb.ind('initAndLoad');
+
+    this.tasks = newTasks;
+    var taskmarksFile = Persist.tasksDataFilePath;
+    if (taskmarksFile) {
+      if (!fs.existsSync(taskmarksFile)) {
+        this.deb.out();
+        return newTasks;
+      }
+      try {
+        const stringFromFile: string = fs.readFileSync(taskmarksFile).toString();
+
+        const persistedTasks = <IPersistTasks>JSON.parse(stringFromFile);
+
+        persistedTasks.tasks.forEach(persistedTask => {
+          const newTask = Persist.persistedToTask(persistedTask);
+          newTasks.addTask(newTask);
+        });
+
+        newTasks.use(persistedTasks.activeTaskName);
+
+        return newTasks;
+      } catch (error) {
+        vscode.window.showErrorMessage('Error loading taskmarks: ' + error.toString() + ' Using "default"');
+        this.deb.out();
+        return newTasks;
+      }
+    }
+    this.deb.out();
+    return newTasks;
+  }
 
   public static saveTasks(): void {
     var taskmarksFile = Persist.tasksDataFilePath;
@@ -53,6 +89,7 @@ export class Persist {
   }
 
   private static persistTask(task: Task): IPersistTask {
+    this.deb.ind('persistTask');
     const persistedTask: IPersistTask = {
       name: task.name,
       activeFileName: task.activeFileName,
@@ -69,35 +106,8 @@ export class Persist {
         });
       }
     });
+    this.deb.out();
     return persistedTask;
-  }
-
-  public static loadTasks(newTasks: Tasks): Tasks {
-    this.tasks = newTasks;
-    var taskmarksFile = Persist.tasksDataFilePath;
-    if (taskmarksFile) {
-      if (!fs.existsSync(taskmarksFile)) {
-        return newTasks;
-      }
-      try {
-        const stringFromFile: string = fs.readFileSync(taskmarksFile).toString();
-
-        const persistedTasks = <IPersistTasks>JSON.parse(stringFromFile);
-
-        persistedTasks.tasks.forEach(persistedTask => {
-          const newTask = Persist.persistedToTask(persistedTask);
-          newTasks.addTask(newTask);
-        });
-
-        newTasks.use(persistedTasks.activeTaskName);
-
-        return newTasks;
-      } catch (error) {
-        vscode.window.showErrorMessage('Error loading taskmarks: ' + error.toString() + ' Using "default"');
-        return newTasks;
-      }
-    }
-    return newTasks;
   }
 
   private static persistedToTask(persistedTask: IPersistTask): Task {
@@ -123,7 +133,9 @@ export class Persist {
   }
 
   public static copyToClipboard(): void {
+    this.deb.ind('copyToClipboard');
     if (!this.tasks.activeTask) {
+      this.deb.out();
       return;
     }
     const persistedActiveTask = this.persistTask(this.tasks.activeTask);
@@ -131,25 +143,26 @@ export class Persist {
     const activeTaskString = JSON.stringify(persistedActiveTask);
 
     write(activeTaskString);
+    this.deb.out();
   }
 
   public static pasteFromClipboard(): void {
+    this.deb.ind('copyToClipboard');
     const activeTaskString = readSync();
 
     if (!activeTaskString) {
       vscode.window.showInformationMessage('Could not paste Task from Clipboard.');
+      this.deb.out();
       return;
     }
+
+    this.deb.dump(0, '############################ from clipboard ############################');
+    this.deb.dump(0, activeTaskString);
+    this.deb.dump(0, '########################################################################');
 
     try {
       const persistedTask = <IPersistTask>JSON.parse(activeTaskString);
       const newTask = Persist.persistedToTask(persistedTask);
-
-      // const task = this.tasks.use(persistedTask.name);
-      // if (task.allMarks.length > 0) {
-      //   // todo: do you really ...  vscode.window.showInputBox()
-      //   // throw ...
-      // }
 
       this.tasks.addTask(newTask);
 
@@ -157,5 +170,30 @@ export class Persist {
     } catch (error) {
       vscode.window.showInformationMessage('PasteFromClipboar failed with ' + error);
     }
+    this.deb.out();
+  }
+
+  public static dumpIPersistTask(persistedTask: IPersistTask) {
+    let indent = 0;
+    this.deb.dump(indent, '------------------------------------------------------');
+    this.deb.dump(indent, '-------------------- IPersistTask --------------------');
+    this.deb.dump(indent, 'persistedTask.name           - ' + persistedTask.name);
+    this.deb.dump(indent, 'persistedTask.activeFileName - ' + persistedTask.activeFileName);
+    persistedTask.files.forEach(persistedFile => {
+      this.dumpIPersistFile(indent, persistedFile);
+    });
+    this.deb.dump(indent, '');
+  }
+
+  public static dumpIPersistFile(indent: number, persistedFile: IPersistFile) {
+    indent++;
+    this.deb.dump(indent, '------------------------------------------');
+    this.deb.dump(indent, '-------------- IPersistFile --------------');
+    this.deb.dump(indent, 'persistedTask.name           - ' + persistedFile.filepath);
+    this.deb.dump(indent + 1, '-------------- Mark --------------');
+    persistedFile.marks.forEach(mark => {
+      this.deb.dump(indent + 1, 'mark - ' + mark);
+    });
+    this.deb.dump(indent, '');
   }
 }

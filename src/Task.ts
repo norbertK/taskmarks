@@ -7,7 +7,6 @@ import { Ring } from './Ring';
 import { DebLog } from './DebLog';
 import { PathHelper } from './PathHelper';
 
-
 export class Task extends DebLog implements ITask {
   private _name: string;
   private _activeFile: File | undefined;
@@ -15,6 +14,7 @@ export class Task extends DebLog implements ITask {
 
   constructor(name: string) {
     super();
+    this.className = 'Task';
     this._name = name;
     this._files = new Ring();
   }
@@ -108,5 +108,16 @@ export class Task extends DebLog implements ITask {
     let fileMark: File | undefined = this._files.find(fm => fm.filepath === reducedFilePath);
 
     return fileMark;
+  }
+
+  public dumpToLog(indent: number): void {
+    indent++;
+    this.dump(indent, '--------------------------');
+    this.dump(indent, '---------- Task ----------');
+    this.dump(indent, '_name - ' + this._name);
+    this._files.forEach(file => {
+      file.dumpToLog(indent);
+    });
+    this.dump(indent, '');
   }
 }

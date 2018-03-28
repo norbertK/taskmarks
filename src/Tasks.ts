@@ -35,6 +35,8 @@ export class Tasks extends DebLog implements ITasks {
 
   private constructor() {
     super();
+    this.className = 'Tasks';
+
     this._allTasks = [];
     this._activeTask = this.use('default');
   }
@@ -51,6 +53,7 @@ export class Tasks extends DebLog implements ITasks {
     let current = this.use(task.name);
 
     current.mergeWith(task);
+    this.dumpToLog();
     this.out();
   }
 
@@ -64,6 +67,7 @@ export class Tasks extends DebLog implements ITasks {
     }
     this._activeTask = task;
 
+    this.dumpToLog();
     return task;
   }
 
@@ -149,5 +153,18 @@ export class Tasks extends DebLog implements ITasks {
     });
 
     return taskNames;
+  }
+
+  public dumpToLog(): void {
+    let indent = 0;
+    this.dump(indent, '');
+    this.dump(indent, '---------------------------------------------------------------------------------');
+    this.dump(indent, '------------------------------------- Tasks -------------------------------------');
+    this.dump(indent, '_activeTask.name - ' + this._activeTask.name);
+    this._allTasks.forEach(task => {
+      task.dumpToLog(indent);
+    });
+    this.dump(indent, '---------------------------------------------------------------------------------');
+    this.dump(indent, '');
   }
 }

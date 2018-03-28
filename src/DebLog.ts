@@ -42,6 +42,26 @@ export class DebLog {
     return DebLog.internalLog(this.className, methodName, text);
   }
 
+  public dump(indent: number, text:string) {
+    if (DebLog._disabled) {
+      return;
+    }
+    DebLog.internalDump(this.className, indent, text);
+  }
+
+  private static  internalDump(className: string, indent: number, text:string) {
+    const foundInBlacklist = this._classBlacklist.find(cb => cb === className);
+    if (!foundInBlacklist) {
+      let line = '';
+      for (let index = 0; index < indent; index++) {
+        line += this._indenter;
+      }
+      line += text;
+      console.log(line);
+      this.writeLine(line);
+    }
+  }
+
   public backFrom(count: number, methodName: string, text = '') {
     if (DebLog._disabled) {
       return;

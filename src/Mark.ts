@@ -4,8 +4,9 @@ import * as vscode from 'vscode';
 
 import { File } from './File';
 import { PathHelper } from './PathHelper';
+import { DebLog } from './DebLog';
 
-export class Mark {
+export class Mark extends DebLog {
   private _isDirty: boolean;
   private _parent: File;
   private _lineNumber: number;
@@ -37,6 +38,9 @@ export class Mark {
   }
 
   public constructor(parent: File, lineNumber: number, dirty = true) {
+    super();
+    this.className = 'Mark';
+    
     this._isDirty = dirty;
     this._parent = parent;
     this._lineNumber = -1;
@@ -96,5 +100,20 @@ export class Mark {
         }
       });
     });
+  }
+
+  public dumpToLog(indent: number): void {
+    indent++;
+    this.dump(indent, '--------------------------');
+    this.dump(indent, '---------- Mark ----------');
+    this.dump(indent, '_isDirty            - ' + this._isDirty);
+    if (this._isDirty) {
+      this.dump(indent, '_dirtyLineNumber    - ' + this._dirtyLineNumber + '(_lineNumber === ' + this._lineNumber + ')');
+      this.dump(indent, '_dirtyQuickPickItem - ' + this._dirtyQuickPickItem);
+    } else {
+      this.dump(indent, '_lineNumber         - ' + this._lineNumber);
+      this.dump(indent, '_quickPickItem      - ' + this._quickPickItem);
+    }
+    this.dump(indent, '');
   }
 }
