@@ -181,14 +181,25 @@ export class Helper {
   }
 
   public static async toggleMark() {
+    this.deb.ind('toggleMark');
+
     const activeTextEditor = vscode.window.activeTextEditor;
-    if (!activeTextEditor || !this._tasks.activeTask) {
+    if (!activeTextEditor) {
+      this.deb.log('toggleMark', 'no activeTextEditor');
+      this.deb.out();
       return;
     }
-    let line = activeTextEditor.selection.active.line;
+    this.deb.log('toggleMark', 'activeTextEditor === ' + activeTextEditor.document.fileName);
+    if (!this._tasks.activeTask) {
+      this.deb.out();
+      return;
+    }
+    this.deb.log('toggleMark', '_tasks.activeTask === ' + this._tasks.activeTask.name);
+
+    let activeLine = activeTextEditor.selection.active.line;
     let isDirty = activeTextEditor.document.isDirty;
 
-    this._tasks.activeTask.toggle(activeTextEditor.document.fileName, line);
+    this._tasks.activeTask.toggle(activeTextEditor.document.fileName, activeLine);
     this._tasks.dumpToLog();
 
     if (!isDirty) {
@@ -196,6 +207,7 @@ export class Helper {
     }
 
     this.refresh();
+    this.deb.out();
   }
 
   public static changeActiveFile(editor: vscode.TextEditor | undefined) {
@@ -214,7 +226,8 @@ export class Helper {
 
   public static refresh() {
     if (this._activeEditor) {
-      this.deb.log('refresh');
+      this.deb.log('refresh', '_tasks.activeTask ' + this._tasks.activeTask.name);
+      this.deb.log('refresh', '_tasks.activeTask.activeFileName ' + this._tasks.activeTask.activeFileName);
       const activeFile = this._tasks.activeTask.activeFile;
       if (activeFile) {
         DecoratorHelper.refresh(this._activeEditor, activeFile.marks);

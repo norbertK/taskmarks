@@ -2,12 +2,11 @@
 
 import * as _ from 'lodash';
 
-import { ITasks } from './Models';
 import { Task } from './Task';
 import { DebLog } from './DebLog';
 import { DecoratorHelper } from './DecoratorHelper';
 
-export class Tasks extends DebLog implements ITasks {
+export class Tasks extends DebLog {
   private static _instance: Tasks;
 
   public static instance(): Tasks {
@@ -48,26 +47,32 @@ export class Tasks extends DebLog implements ITasks {
     }
   }
 
-  public addTask(task: Task) {
+  public addTask(task: IPersistTask) {
     this.ind('addTask', 'with task.name === ' + task.name);
     let current = this.use(task.name);
 
     current.mergeWith(task);
+    this.ind('addTask', 'task.name ' + task.name + ':');
     this.dumpToLog();
     this.out();
   }
 
   public use(taskname: string): Task {
+    this.ind('use', 'with taskname === ' + taskname);
     let task = _.find(this._allTasks, task => task.name === taskname);
 
     if (!task) {
+      this.log('use', 'did not find task ' + taskname + ' - added new');
       task = new Task(taskname);
 
       this._allTasks.push(task);
     }
+    this.log('use', 'set tasks._activeTask to ' + task.name);
     this._activeTask = task;
 
+    this.log('use', 'task ' + taskname + ':');
     this.dumpToLog();
+    this.out();
     return task;
   }
 

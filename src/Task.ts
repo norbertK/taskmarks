@@ -1,13 +1,12 @@
 'use strict';
 
 import { File } from './File';
-import { ITask } from './Models';
 import { Mark } from './Mark';
 import { Ring } from './Ring';
 import { DebLog } from './DebLog';
 import { PathHelper } from './PathHelper';
 
-export class Task extends DebLog implements ITask {
+export class Task extends DebLog {
   private _name: string;
   private _activeFile: File | undefined;
   private _files: Ring<File>;
@@ -51,41 +50,46 @@ export class Task extends DebLog implements ITask {
     return marks;
   }
 
-  public mergeWith(taskToMerge: Task): Task {
+  public mergeWith(taskToMerge: IPersistTask): Task {
     this.ind('mergeWith', 'with taskToMerge.name === ' + taskToMerge.name);
-    let filesToAdd: Array<File> = [];
+    let filesToAdd: Array<IPersistFile> = [];
 
-    taskToMerge._files.forEach(fileToMerge => {
+    taskToMerge.files.forEach(fileToMerge => {
       this.log('mergeWith', 'look for file  fileToMerge.filepath === ' + fileToMerge.filepath);
       let file: File | undefined = this._files.find(fm => fm.filepath === fileToMerge.filepath);
 
       if (file) {
-        this.log('mergeWith', 'file found');
+        this.log('mergeWith', 'file ' + fileToMerge.filepath + ' found');
         file.mergeWith(fileToMerge);
       } else {
-        this.log('mergeWith', 'file not found');
+        this.log('mergeWith', 'file ' + fileToMerge.filepath + ' not found');
         filesToAdd.push(fileToMerge);
       }
     });
     filesToAdd.forEach(fileToAdd => {
-      this.files.push(fileToAdd);
+      let file = this.use(fileToAdd.filepath);
+      fileToAdd.marks.forEach(mark => file.addMark(mark));
     });
     this.out();
     return this;
   }
 
   public toggle(path: string, lineNumber: number): boolean {
-    const filePath = PathHelper.reducePath(path);
+    this.ind('toggle', 'with path === ' + path + ' and lineNumber === ' + lineNumber);
+    const reducedPath = PathHelper.reducePath(path);
+    this.log('toggle', 'reducedPath === ' + reducedPath);
 
-    let file: File | undefined = this._files.find(fm => fm.filepath === filePath);
+    let file: File | undefined = this._files.find(fm => fm.filepath === reducedPath);
 
     if (file) {
+      this.log('toggle', 'found file with ' + reducedPath);
       file.toggleTask(lineNumber);
     } else {
-      file = new File(filePath, lineNumber);
+      file = new File(reducedPath, lineNumber);
       this._files.push(file);
     }
 
+    this.out();
     return file.hasMarks();
   }
 

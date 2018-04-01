@@ -4,10 +4,10 @@ import * as vscode from 'vscode';
 
 import { Persist } from './Persist';
 import { Helper } from './Helper';
-import { DebLog } from './DebLog';
+// import { DebLog } from './DebLog';
 
 export function activate(context: vscode.ExtensionContext) {
-  const blackList: Array<string> = [];
+  // const blackList: Array<string> = [];
   // // blackList.push('extension.ts');
   // // blackList.push('File');
   // // blackList.push('Mark');
@@ -16,7 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
   // // blackList.push('Tasks');
   // // blackList.push('Helper');
 
-  DebLog.initLogfile('C:\\_work\\log\\debLog.txt', false, blackList);
+  // DebLog.initLogfile('C:\\_work\\log\\debLog.txt', false, blackList);
 
   Helper.init(context);
 

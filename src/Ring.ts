@@ -1,5 +1,7 @@
 'use strict';
 
+// import { DebLog } from './DebLog';
+
 // not a 'real' ring class - only stuff I need
 export class Ring<T> extends Array<T> {
   private _current: number = 0;

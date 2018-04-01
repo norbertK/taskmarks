@@ -53,11 +53,18 @@ export class File extends DebLog {
     this.toggleTask(lineNumber);
   }
 
-  public mergeWith(file: File): File {
+  public mergeWith(file: IPersistFile): File {
     this.ind('mergeWith', 'with file.filepath === ' + file.filepath + ' and marks: ' + file.marks);
-    let diff = _.difference(file._marks, this._marks);
-    this.log('mergeWith', 'diff is ' + diff);
-    this._marks.push(...diff);
+    this.log('mergeWith', 'existing marks are: ' + this.marks);
+    this.log('mergeWith', 'marks to include are: ' + file.marks);
+
+    let diff = _.difference(file.marks, this.marks);
+    this.log('mergeWith', 'diff is :');
+    diff.forEach(mark => {
+      this.log('mergeWith', mark + '');
+      this.addMark(mark);
+    });
+
     this.out();
     return this;
   }
@@ -68,7 +75,7 @@ export class File extends DebLog {
     });
   }
 
-  private addMark(mark: number) {
+  public addMark(mark: number) {
     this._marks.push(new Mark(this, mark, false));
   }
 
@@ -97,9 +104,12 @@ export class File extends DebLog {
     this.dump(indent, '--------------------------');
     this.dump(indent, '---------- File ----------');
     this.dump(indent, '_filepath - ' + this._filepath);
+    let marks = '';
     this._marks.forEach(mark => {
-      mark.dumpToLog(indent);
+      // mark.dumpToLog(indent);
+      marks += mark.lineNumber + ' ';
     });
+    this.dump(indent, marks);
     this.dump(indent, '');
   }
 }

@@ -42,7 +42,7 @@
             },
             {
                 "command": "taskmark.pasteFromClipboard",
-                "title": "Taskmarks: Paste Clipboard to Active Task"
+                "title": "Taskmarks: Paste Clipboard to Task"
             },
             {
                 "command": "taskmark.nextMark",

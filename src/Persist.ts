@@ -11,20 +11,6 @@ import { Tasks } from './Tasks';
 import { Task } from './Task';
 import { DebLog } from './DebLog';
 
-interface IPersistFile {
-  filepath: string;
-  marks: Array<number>;
-}
-interface IPersistTask {
-  name: string;
-  activeFileName: string | undefined;
-  files: Array<IPersistFile>;
-}
-interface IPersistTasks {
-  activeTaskName: string;
-  tasks: Array<IPersistTask>;
-}
-
 export class Persist {
   private static tasks: Tasks;
   private static _tasksDataFilePath: string;
@@ -89,10 +75,9 @@ export class Persist {
   }
 
   private static persistTask(task: Task): IPersistTask {
-    this.deb.ind('persistTask');
+    this.deb.ind('persistTask', 'with task === ' + task.name);
     const persistedTask: IPersistTask = {
       name: task.name,
-      activeFileName: task.activeFileName,
       files: []
     };
 
@@ -111,7 +96,8 @@ export class Persist {
   }
 
   private static persistedToTask(persistedTask: IPersistTask): Task {
-    let task = this.tasks.use(persistedTask.name);
+    let task = new Task(persistedTask.name);
+    //this.tasks.use(persistedTask.name);
     persistedTask.files.forEach(persistedFile => {
       let file: File = new File(persistedFile.filepath, -1);
       file.setMarksFromPersist(persistedFile.marks);
@@ -147,7 +133,7 @@ export class Persist {
   }
 
   public static pasteFromClipboard(): void {
-    this.deb.ind('copyToClipboard');
+    this.deb.ind('pasteFromClipboard');
     const activeTaskString = readSync();
 
     if (!activeTaskString) {
@@ -162,9 +148,9 @@ export class Persist {
 
     try {
       const persistedTask = <IPersistTask>JSON.parse(activeTaskString);
-      const newTask = Persist.persistedToTask(persistedTask);
+      this.dumpIPersistTask(persistedTask);
 
-      this.tasks.addTask(newTask);
+      this.tasks.addTask(persistedTask);
 
       this.saveTasks();
     } catch (error) {
@@ -178,7 +164,6 @@ export class Persist {
     this.deb.dump(indent, '------------------------------------------------------');
     this.deb.dump(indent, '-------------------- IPersistTask --------------------');
     this.deb.dump(indent, 'persistedTask.name           - ' + persistedTask.name);
-    this.deb.dump(indent, 'persistedTask.activeFileName - ' + persistedTask.activeFileName);
     persistedTask.files.forEach(persistedFile => {
       this.dumpIPersistFile(indent, persistedFile);
     });

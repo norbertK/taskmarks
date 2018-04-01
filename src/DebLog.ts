@@ -4,7 +4,7 @@ export class DebLog {
   private static _disabled = true;
   private static _count = 0;
   private static _indentCounter = 0;
-  private static _marker = '----------------------------------------------------------------------------------';
+  private static _marker = '*******************************************************************************';
   private static _indenter = '+ - ';
 
   private static _classBlacklist: Array<string>;
@@ -14,7 +14,10 @@ export class DebLog {
     this._classBlacklist = classBlacklist;
     WriteFile.init(filePath, clear);
     if (!clear) {
+      this.writeLine('');
       this.writeLine(this._marker);
+      this.writeLine(this._marker);
+      this.writeLine('');
     }
   }
 
@@ -42,14 +45,14 @@ export class DebLog {
     return DebLog.internalLog(this.className, methodName, text);
   }
 
-  public dump(indent: number, text:string) {
+  public dump(indent: number, text: string) {
     if (DebLog._disabled) {
       return;
     }
     DebLog.internalDump(this.className, indent, text);
   }
 
-  private static  internalDump(className: string, indent: number, text:string) {
+  private static internalDump(className: string, indent: number, text: string) {
     const foundInBlacklist = this._classBlacklist.find(cb => cb === className);
     if (!foundInBlacklist) {
       let line = '';
