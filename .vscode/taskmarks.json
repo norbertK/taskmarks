@@ -1,10 +1,54 @@
 {
-	"activeTaskName": "default",
+	"activeTaskName": "Version",
 	"tasks": [
 		{
 			"name": "default",
-			"activeFileName": "\\src\\Mark.ts",
 			"files": []
+		},
+		{
+			"name": "Version",
+			"activeFileName": "\\src\\Helper.ts",
+			"files": [
+				{
+					"filepath": "\\package.json",
+					"marks": [
+						4
+					]
+				},
+				{
+					"filepath": "\\CHANGELOG.md",
+					"marks": [
+						3
+					]
+				}
+			]
+		},
+		{
+			"name": "where I use Persist",
+			"activeFileName": "\\src\\Helper.ts",
+			"files": [
+				{
+					"filepath": "\\src\\Helper.ts",
+					"marks": [
+						110,
+						160,
+						205,
+						35
+					]
+				},
+				{
+					"filepath": "\\src\\Persist.ts",
+					"marks": [
+						13
+					]
+				},
+				{
+					"filepath": "\\src\\Models.ts",
+					"marks": [
+						15
+					]
+				}
+			]
 		}
 	]
 }

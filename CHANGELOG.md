@@ -1,17 +1,25 @@
 # Changelog
 All notable changes to the "taskmarks" extension will be documented in this file.
 
-## [0.5.1] - 2018-03-26
-### Copy to Clipboard and Paste from Clipboard added
+## [0.5.3] - 2018-04-01
+### some cleanup - some new ideas
 
-## [Unreleased - Ideas]
-- remove all unnecessary ' | undefined' that tslint wanted
+## [Unreleased - Ideas - not ideal]
+- start 'Select Active Task' on Active Task, not always on first element
+- sort marks
+- switching Tasks, make first refresh work (Taskmarks are not shown correctly)
+- make little demo, how to work with taskmarks
 - enable debLog by vscode settings (logname and path, blacklist)
-- copy Task to clipboard / insert new Task from clipboard (makes sharing some bookmarks much easier)
 - find better shortcuts and make them work outside the edit mode (eg 'goto next' should work always)
 - add debug points to task (toggle, switch all on or off)
 - work on next? first time next at end of file goes back to beginning
 - perhaps? be able to leave comments on tasks - for starters, just keep them in taskmarks.json
+
+## [0.5.2] - 2018-04-01
+### Copy to Clipboard and Paste from Clipboard works now
+
+## [0.5.1] - 2018-03-26
+### Copy to Clipboard and Paste from Clipboard added
 
 ## [0.4.6] - 2018-03-25
 ### Upgraded to newest vscode, but then found the error in my code :-(
