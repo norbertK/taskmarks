@@ -3,9 +3,8 @@
 import * as _ from 'lodash';
 
 import { Mark } from './Mark';
-import { DebLog } from './DebLog';
 
-export class File extends DebLog {
+export class File  {
   private _filepath: string;
   private _marks: Array<Mark> = [];
 
@@ -40,8 +39,6 @@ export class File extends DebLog {
   }
 
   constructor(filePath: string, lineNumber: number) {
-    super();
-    this.className = 'File';
     this._filepath = filePath;
 
     if (!this._marks) {
@@ -54,18 +51,12 @@ export class File extends DebLog {
   }
 
   public mergeWith(file: IPersistFile): File {
-    this.ind('mergeWith', 'with file.filepath === ' + file.filepath + ' and marks: ' + file.marks);
-    this.log('mergeWith', 'existing marks are: ' + this.marks);
-    this.log('mergeWith', 'marks to include are: ' + file.marks);
 
     let diff = _.difference(file.marks, this.marks);
-    this.log('mergeWith', 'diff is :');
     diff.forEach(mark => {
-      this.log('mergeWith', mark + '');
       this.addMark(mark);
     });
 
-    this.out();
     return this;
   }
 
@@ -101,15 +92,15 @@ export class File extends DebLog {
 
   public dumpToLog(indent: number): void {
     indent++;
-    this.dump(indent, '--------------------------');
-    this.dump(indent, '---------- File ----------');
-    this.dump(indent, '_filepath - ' + this._filepath);
+    console.log(indent, '--------------------------');
+    console.log(indent, '---------- File ----------');
+    console.log(indent, '_filepath - ' + this._filepath);
     let marks = '';
     this._marks.forEach(mark => {
       // mark.dumpToLog(indent);
       marks += mark.lineNumber + ' ';
     });
-    this.dump(indent, marks);
-    this.dump(indent, '');
+    console.log(indent, marks);
+    console.log(indent, '');
   }
 }

@@ -3,10 +3,9 @@
 import * as _ from 'lodash';
 
 import { Task } from './Task';
-import { DebLog } from './DebLog';
 import { DecoratorHelper } from './DecoratorHelper';
 
-export class Tasks extends DebLog {
+export class Tasks {
   private static _instance: Tasks;
 
   public static instance(): Tasks {
@@ -33,9 +32,6 @@ export class Tasks extends DebLog {
   }
 
   private constructor() {
-    super();
-    this.className = 'Tasks';
-
     this._allTasks = [];
     this._activeTask = this.use('default');
   }
@@ -48,31 +44,22 @@ export class Tasks extends DebLog {
   }
 
   public addTask(task: IPersistTask) {
-    this.ind('addTask', 'with task.name === ' + task.name);
     let current = this.use(task.name);
 
     current.mergeWith(task);
-    this.ind('addTask', 'task.name ' + task.name + ':');
-    this.dumpToLog();
-    this.out();
+    // this.dumpToLog();
   }
 
   public use(taskname: string): Task {
-    this.ind('use', 'with taskname === ' + taskname);
     let task = _.find(this._allTasks, task => task.name === taskname);
 
     if (!task) {
-      this.log('use', 'did not find task ' + taskname + ' - added new');
       task = new Task(taskname);
-
       this._allTasks.push(task);
     }
-    this.log('use', 'set tasks._activeTask to ' + task.name);
     this._activeTask = task;
 
-    this.log('use', 'task ' + taskname + ':');
-    this.dumpToLog();
-    this.out();
+    // this.dumpToLog();
     return task;
   }
 
@@ -162,14 +149,14 @@ export class Tasks extends DebLog {
 
   public dumpToLog(): void {
     let indent = 0;
-    this.dump(indent, '');
-    this.dump(indent, '---------------------------------------------------------------------------------');
-    this.dump(indent, '------------------------------------- Tasks -------------------------------------');
-    this.dump(indent, '_activeTask.name - ' + this._activeTask.name);
+    console.log(indent, '');
+    console.log(indent, '---------------------------------------------------------------------------------');
+    console.log(indent, '------------------------------------- Tasks -------------------------------------');
+    console.log(indent, '_activeTask.name - ' + this._activeTask.name);
     this._allTasks.forEach(task => {
       task.dumpToLog(indent);
     });
-    this.dump(indent, '---------------------------------------------------------------------------------');
-    this.dump(indent, '');
+    console.log(indent, '---------------------------------------------------------------------------------');
+    console.log(indent, '');
   }
 }

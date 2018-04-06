@@ -42,7 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   let copyToClipboardDisposable = vscode.commands.registerCommand('taskmark.copyToClipboard', () => {
     Persist.copyToClipboard();
-    Helper.dumpTasksToLog();
+    // Helper.dumpTasksToLog();
   });
   context.subscriptions.push(copyToClipboardDisposable);
 

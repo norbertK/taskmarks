@@ -9,22 +9,16 @@ import { write, readSync } from 'clipboardy';
 import { File } from './File';
 import { Tasks } from './Tasks';
 import { Task } from './Task';
-import { DebLog } from './DebLog';
 
 export class Persist {
   private static tasks: Tasks;
   private static _tasksDataFilePath: string;
-  private static deb: DebLog;
 
   public static initAndLoad(newTasks: Tasks): Tasks {
-    this.deb = new DebLog();
-    this.deb.ind('initAndLoad');
-
     this.tasks = newTasks;
     var taskmarksFile = Persist.tasksDataFilePath;
     if (taskmarksFile) {
       if (!fs.existsSync(taskmarksFile)) {
-        this.deb.out();
         return newTasks;
       }
       try {
@@ -42,11 +36,9 @@ export class Persist {
         return newTasks;
       } catch (error) {
         vscode.window.showErrorMessage('Error loading taskmarks: ' + error.toString() + ' Using "default"');
-        this.deb.out();
         return newTasks;
       }
     }
-    this.deb.out();
     return newTasks;
   }
 
@@ -75,7 +67,6 @@ export class Persist {
   }
 
   private static persistTask(task: Task): IPersistTask {
-    this.deb.ind('persistTask', 'with task === ' + task.name);
     const persistedTask: IPersistTask = {
       name: task.name,
       files: []
@@ -91,7 +82,6 @@ export class Persist {
         });
       }
     });
-    this.deb.out();
     return persistedTask;
   }
 
@@ -119,9 +109,7 @@ export class Persist {
   }
 
   public static copyToClipboard(): void {
-    this.deb.ind('copyToClipboard');
     if (!this.tasks.activeTask) {
-      this.deb.out();
       return;
     }
     const persistedActiveTask = this.persistTask(this.tasks.activeTask);
@@ -129,26 +117,19 @@ export class Persist {
     const activeTaskString = JSON.stringify(persistedActiveTask);
 
     write(activeTaskString);
-    this.deb.out();
   }
 
   public static pasteFromClipboard(): void {
-    this.deb.ind('pasteFromClipboard');
     const activeTaskString = readSync();
 
     if (!activeTaskString) {
       vscode.window.showInformationMessage('Could not paste Task from Clipboard.');
-      this.deb.out();
       return;
     }
 
-    this.deb.dump(0, '############################ from clipboard ############################');
-    this.deb.dump(0, activeTaskString);
-    this.deb.dump(0, '########################################################################');
-
     try {
       const persistedTask = <IPersistTask>JSON.parse(activeTaskString);
-      this.dumpIPersistTask(persistedTask);
+      // this.dumpIPersistTask(persistedTask);
 
       this.tasks.addTask(persistedTask);
 
@@ -156,29 +137,25 @@ export class Persist {
     } catch (error) {
       vscode.window.showInformationMessage('PasteFromClipboar failed with ' + error);
     }
-    this.deb.out();
   }
 
   public static dumpIPersistTask(persistedTask: IPersistTask) {
     let indent = 0;
-    this.deb.dump(indent, '------------------------------------------------------');
-    this.deb.dump(indent, '-------------------- IPersistTask --------------------');
-    this.deb.dump(indent, 'persistedTask.name           - ' + persistedTask.name);
+    console.log('persistedTask.name - ' + persistedTask.name);
     persistedTask.files.forEach(persistedFile => {
       this.dumpIPersistFile(indent, persistedFile);
     });
-    this.deb.dump(indent, '');
   }
 
   public static dumpIPersistFile(indent: number, persistedFile: IPersistFile) {
     indent++;
-    this.deb.dump(indent, '------------------------------------------');
-    this.deb.dump(indent, '-------------- IPersistFile --------------');
-    this.deb.dump(indent, 'persistedTask.name           - ' + persistedFile.filepath);
-    this.deb.dump(indent + 1, '-------------- Mark --------------');
+    console.log(indent, '------------------------------------------');
+    console.log(indent, '-------------- IPersistFile --------------');
+    console.log(indent, 'persistedTask.name           - ' + persistedFile.filepath);
+    console.log(indent + 1, '-------------- Mark --------------');
     persistedFile.marks.forEach(mark => {
-      this.deb.dump(indent + 1, 'mark - ' + mark);
+      console.log(indent + 1, 'mark - ' + mark);
     });
-    this.deb.dump(indent, '');
+    console.log(indent, '');
   }
 }

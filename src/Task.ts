@@ -3,17 +3,14 @@
 import { File } from './File';
 import { Mark } from './Mark';
 import { Ring } from './Ring';
-import { DebLog } from './DebLog';
 import { PathHelper } from './PathHelper';
 
-export class Task extends DebLog {
+export class Task {
   private _name: string;
   private _activeFile: File | undefined;
   private _files: Ring<File>;
 
   constructor(name: string) {
-    super();
-    this.className = 'Task';
     this._name = name;
     this._files = new Ring();
   }
@@ -51,18 +48,14 @@ export class Task extends DebLog {
   }
 
   public mergeWith(taskToMerge: IPersistTask): Task {
-    this.ind('mergeWith', 'with taskToMerge.name === ' + taskToMerge.name);
     let filesToAdd: Array<IPersistFile> = [];
 
     taskToMerge.files.forEach(fileToMerge => {
-      this.log('mergeWith', 'look for file  fileToMerge.filepath === ' + fileToMerge.filepath);
       let file: File | undefined = this._files.find(fm => fm.filepath === fileToMerge.filepath);
 
       if (file) {
-        this.log('mergeWith', 'file ' + fileToMerge.filepath + ' found');
         file.mergeWith(fileToMerge);
       } else {
-        this.log('mergeWith', 'file ' + fileToMerge.filepath + ' not found');
         filesToAdd.push(fileToMerge);
       }
     });
@@ -70,26 +63,21 @@ export class Task extends DebLog {
       let file = this.use(fileToAdd.filepath);
       fileToAdd.marks.forEach(mark => file.addMark(mark));
     });
-    this.out();
     return this;
   }
 
   public toggle(path: string, lineNumber: number): boolean {
-    this.ind('toggle', 'with path === ' + path + ' and lineNumber === ' + lineNumber);
     const reducedPath = PathHelper.reducePath(path);
-    this.log('toggle', 'reducedPath === ' + reducedPath);
 
     let file: File | undefined = this._files.find(fm => fm.filepath === reducedPath);
 
     if (file) {
-      this.log('toggle', 'found file with ' + reducedPath);
       file.toggleTask(lineNumber);
     } else {
       file = new File(reducedPath, lineNumber);
       this._files.push(file);
     }
 
-    this.out();
     return file.hasMarks();
   }
 
@@ -116,12 +104,12 @@ export class Task extends DebLog {
 
   public dumpToLog(indent: number): void {
     indent++;
-    this.dump(indent, '--------------------------');
-    this.dump(indent, '---------- Task ----------');
-    this.dump(indent, '_name - ' + this._name);
+    console.log(indent, '--------------------------');
+    console.log(indent, '---------- Task ----------');
+    console.log(indent, '_name - ' + this._name);
     this._files.forEach(file => {
       file.dumpToLog(indent);
     });
-    this.dump(indent, '');
+    console.log(indent, '');
   }
 }

@@ -17,7 +17,7 @@ export class DecoratorHelper {
   }
 
   public static refresh(activeEditor: vscode.TextEditor, marks: Array<number>) {
-    if (!activeEditor || marks.length === 0) {
+    if (!activeEditor) {
       return;
     }
     let ranges: vscode.Range[] = [];
@@ -53,6 +53,9 @@ export class DecoratorHelper {
     vscode.workspace.openTextDocument(fullPath).then(textDocument => {
       if (textDocument) {
         vscode.window.showTextDocument(textDocument).then(editor => {
+          if (!mark) {
+            return;
+          }
           this.showLine(mark);
         });
       }

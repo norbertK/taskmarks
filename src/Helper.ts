@@ -5,23 +5,18 @@ import * as vscode from 'vscode';
 import { Tasks } from './Tasks';
 import { Persist } from './Persist';
 import { DecoratorHelper } from './DecoratorHelper';
-import { DebLog } from './DebLog';
 import { PathHelper } from './PathHelper';
 
 export class Helper {
   private static _activeEditorLineCount: number;
   private static _activeEditor: vscode.TextEditor | undefined;
   private static _tasks: Tasks;
-  private static deb: DebLog;
 
   public static get activeEditor() {
     return this._activeEditor;
   }
 
   public static init(context: vscode.ExtensionContext) {
-    this.deb = new DebLog();
-    this.deb.log('init');
-
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders || workspaceFolders.length === 0) {
       vscode.window.showErrorMessage('Error loading vscode.workspace! Stop!');
@@ -41,7 +36,7 @@ export class Helper {
     Helper.handleSave();
     Helper.handleChange(context);
 
-    this.dumpTasksToLog();
+    // this._tasks.dumpToLog();
   }
 
   private static HandleEditorChange() {
@@ -52,10 +47,6 @@ export class Helper {
     vscode.window.onDidChangeActiveTextEditor(editor => {
       this.changeActiveFile(editor);
     }, null);
-  }
-
-  public static dumpTasksToLog(): any {
-    this._tasks.dumpToLog();
   }
 
   private static handleChange(context: vscode.ExtensionContext) {
@@ -181,43 +172,33 @@ export class Helper {
   }
 
   public static async toggleMark() {
-    this.deb.ind('toggleMark');
-
     const activeTextEditor = vscode.window.activeTextEditor;
     if (!activeTextEditor) {
-      this.deb.log('toggleMark', 'no activeTextEditor');
-      this.deb.out();
       return;
     }
-    this.deb.log('toggleMark', 'activeTextEditor === ' + activeTextEditor.document.fileName);
     if (!this._tasks.activeTask) {
-      this.deb.out();
       return;
     }
-    this.deb.log('toggleMark', '_tasks.activeTask === ' + this._tasks.activeTask.name);
 
     let activeLine = activeTextEditor.selection.active.line;
     let isDirty = activeTextEditor.document.isDirty;
 
     this._tasks.activeTask.toggle(activeTextEditor.document.fileName, activeLine);
-    this._tasks.dumpToLog();
+    // this._tasks.dumpToLog();
 
     if (!isDirty) {
       Persist.saveTasks();
     }
 
     this.refresh();
-    this.deb.out();
   }
 
   public static changeActiveFile(editor: vscode.TextEditor | undefined) {
     if (this._activeEditor === editor || !this._tasks.activeTask) {
-      this.deb.log('changeActiveFile', 'nothing to do');
       return;
     }
     this._activeEditor = editor;
     if (editor) {
-      this.deb.log('changeActiveFile', 'changed to document ' + editor.document.fileName);
       this._activeEditorLineCount = editor.document.lineCount;
       this._tasks.activeTask.use(editor.document.uri.fsPath);
       this.refresh();
@@ -226,8 +207,6 @@ export class Helper {
 
   public static refresh() {
     if (this._activeEditor) {
-      this.deb.log('refresh', '_tasks.activeTask ' + this._tasks.activeTask.name);
-      this.deb.log('refresh', '_tasks.activeTask.activeFileName ' + this._tasks.activeTask.activeFileName);
       const activeFile = this._tasks.activeTask.activeFile;
       if (activeFile) {
         DecoratorHelper.refresh(this._activeEditor, activeFile.marks);

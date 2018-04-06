@@ -1,8 +1,8 @@
 # Changelog
 All notable changes to the "taskmarks" extension will be documented in this file.
 
-## [0.5.3] - 2018-04-01
-### some cleanup - some new ideas
+## [0.5.4] - 2018-04-06
+### some cleanup - removed DebLog, fixed problem with no mark in file
 
 ## [Unreleased - Ideas - not ideal]
 - start 'Select Active Task' on Active Task, not always on first element
@@ -14,6 +14,9 @@ All notable changes to the "taskmarks" extension will be documented in this file
 - add debug points to task (toggle, switch all on or off)
 - work on next? first time next at end of file goes back to beginning
 - perhaps? be able to leave comments on tasks - for starters, just keep them in taskmarks.json
+
+## [0.5.3] - 2018-04-01
+### some cleanup - some new ideas
 
 ## [0.5.2] - 2018-04-01
 ### Copy to Clipboard and Paste from Clipboard works now
