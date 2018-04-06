@@ -9,7 +9,6 @@ All notable changes to the "taskmarks" extension will be documented in this file
 - sort marks
 - switching Tasks, make first refresh work (Taskmarks are not shown correctly)
 - make little demo, how to work with taskmarks
-- enable debLog by vscode settings (logname and path, blacklist)
 - find better shortcuts and make them work outside the edit mode (eg 'goto next' should work always)
 - add debug points to task (toggle, switch all on or off)
 - work on next? first time next at end of file goes back to beginning
