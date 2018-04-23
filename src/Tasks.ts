@@ -4,6 +4,7 @@ import * as _ from 'lodash';
 
 import { Task } from './Task';
 import { DecoratorHelper } from './DecoratorHelper';
+import { StatusBarItem, window, StatusBarAlignment } from 'vscode';
 
 export class Tasks {
   private static _instance: Tasks;
@@ -18,6 +19,7 @@ export class Tasks {
 
   private _allTasks: Array<Task>;
   private _activeTask: Task;
+  private _statusBarItem: StatusBarItem;
 
   public get allTasks(): Array<Task> {
     return this._allTasks;
@@ -28,18 +30,24 @@ export class Tasks {
   }
 
   public set activeTask(task: Task) {
-    this._activeTask = task;
+    this.setActiveTask(task.name);
   }
 
   private constructor() {
     this._allTasks = [];
-    this._activeTask = this.use('default');
+    this._statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right);
+    this._activeTask = this.use();
   }
 
   public setActiveTask(taskname: string) {
     let activeTask = _.find(this._allTasks, task => task.name === taskname);
     if (activeTask) {
       this._activeTask = activeTask;
+      this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
+      this._statusBarItem.show();
+    } else {
+      this._statusBarItem.hide();
+      this.use();
     }
   }
 
@@ -50,17 +58,28 @@ export class Tasks {
     // this.dumpToLog();
   }
 
-  public use(taskname: string): Task {
+  public use(taskname = 'default'): Task {
     let task = _.find(this._allTasks, task => task.name === taskname);
 
     if (!task) {
       task = new Task(taskname);
       this._allTasks.push(task);
     }
-    this._activeTask = task;
+    this.setActiveTask(task.name);
 
     // this.dumpToLog();
     return task;
+  }
+
+  public delete(taskname: string): Task {
+    let task = _.find(this._allTasks, task => task.name === taskname);
+
+    if (task) {
+      _.remove(this._allTasks, task => task.name === taskname);
+    }
+
+    // this.dumpToLog();
+    return this.use();
   }
 
   public nextMark(activeFile: string, currentline: number) {

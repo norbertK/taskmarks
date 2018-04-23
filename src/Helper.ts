@@ -114,7 +114,10 @@ export class Helper {
         allMarks.push(qpi);
       }
     });
-    vscode.window.showQuickPick(allMarks, { placeHolder: 'select Bookmark' }).then(result => {
+    const options: vscode.QuickPickOptions = {
+      placeHolder: 'select Bookmark'
+    };
+    vscode.window.showQuickPick(allMarks, options).then(result => {
       if (result && result.detail) {
         let mark = Number.parseInt(result.label);
 
@@ -124,7 +127,17 @@ export class Helper {
   }
 
   public static async selectTask() {
-    vscode.window.showQuickPick(this._tasks.taskNames, { placeHolder: 'select Task ' }).then(result => {
+    const options: vscode.QuickPickOptions = {
+      placeHolder: 'select Task '
+    };
+    let taskNames: Array<string> = [];
+    taskNames.push(this._tasks.activeTask.name);
+    this._tasks.taskNames.forEach(tn => {
+      if (tn !== this._tasks.activeTask.name) {
+        taskNames.push(tn);
+      }
+    });
+    vscode.window.showQuickPick(taskNames, options).then(result => {
       if (result) {
         this._tasks.use(result);
       } else {
@@ -144,6 +157,24 @@ export class Helper {
       }
     });
   }
+
+  public static deleteTask(): any {
+    vscode.window.showQuickPick(this._tasks.taskNames, { placeHolder: 'delete Task ' }).then(result => {
+      if (result) {
+        this._tasks.use(result);
+        this._tasks.delete(result);
+      } else {
+        if (!this._tasks.activeTask) {
+          this._tasks.use('default');
+        }
+      }
+      Helper.persistActiveFile();
+    });
+  }
+
+  // public static renameTask(): any {
+  //   throw new Error('Method not implemented.');
+  // }
 
   private static persistActiveFile() {
     if (Helper.activeEditor && this._tasks.activeTask) {

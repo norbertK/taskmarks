@@ -2,12 +2,13 @@
     "name": "taskmarks",
     "displayName": "Taskmarks",
     "description": "Persist bookmarks for different tasks.",
-    "version": "0.5.4",
+    "version": "0.6.1",
     "publisher": "NorbertKlein",
     "engines": {
         "vscode": "^1.21.0"
     },
     "license": "(MIT OR Apache-2.0)",
+    "icon": "images/taskmarks-icon.png",
     "categories": [
         "Other"
     ],
@@ -31,6 +32,10 @@
             {
                 "command": "taskmark.createTask",
                 "title": "Taskmarks: Create new Task"
+            },
+            {
+                "command": "taskmark.deleteTask",
+                "title": "Taskmarks: Delete Task"
             },
             {
                 "command": "taskmark.toggleMark",

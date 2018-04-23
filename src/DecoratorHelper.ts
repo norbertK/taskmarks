@@ -7,6 +7,10 @@ export class DecoratorHelper {
   private static _iconPath: string;
   private static _vscTextEditorDecorationType: vscode.TextEditorDecorationType;
 
+  public static get iconPath() {
+    return this._iconPath;
+  }
+
   public static initDecorator(context: vscode.ExtensionContext) {
     this._iconPath = context.asAbsolutePath('images/bookmark.svg');
     this._vscTextEditorDecorationType = vscode.window.createTextEditorDecorationType({

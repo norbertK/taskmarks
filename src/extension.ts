@@ -35,6 +35,16 @@ export function activate(context: vscode.ExtensionContext) {
   });
   context.subscriptions.push(createTaskDisposable);
 
+  // let renameTaskDisposable = vscode.commands.registerCommand('taskmark.renameTask', () => {
+  //   Helper.renameTask();
+  // });
+  // context.subscriptions.push(renameTaskDisposable);
+
+  let deleteTaskDisposable = vscode.commands.registerCommand('taskmark.deleteTask', () => {
+    Helper.deleteTask();
+  });
+  context.subscriptions.push(deleteTaskDisposable);
+
   let toggleMarkDisposable = vscode.commands.registerCommand('taskmark.toggleMark', () => {
     Helper.toggleMark();
   });

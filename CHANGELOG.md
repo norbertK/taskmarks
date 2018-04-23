@@ -1,18 +1,24 @@
 # Changelog
 All notable changes to the "taskmarks" extension will be documented in this file.
 
-## [0.5.4] - 2018-04-06
-### some cleanup - removed DebLog, fixed problem with no mark in file
+## [0.6.1] - 2018-04-23
+### show active task, delete task, some fixes
+- show active task in taskbar
+- possibility to delete task
+- 'switch Task' and 'next' now always work
+- start 'Select Active Task' on Active Task, not always on default
 
 ## [Unreleased - Ideas - not ideal]
-- start 'Select Active Task' on Active Task, not always on first element
+- rename Task
+- disable taskbar display (and perhaps other things) in settings 
 - sort marks
-- switching Tasks, make first refresh work (Taskmarks are not shown correctly)
 - make little demo, how to work with taskmarks
-- find better shortcuts and make them work outside the edit mode (eg 'goto next' should work always)
+- find better shortcuts and make them work outside the edit mode (eg 'goto next' or 'Select Active Task' should work always)
 - add debug points to task (toggle, switch all on or off)
-- work on next? first time next at end of file goes back to beginning
 - perhaps? be able to leave comments on tasks - for starters, just keep them in taskmarks.json
+
+## [0.5.4] - 2018-04-06
+### some cleanup - removed DebLog, fixed problem with no mark in file
 
 ## [0.5.3] - 2018-04-01
 ### some cleanup - some new ideas
