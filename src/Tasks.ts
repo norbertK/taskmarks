@@ -1,10 +1,10 @@
-'use strict';
+"use strict";
 
-import * as _ from 'lodash';
+import * as _ from "lodash";
 
-import { Task } from './Task';
-import { DecoratorHelper } from './DecoratorHelper';
-import { StatusBarItem, window, StatusBarAlignment } from 'vscode';
+import { Task } from "./Task";
+import { DecoratorHelper } from "./DecoratorHelper";
+import { StatusBarItem, window, StatusBarAlignment } from "vscode";
 
 export class Tasks {
   private static _instance: Tasks;
@@ -40,10 +40,10 @@ export class Tasks {
   }
 
   public setActiveTask(taskname: string) {
-    let activeTask = _.find(this._allTasks, task => task.name === taskname);
+    let activeTask = _.find(this._allTasks, (task) => task.name === taskname);
     if (activeTask) {
       this._activeTask = activeTask;
-      this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
+      this._statusBarItem.text = "TaskMarks: " + this._activeTask.name;
       this._statusBarItem.show();
     } else {
       this._statusBarItem.hide();
@@ -58,8 +58,8 @@ export class Tasks {
     // this.dumpToLog();
   }
 
-  public use(taskname = 'default'): Task {
-    let task = _.find(this._allTasks, task => task.name === taskname);
+  public use(taskname = "default"): Task {
+    let task = _.find(this._allTasks, (task) => task.name === taskname);
 
     if (!task) {
       task = new Task(taskname);
@@ -72,10 +72,10 @@ export class Tasks {
   }
 
   public delete(taskname: string): Task {
-    let task = _.find(this._allTasks, task => task.name === taskname);
+    let task = _.find(this._allTasks, (task) => task.name === taskname);
 
     if (task) {
-      _.remove(this._allTasks, task => task.name === taskname);
+      _.remove(this._allTasks, (task) => task.name === taskname);
     }
 
     // this.dumpToLog();
@@ -110,7 +110,11 @@ export class Tasks {
     if (!activeTask.activeFile) {
       return;
     }
-    for (let index = activeTask.activeFile.marks.length - 1; index > -1; index--) {
+    for (
+      let index = activeTask.activeFile.marks.length - 1;
+      index > -1;
+      index--
+    ) {
       const mark = activeTask.activeFile.marks[index];
 
       if (mark < currentline) {
@@ -130,13 +134,15 @@ export class Tasks {
     let currentFile = this.activeTask.activeFile;
     let nextFile = this.activeTask.files.next;
     while (currentFile !== nextFile) {
-      if (nextFile.marks.length > 0) {
+      if (nextFile && nextFile.marks && nextFile.marks.length > 0) {
         currentFile = nextFile;
       } else {
         nextFile = this.activeTask.files.next;
       }
     }
-    DecoratorHelper.openAndShow(currentFile.filepath, currentFile.marks[0]);
+    if (currentFile) {
+      DecoratorHelper.openAndShow(currentFile.filepath, currentFile.marks[0]);
+    }
   }
 
   public previousDocument() {
@@ -147,19 +153,21 @@ export class Tasks {
     let currentFile = this.activeTask.activeFile;
     let previousFile = this.activeTask.files.previous;
     while (currentFile !== previousFile) {
-      if (previousFile.marks.length > 0) {
+      if (previousFile && previousFile.marks && previousFile.marks.length > 0) {
         currentFile = previousFile;
       } else {
         previousFile = this.activeTask.files.next;
       }
     }
-    DecoratorHelper.openAndShow(currentFile.filepath, currentFile.marks[0]);
+    if (currentFile) {
+      DecoratorHelper.openAndShow(currentFile.filepath, currentFile.marks[0]);
+    }
   }
 
   public get taskNames(): Array<string> {
     let taskNames: Array<string> = [];
 
-    this._allTasks.forEach(task => {
+    this._allTasks.forEach((task) => {
       taskNames.push(task.name);
     });
 
@@ -168,14 +176,23 @@ export class Tasks {
 
   public dumpToLog(): void {
     let indent = 0;
-    console.log(indent, '');
-    console.log(indent, '---------------------------------------------------------------------------------');
-    console.log(indent, '------------------------------------- Tasks -------------------------------------');
-    console.log(indent, '_activeTask.name - ' + this._activeTask.name);
-    this._allTasks.forEach(task => {
+    console.log(indent, "");
+    console.log(
+      indent,
+      "---------------------------------------------------------------------------------"
+    );
+    console.log(
+      indent,
+      "------------------------------------- Tasks -------------------------------------"
+    );
+    console.log(indent, "_activeTask.name - " + this._activeTask.name);
+    this._allTasks.forEach((task) => {
       task.dumpToLog(indent);
     });
-    console.log(indent, '---------------------------------------------------------------------------------');
-    console.log(indent, '');
+    console.log(
+      indent,
+      "---------------------------------------------------------------------------------"
+    );
+    console.log(indent, "");
   }
 }

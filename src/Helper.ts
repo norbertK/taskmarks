@@ -1,11 +1,9 @@
-'use strict';
+import * as vscode from "vscode";
 
-import * as vscode from 'vscode';
-
-import { Tasks } from './Tasks';
-import { Persist } from './Persist';
-import { DecoratorHelper } from './DecoratorHelper';
-import { PathHelper } from './PathHelper';
+import { Tasks } from "./Tasks";
+import { Persist } from "./Persist";
+import { DecoratorHelper } from "./DecoratorHelper";
+import { PathHelper } from "./PathHelper";
 
 export class Helper {
   private static _activeEditorLineCount: number;
@@ -19,8 +17,8 @@ export class Helper {
   public static init(context: vscode.ExtensionContext) {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders || workspaceFolders.length === 0) {
-      vscode.window.showErrorMessage('Error loading vscode.workspace! Stop!');
-      throw new Error('Error loading vscode.workspace! Stop!');
+      vscode.window.showErrorMessage("Error loading vscode.workspace! Stop!");
+      throw new Error("Error loading vscode.workspace! Stop!");
     }
 
     const workspaceFolder: vscode.WorkspaceFolder = workspaceFolders[0];
@@ -204,6 +202,7 @@ export class Helper {
 
   public static async toggleMark() {
     const activeTextEditor = vscode.window.activeTextEditor;
+
     if (!activeTextEditor) {
       return;
     }

@@ -1,10 +1,10 @@
-'use strict';
+"use strict";
 
-import * as _ from 'lodash';
+import * as _ from "lodash";
 
-import { Mark } from './Mark';
+import { Mark } from "./Mark";
 
-export class File  {
+export class File {
   private _filepath: string;
   private _marks: Array<Mark> = [];
 
@@ -18,7 +18,7 @@ export class File  {
 
   public get marks(): Array<number> {
     const marks: number[] = [];
-    this._marks.forEach(mark => {
+    this._marks.forEach((mark) => {
       if (mark.lineNumber !== undefined) {
         marks.push(mark.lineNumber);
       }
@@ -29,7 +29,7 @@ export class File  {
 
   public get marksForPersist(): Array<number> {
     const marks: number[] = [];
-    this._marks.forEach(mark => {
+    this._marks.forEach((mark) => {
       if (mark.lineNumberForPersist !== undefined) {
         marks.push(mark.lineNumberForPersist);
       }
@@ -51,9 +51,8 @@ export class File  {
   }
 
   public mergeWith(file: IPersistFile): File {
-
     let diff = _.difference(file.marks, this.marks);
-    diff.forEach(mark => {
+    diff.forEach((mark) => {
       this.addMark(mark);
     });
 
@@ -61,7 +60,7 @@ export class File  {
   }
 
   public setMarksFromPersist(marks: Array<number>) {
-    marks.forEach(async mark => {
+    marks.forEach(async (mark) => {
       this.addMark(mark);
     });
   }
@@ -71,7 +70,10 @@ export class File  {
   }
 
   public toggleTask(lineNumber: number): boolean {
-    const mark: Mark | undefined = _.find(this._marks, (mark: Mark) => mark.lineNumber === lineNumber);
+    const mark: Mark | undefined = _.find(
+      this._marks,
+      (mark: Mark) => mark.lineNumber === lineNumber
+    );
 
     if (mark) {
       _.remove(this._marks, (mark: Mark) => mark.lineNumber === lineNumber);
@@ -83,7 +85,7 @@ export class File  {
   }
 
   public unDirty(): void {
-    this._marks.forEach(mark => mark.unDirty());
+    this._marks.forEach((mark) => mark.unDirty());
   }
 
   public hasMarks(): boolean {
@@ -92,15 +94,15 @@ export class File  {
 
   public dumpToLog(indent: number): void {
     indent++;
-    console.log(indent, '--------------------------');
-    console.log(indent, '---------- File ----------');
-    console.log(indent, '_filepath - ' + this._filepath);
-    let marks = '';
-    this._marks.forEach(mark => {
+    console.log(indent, "--------------------------");
+    console.log(indent, "---------- File ----------");
+    console.log(indent, "_filepath - " + this._filepath);
+    let marks = "";
+    this._marks.forEach((mark) => {
       // mark.dumpToLog(indent);
-      marks += mark.lineNumber + ' ';
+      marks += mark.lineNumber + " ";
     });
     console.log(indent, marks);
-    console.log(indent, '');
+    console.log(indent, "");
   }
 }

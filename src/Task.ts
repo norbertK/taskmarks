@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
-import { File } from './File';
-import { Mark } from './Mark';
-import { Ring } from './Ring';
-import { PathHelper } from './PathHelper';
+import { File } from "./File";
+import { Mark } from "./Mark";
+import { Ring } from "./Ring";
+import { PathHelper } from "./PathHelper";
 
 export class Task {
   private _name: string;
@@ -41,8 +41,10 @@ export class Task {
   public get allMarks(): Array<Mark> {
     let marks: Array<Mark> = [];
 
-    this._files.forEach(file => {
-      marks.push(...file.allMarks);
+    this._files.forEach((file) => {
+      if (file) {
+        marks.push(...file.allMarks);
+      }
     });
     return marks;
   }
@@ -50,8 +52,12 @@ export class Task {
   public mergeWith(taskToMerge: IPersistTask): Task {
     let filesToAdd: Array<IPersistFile> = [];
 
-    taskToMerge.files.forEach(fileToMerge => {
-      let file: File | undefined = this._files.find(fm => fm.filepath === fileToMerge.filepath);
+    taskToMerge.files.forEach((fileToMerge) => {
+      let file: File | undefined = this._files.find((fm) => {
+        if (fm) {
+          return fm.filepath === fileToMerge.filepath;
+        }
+      });
 
       if (file) {
         file.mergeWith(fileToMerge);
@@ -59,9 +65,9 @@ export class Task {
         filesToAdd.push(fileToMerge);
       }
     });
-    filesToAdd.forEach(fileToAdd => {
+    filesToAdd.forEach((fileToAdd) => {
       let file = this.use(fileToAdd.filepath);
-      fileToAdd.marks.forEach(mark => file.addMark(mark));
+      fileToAdd.marks.forEach((mark) => file.addMark(mark));
     });
     return this;
   }
@@ -69,7 +75,11 @@ export class Task {
   public toggle(path: string, lineNumber: number): boolean {
     const reducedPath = PathHelper.reducePath(path);
 
-    let file: File | undefined = this._files.find(fm => fm.filepath === reducedPath);
+    let file: File | undefined = this._files.find((fm) => {
+      if (fm) {
+        return fm.filepath === reducedPath;
+      }
+    });
 
     if (file) {
       file.toggleTask(lineNumber);
@@ -97,19 +107,25 @@ export class Task {
   }
 
   public getFile(reducedFilePath: string): File | undefined {
-    let fileMark: File | undefined = this._files.find(fm => fm.filepath === reducedFilePath);
+    let fileMark: File | undefined = this._files.find((fm) => {
+      if (fm) {
+        return fm.filepath === reducedFilePath;
+      }
+    });
 
     return fileMark;
   }
 
   public dumpToLog(indent: number): void {
     indent++;
-    console.log(indent, '--------------------------');
-    console.log(indent, '---------- Task ----------');
-    console.log(indent, '_name - ' + this._name);
-    this._files.forEach(file => {
-      file.dumpToLog(indent);
+    console.log(indent, "--------------------------");
+    console.log(indent, "---------- Task ----------");
+    console.log(indent, "_name - " + this._name);
+    this._files.forEach((file) => {
+      if (file) {
+        file.dumpToLog(indent);
+      }
     });
-    console.log(indent, '');
+    console.log(indent, "");
   }
 }

@@ -1,7 +1,5 @@
-'use strict';
-
-import * as vscode from 'vscode';
-import { PathHelper } from './PathHelper';
+import * as vscode from "vscode";
+import { PathHelper } from "./PathHelper";
 
 export class DecoratorHelper {
   private static _iconPath: string;
@@ -12,12 +10,14 @@ export class DecoratorHelper {
   }
 
   public static initDecorator(context: vscode.ExtensionContext) {
-    this._iconPath = context.asAbsolutePath('images/bookmark.svg');
-    this._vscTextEditorDecorationType = vscode.window.createTextEditorDecorationType({
-      gutterIconPath: this._iconPath,
-      overviewRulerLane: vscode.OverviewRulerLane.Full,
-      overviewRulerColor: 'rgba(196, 196, 0, 0.8)'
-    });
+    this._iconPath = context.asAbsolutePath("images/bookmark.svg");
+    this._vscTextEditorDecorationType = vscode.window.createTextEditorDecorationType(
+      {
+        gutterIconPath: this._iconPath,
+        overviewRulerLane: vscode.OverviewRulerLane.Full,
+        overviewRulerColor: "rgba(196, 196, 0, 0.8)",
+      }
+    );
   }
 
   public static refresh(activeEditor: vscode.TextEditor, marks: Array<number>) {
@@ -39,9 +39,11 @@ export class DecoratorHelper {
     if (!activeTextEditor) {
       return;
     }
-    let textEditorRevealType: vscode.TextEditorRevealType = vscode.TextEditorRevealType.InCenter;
+    let textEditorRevealType: vscode.TextEditorRevealType =
+      vscode.TextEditorRevealType.InCenter;
     if (line === activeTextEditor.selection.active.line) {
-      textEditorRevealType = vscode.TextEditorRevealType.InCenterIfOutsideViewport;
+      textEditorRevealType =
+        vscode.TextEditorRevealType.InCenterIfOutsideViewport;
     }
     let selection = new vscode.Selection(line, 0, line, 0);
     activeTextEditor.selection = selection;
@@ -54,9 +56,9 @@ export class DecoratorHelper {
       return;
     }
 
-    vscode.workspace.openTextDocument(fullPath).then(textDocument => {
+    vscode.workspace.openTextDocument(fullPath).then((textDocument) => {
       if (textDocument) {
-        vscode.window.showTextDocument(textDocument).then(editor => {
+        vscode.window.showTextDocument(textDocument).then((editor) => {
           if (!mark) {
             return;
           }

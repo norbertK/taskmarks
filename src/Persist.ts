@@ -1,14 +1,14 @@
-'use strict';
+"use strict";
 
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import fs = require('fs');
-import path = require('path');
-import { write, readSync } from 'clipboardy';
+import fs = require("fs");
+import path = require("path");
+import { write, readSync } from "clipboardy";
 
-import { File } from './File';
-import { Tasks } from './Tasks';
-import { Task } from './Task';
+import { File } from "./File";
+import { Tasks } from "./Tasks";
+import { Task } from "./Task";
 
 export class Persist {
   private static tasks: Tasks;
@@ -22,20 +22,24 @@ export class Persist {
         return newTasks;
       }
       try {
-        const stringFromFile: string = fs.readFileSync(taskmarksFile).toString();
+        const stringFromFile: string = fs
+          .readFileSync(taskmarksFile)
+          .toString();
 
         const persistedTasks = <IPersistTasks>JSON.parse(stringFromFile);
 
-        persistedTasks.tasks.forEach(persistedTask => {
-          const newTask = Persist.persistedToTask(persistedTask);
-          newTasks.addTask(newTask);
+        persistedTasks.tasks.forEach((persistedTask) => {
+          // todo ??? const newTask = Persist.persistedToTask(persistedTask);
+          newTasks.addTask(persistedTask);
         });
 
         newTasks.use(persistedTasks.activeTaskName);
 
         return newTasks;
       } catch (error) {
-        vscode.window.showErrorMessage('Error loading taskmarks: ' + error.toString() + ' Using "default"');
+        vscode.window.showErrorMessage(
+          "Error loading taskmarks: " + error.toString() + ' Using "default"'
+        );
         return newTasks;
       }
     }
@@ -50,7 +54,7 @@ export class Persist {
 
     let persistTaskArray: Array<IPersistTask> = [];
 
-    this.tasks.allTasks.forEach(task => {
+    this.tasks.allTasks.forEach((task) => {
       const persistTask: IPersistTask = this.persistTask(task);
       persistTaskArray.push(persistTask);
     });
@@ -60,25 +64,25 @@ export class Persist {
     }
     const persistTasks: IPersistTasks = {
       activeTaskName: this.tasks.activeTask.name,
-      tasks: persistTaskArray
+      tasks: persistTaskArray,
     };
 
-    fs.writeFileSync(taskmarksFile, JSON.stringify(persistTasks, null, '\t'));
+    fs.writeFileSync(taskmarksFile, JSON.stringify(persistTasks, null, "\t"));
   }
 
   private static persistTask(task: Task): IPersistTask {
     const persistedTask: IPersistTask = {
       name: task.name,
-      files: []
+      files: [],
     };
 
-    task.files.forEach(file => {
-      if (file.marks.length > 0) {
+    task.files.forEach((file) => {
+      if (file && file.marks && file.marks.length > 0) {
         const marks: number[] = file.marksForPersist;
 
         persistedTask.files.push({
           filepath: file.filepath,
-          marks: marks.sort()
+          marks: marks.sort(),
         });
       }
     });
@@ -88,7 +92,7 @@ export class Persist {
   private static persistedToTask(persistedTask: IPersistTask): Task {
     let task = new Task(persistedTask.name);
     //this.tasks.use(persistedTask.name);
-    persistedTask.files.forEach(persistedFile => {
+    persistedTask.files.forEach((persistedFile) => {
       let file: File = new File(persistedFile.filepath, -1);
       file.setMarksFromPersist(persistedFile.marks);
       task.files.push(file);
@@ -99,10 +103,14 @@ export class Persist {
   public static get tasksDataFilePath(): string {
     if (!this._tasksDataFilePath) {
       if (!vscode.workspace.workspaceFolders) {
-        vscode.window.showErrorMessage('Error loading vscode.workspace! Stop!');
-        throw new Error('Error loading vscode.workspace! Stop!');
+        vscode.window.showErrorMessage("Error loading vscode.workspace! Stop!");
+        throw new Error("Error loading vscode.workspace! Stop!");
       }
-      this._tasksDataFilePath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.vscode', 'taskmarks.json');
+      this._tasksDataFilePath = path.join(
+        vscode.workspace.workspaceFolders[0].uri.fsPath,
+        ".vscode",
+        "taskmarks.json"
+      );
     }
 
     return this._tasksDataFilePath;
@@ -123,7 +131,9 @@ export class Persist {
     const activeTaskString = readSync();
 
     if (!activeTaskString) {
-      vscode.window.showInformationMessage('Could not paste Task from Clipboard.');
+      vscode.window.showInformationMessage(
+        "Could not paste Task from Clipboard."
+      );
       return;
     }
 
@@ -135,27 +145,32 @@ export class Persist {
 
       this.saveTasks();
     } catch (error) {
-      vscode.window.showInformationMessage('PasteFromClipboar failed with ' + error);
+      vscode.window.showInformationMessage(
+        "PasteFromClipboar failed with " + error
+      );
     }
   }
 
   public static dumpIPersistTask(persistedTask: IPersistTask) {
     let indent = 0;
-    console.log('persistedTask.name - ' + persistedTask.name);
-    persistedTask.files.forEach(persistedFile => {
+    console.log("persistedTask.name - " + persistedTask.name);
+    persistedTask.files.forEach((persistedFile) => {
       this.dumpIPersistFile(indent, persistedFile);
     });
   }
 
   public static dumpIPersistFile(indent: number, persistedFile: IPersistFile) {
     indent++;
-    console.log(indent, '------------------------------------------');
-    console.log(indent, '-------------- IPersistFile --------------');
-    console.log(indent, 'persistedTask.name           - ' + persistedFile.filepath);
-    console.log(indent + 1, '-------------- Mark --------------');
-    persistedFile.marks.forEach(mark => {
-      console.log(indent + 1, 'mark - ' + mark);
+    console.log(indent, "------------------------------------------");
+    console.log(indent, "-------------- IPersistFile --------------");
+    console.log(
+      indent,
+      "persistedTask.name           - " + persistedFile.filepath
+    );
+    console.log(indent + 1, "-------------- Mark --------------");
+    persistedFile.marks.forEach((mark) => {
+      console.log(indent + 1, "mark - " + mark);
     });
-    console.log(indent, '');
+    console.log(indent, "");
   }
 }

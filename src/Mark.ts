@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import { File } from './File';
-import { PathHelper } from './PathHelper';
+import { File } from "./File";
+import { PathHelper } from "./PathHelper";
 
 export class Mark {
   private _isDirty: boolean;
@@ -52,10 +52,10 @@ export class Mark {
     }
 
     this.getQuickPickItem(this._parent.filepath, lineNumber)
-      .then(value => {
+      .then((value) => {
         this._quickPickItem = value;
       })
-      .catch(reason => console.log('error : ' + reason));
+      .catch((reason) => console.log("error : " + reason));
   }
 
   public unDirty() {
@@ -70,27 +70,30 @@ export class Mark {
     }
   }
 
-  public async getQuickPickItem(filepath: string, mark: number): Promise<vscode.QuickPickItem> {
+  public async getQuickPickItem(
+    filepath: string,
+    mark: number
+  ): Promise<vscode.QuickPickItem> {
     return new Promise<vscode.QuickPickItem>((resolve, reject) => {
       let fullPath = PathHelper.getFullPath(filepath);
       let quickPickItem: vscode.QuickPickItem;
 
       if (!fullPath) {
-        reject('File not found! - ' + filepath);
+        reject("File not found! - " + filepath);
         return;
       }
       if (!mark) {
-        reject('Mark not set! - ' + filepath);
+        reject("Mark not set! - " + filepath);
         return;
       }
       let uri: vscode.Uri = vscode.Uri.file(fullPath);
-      vscode.workspace.openTextDocument(uri).then(doc => {
+      vscode.workspace.openTextDocument(uri).then((doc) => {
         if (mark <= doc.lineCount) {
           let lineText = doc.lineAt(mark).text;
           quickPickItem = {
             label: mark.toString(),
             description: lineText,
-            detail: fullPath
+            detail: fullPath,
           };
           resolve(quickPickItem);
         }
@@ -100,19 +103,23 @@ export class Mark {
 
   public dumpToLog(indent: number): void {
     indent++;
-    console.log(indent, '--------------------------');
-    console.log(indent, '---------- Mark ----------');
-    console.log(indent, '_isDirty            - ' + this._isDirty);
+    console.log(indent, "--------------------------");
+    console.log(indent, "---------- Mark ----------");
+    console.log(indent, "_isDirty            - " + this._isDirty);
     if (this._isDirty) {
       console.log(
         indent,
-        '_dirtyLineNumber    - ' + this._dirtyLineNumber + '(_lineNumber === ' + this._lineNumber + ')'
+        "_dirtyLineNumber    - " +
+          this._dirtyLineNumber +
+          "(_lineNumber === " +
+          this._lineNumber +
+          ")"
       );
-      console.log(indent, '_dirtyQuickPickItem - ' + this._dirtyQuickPickItem);
+      console.log(indent, "_dirtyQuickPickItem - " + this._dirtyQuickPickItem);
     } else {
-      console.log(indent, '_lineNumber         - ' + this._lineNumber);
-      console.log(indent, '_quickPickItem      - ' + this._quickPickItem);
+      console.log(indent, "_lineNumber         - " + this._lineNumber);
+      console.log(indent, "_quickPickItem      - " + this._quickPickItem);
     }
-    console.log(indent, '');
+    console.log(indent, "");
   }
 }

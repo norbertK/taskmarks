@@ -1,4 +1,4 @@
-import fs = require('fs');
+import fs = require("fs");
 
 export class PathHelper {
   private static _basePath: string;
@@ -35,6 +35,4 @@ export class PathHelper {
     }
     return filepath;
   }
-
-
 }
