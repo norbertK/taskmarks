@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 
-import * as _ from "lodash";
+import * as _ from 'lodash';
 
-import { Mark } from "./Mark";
+import { Mark } from './Mark';
 
 export class File {
   private _filepath: string;
@@ -94,15 +94,15 @@ export class File {
 
   public dumpToLog(indent: number): void {
     indent++;
-    console.log(indent, "--------------------------");
-    console.log(indent, "---------- File ----------");
-    console.log(indent, "_filepath - " + this._filepath);
-    let marks = "";
+    console.log(indent, '--------------------------');
+    console.log(indent, '---------- File ----------');
+    console.log(indent, '_filepath - ' + this._filepath);
+    let marks = '';
     this._marks.forEach((mark) => {
       // mark.dumpToLog(indent);
-      marks += mark.lineNumber + " ";
+      marks += mark.lineNumber + ' ';
     });
     console.log(indent, marks);
-    console.log(indent, "");
+    console.log(indent, '');
   }
 }

@@ -1,10 +1,10 @@
-"use strict";
+'use strict';
 
-import * as _ from "lodash";
+import * as _ from 'lodash';
 
-import { Task } from "./Task";
-import { DecoratorHelper } from "./DecoratorHelper";
-import { StatusBarItem, window, StatusBarAlignment } from "vscode";
+import { Task } from './Task';
+import { DecoratorHelper } from './DecoratorHelper';
+import { StatusBarItem, window, StatusBarAlignment } from 'vscode';
 
 export class Tasks {
   private static _instance: Tasks;
@@ -43,7 +43,7 @@ export class Tasks {
     let activeTask = _.find(this._allTasks, (task) => task.name === taskname);
     if (activeTask) {
       this._activeTask = activeTask;
-      this._statusBarItem.text = "TaskMarks: " + this._activeTask.name;
+      this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
       this._statusBarItem.show();
     } else {
       this._statusBarItem.hide();
@@ -58,7 +58,7 @@ export class Tasks {
     // this.dumpToLog();
   }
 
-  public use(taskname = "default"): Task {
+  public use(taskname = 'default'): Task {
     let task = _.find(this._allTasks, (task) => task.name === taskname);
 
     if (!task) {
@@ -176,23 +176,23 @@ export class Tasks {
 
   public dumpToLog(): void {
     let indent = 0;
-    console.log(indent, "");
+    console.log(indent, '');
     console.log(
       indent,
-      "---------------------------------------------------------------------------------"
+      '---------------------------------------------------------------------------------'
     );
     console.log(
       indent,
-      "------------------------------------- Tasks -------------------------------------"
+      '------------------------------------- Tasks -------------------------------------'
     );
-    console.log(indent, "_activeTask.name - " + this._activeTask.name);
+    console.log(indent, '_activeTask.name - ' + this._activeTask.name);
     this._allTasks.forEach((task) => {
       task.dumpToLog(indent);
     });
     console.log(
       indent,
-      "---------------------------------------------------------------------------------"
+      '---------------------------------------------------------------------------------'
     );
-    console.log(indent, "");
+    console.log(indent, '');
   }
 }

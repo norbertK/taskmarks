@@ -1,5 +1,5 @@
-import * as vscode from "vscode";
-import { PathHelper } from "./PathHelper";
+import * as vscode from 'vscode';
+import { PathHelper } from './PathHelper';
 
 export class DecoratorHelper {
   private static _iconPath: string;
@@ -10,12 +10,12 @@ export class DecoratorHelper {
   }
 
   public static initDecorator(context: vscode.ExtensionContext) {
-    this._iconPath = context.asAbsolutePath("images/bookmark.svg");
+    this._iconPath = context.asAbsolutePath('images/bookmark.svg');
     this._vscTextEditorDecorationType = vscode.window.createTextEditorDecorationType(
       {
         gutterIconPath: this._iconPath,
         overviewRulerLane: vscode.OverviewRulerLane.Full,
-        overviewRulerColor: "rgba(196, 196, 0, 0.8)",
+        overviewRulerColor: 'rgba(196, 196, 0, 0.8)',
       }
     );
   }

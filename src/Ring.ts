@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 // import { DebLog } from './DebLog';
 // not a 'real' ring class - only stuff I need

@@ -1,9 +1,9 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-import { Tasks } from "./Tasks";
-import { Persist } from "./Persist";
-import { DecoratorHelper } from "./DecoratorHelper";
-import { PathHelper } from "./PathHelper";
+import { Tasks } from './Tasks';
+import { Persist } from './Persist';
+import { DecoratorHelper } from './DecoratorHelper';
+import { PathHelper } from './PathHelper';
 
 export class Helper {
   private static _activeEditorLineCount: number;
@@ -17,8 +17,8 @@ export class Helper {
   public static init(context: vscode.ExtensionContext) {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders || workspaceFolders.length === 0) {
-      vscode.window.showErrorMessage("Error loading vscode.workspace! Stop!");
-      throw new Error("Error loading vscode.workspace! Stop!");
+      vscode.window.showErrorMessage('Error loading vscode.workspace! Stop!');
+      throw new Error('Error loading vscode.workspace! Stop!');
     }
 
     const workspaceFolder: vscode.WorkspaceFolder = workspaceFolders[0];
@@ -30,19 +30,19 @@ export class Helper {
 
     DecoratorHelper.initDecorator(context);
 
-    Helper.HandleEditorChange();
+    Helper.handleEditorChange();
     Helper.handleSave();
     Helper.handleChange(context);
 
     // this._tasks.dumpToLog();
   }
 
-  private static HandleEditorChange() {
+  private static handleEditorChange() {
     const activeTextEditor = vscode.window.activeTextEditor;
     if (activeTextEditor) {
       this.changeActiveFile(activeTextEditor);
     }
-    vscode.window.onDidChangeActiveTextEditor(editor => {
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
       this.changeActiveFile(editor);
     }, null);
   }
@@ -51,8 +51,11 @@ export class Helper {
     let lastEditorWithChanges: vscode.TextEditor | undefined = undefined;
     let lastLineCount: number;
     vscode.workspace.onDidChangeTextDocument(
-      event => {
-        if (!this._activeEditor || event.document !== this._activeEditor.document) {
+      (event) => {
+        if (
+          !this._activeEditor ||
+          event.document !== this._activeEditor.document
+        ) {
           return;
         }
         if (lastEditorWithChanges !== this._activeEditor) {
@@ -73,7 +76,7 @@ export class Helper {
         let diffLine: number;
         if (event.document.lineCount !== lastLineCount) {
           diffLine = event.document.lineCount - lastLineCount;
-          allMarks.forEach(mark => {
+          allMarks.forEach((mark) => {
             if (mark.lineNumber && mark.lineNumber > startLine) {
               mark.lineNumber += diffLine;
             }
@@ -88,12 +91,14 @@ export class Helper {
   }
 
   private static handleSave() {
-    vscode.workspace.onDidSaveTextDocument(textDocument => {
+    vscode.workspace.onDidSaveTextDocument((textDocument) => {
       var activeTask = this._tasks.activeTask;
       if (!activeTask) {
         return;
       }
-      var file = activeTask.getFile(PathHelper.reducePath(textDocument.fileName));
+      var file = activeTask.getFile(
+        PathHelper.reducePath(textDocument.fileName)
+      );
       if (file) {
         file.unDirty();
       }
@@ -106,16 +111,16 @@ export class Helper {
       return;
     }
     let allMarks: Array<vscode.QuickPickItem> = [];
-    let all = this._tasks.activeTask.allMarks.map(mark => mark.quickPickItem);
-    all.forEach(qpi => {
+    let all = this._tasks.activeTask.allMarks.map((mark) => mark.quickPickItem);
+    all.forEach((qpi) => {
       if (qpi) {
         allMarks.push(qpi);
       }
     });
     const options: vscode.QuickPickOptions = {
-      placeHolder: 'select Bookmark'
+      placeHolder: 'select Bookmark',
     };
-    vscode.window.showQuickPick(allMarks, options).then(result => {
+    vscode.window.showQuickPick(allMarks, options).then((result) => {
       if (result && result.detail) {
         let mark = Number.parseInt(result.label);
 
@@ -126,16 +131,16 @@ export class Helper {
 
   public static async selectTask() {
     const options: vscode.QuickPickOptions = {
-      placeHolder: 'select Task '
+      placeHolder: 'select Task ',
     };
     let taskNames: Array<string> = [];
     taskNames.push(this._tasks.activeTask.name);
-    this._tasks.taskNames.forEach(tn => {
+    this._tasks.taskNames.forEach((tn) => {
       if (tn !== this._tasks.activeTask.name) {
         taskNames.push(tn);
       }
     });
-    vscode.window.showQuickPick(taskNames, options).then(result => {
+    vscode.window.showQuickPick(taskNames, options).then((result) => {
       if (result) {
         this._tasks.use(result);
       } else {
@@ -148,7 +153,7 @@ export class Helper {
   }
 
   public static async createTask() {
-    vscode.window.showInputBox().then(result => {
+    vscode.window.showInputBox().then((result) => {
       if (result) {
         this._tasks.use(result);
         Helper.persistActiveFile();
@@ -157,17 +162,19 @@ export class Helper {
   }
 
   public static deleteTask(): any {
-    vscode.window.showQuickPick(this._tasks.taskNames, { placeHolder: 'delete Task ' }).then(result => {
-      if (result) {
-        this._tasks.use(result);
-        this._tasks.delete(result);
-      } else {
-        if (!this._tasks.activeTask) {
-          this._tasks.use('default');
+    vscode.window
+      .showQuickPick(this._tasks.taskNames, { placeHolder: 'delete Task ' })
+      .then((result) => {
+        if (result) {
+          this._tasks.use(result);
+          this._tasks.delete(result);
+        } else {
+          if (!this._tasks.activeTask) {
+            this._tasks.use('default');
+          }
         }
-      }
-      Helper.persistActiveFile();
-    });
+        Helper.persistActiveFile();
+      });
   }
 
   // public static renameTask(): any {
@@ -213,7 +220,10 @@ export class Helper {
     let activeLine = activeTextEditor.selection.active.line;
     let isDirty = activeTextEditor.document.isDirty;
 
-    this._tasks.activeTask.toggle(activeTextEditor.document.fileName, activeLine);
+    this._tasks.activeTask.toggle(
+      activeTextEditor.document.fileName,
+      activeLine
+    );
     // this._tasks.dumpToLog();
 
     if (!isDirty) {

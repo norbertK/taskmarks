@@ -86,6 +86,7 @@
     ]
   },
   "scripts": {
+    "prettify": "prettier -l --write \"**/*.ts\"",
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",

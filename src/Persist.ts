@@ -1,14 +1,14 @@
-"use strict";
+'use strict';
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-import fs = require("fs");
-import path = require("path");
-import { write, readSync } from "clipboardy";
+import fs = require('fs');
+import path = require('path');
+import { write, readSync } from 'clipboardy';
 
-import { File } from "./File";
-import { Tasks } from "./Tasks";
-import { Task } from "./Task";
+import { File } from './File';
+import { Tasks } from './Tasks';
+import { Task } from './Task';
 
 export class Persist {
   private static tasks: Tasks;
@@ -38,7 +38,7 @@ export class Persist {
         return newTasks;
       } catch (error) {
         vscode.window.showErrorMessage(
-          "Error loading taskmarks: " + error.toString() + ' Using "default"'
+          'Error loading taskmarks: ' + error.toString() + ' Using "default"'
         );
         return newTasks;
       }
@@ -67,7 +67,7 @@ export class Persist {
       tasks: persistTaskArray,
     };
 
-    fs.writeFileSync(taskmarksFile, JSON.stringify(persistTasks, null, "\t"));
+    fs.writeFileSync(taskmarksFile, JSON.stringify(persistTasks, null, '\t'));
   }
 
   private static persistTask(task: Task): IPersistTask {
@@ -103,13 +103,13 @@ export class Persist {
   public static get tasksDataFilePath(): string {
     if (!this._tasksDataFilePath) {
       if (!vscode.workspace.workspaceFolders) {
-        vscode.window.showErrorMessage("Error loading vscode.workspace! Stop!");
-        throw new Error("Error loading vscode.workspace! Stop!");
+        vscode.window.showErrorMessage('Error loading vscode.workspace! Stop!');
+        throw new Error('Error loading vscode.workspace! Stop!');
       }
       this._tasksDataFilePath = path.join(
         vscode.workspace.workspaceFolders[0].uri.fsPath,
-        ".vscode",
-        "taskmarks.json"
+        '.vscode',
+        'taskmarks.json'
       );
     }
 
@@ -132,7 +132,7 @@ export class Persist {
 
     if (!activeTaskString) {
       vscode.window.showInformationMessage(
-        "Could not paste Task from Clipboard."
+        'Could not paste Task from Clipboard.'
       );
       return;
     }
@@ -146,14 +146,14 @@ export class Persist {
       this.saveTasks();
     } catch (error) {
       vscode.window.showInformationMessage(
-        "PasteFromClipboar failed with " + error
+        'PasteFromClipboar failed with ' + error
       );
     }
   }
 
   public static dumpIPersistTask(persistedTask: IPersistTask) {
     let indent = 0;
-    console.log("persistedTask.name - " + persistedTask.name);
+    console.log('persistedTask.name - ' + persistedTask.name);
     persistedTask.files.forEach((persistedFile) => {
       this.dumpIPersistFile(indent, persistedFile);
     });
@@ -161,16 +161,16 @@ export class Persist {
 
   public static dumpIPersistFile(indent: number, persistedFile: IPersistFile) {
     indent++;
-    console.log(indent, "------------------------------------------");
-    console.log(indent, "-------------- IPersistFile --------------");
+    console.log(indent, '------------------------------------------');
+    console.log(indent, '-------------- IPersistFile --------------');
     console.log(
       indent,
-      "persistedTask.name           - " + persistedFile.filepath
+      'persistedTask.name           - ' + persistedFile.filepath
     );
-    console.log(indent + 1, "-------------- Mark --------------");
+    console.log(indent + 1, '-------------- Mark --------------');
     persistedFile.marks.forEach((mark) => {
-      console.log(indent + 1, "mark - " + mark);
+      console.log(indent + 1, 'mark - ' + mark);
     });
-    console.log(indent, "");
+    console.log(indent, '');
   }
 }
