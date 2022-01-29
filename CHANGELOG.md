@@ -6,8 +6,8 @@ All notable changes to the "taskmarks" extension will be documented in this file
 
 ## forked
 
-- cleaned up problems
 - cleaned up types
+- cleaned up problems
 
 ## [0.7.1] - 2021-03-09
 
