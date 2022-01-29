@@ -1,7 +1,7 @@
 {
   "name": "taskmarks2",
   "displayName": "Taskmarks2",
-  "description": "Forked from original Taskmarks: \"Little helper for teams to navigate through files. Persists bookmarks for different tasks.\". All Credit for original work to Klein Norbert (https://github.com/norbertK/taskmarks). ",
+  "description": "Forked from original Taskmarks",
   "version": "0.8.0",
   "publisher": "bdubba",
   "contributors": [
@@ -19,7 +19,15 @@
     "Bookmark, Tasks, Remember, Places, Teamwork, Collaboration"
   ],
   "activationEvents": [
-    "*"
+    "onCommand:taskmark.selectMarkFromList",
+    "onCommand:taskmark.selectTask",
+    "onCommand:taskmark.createTask",
+    "onCommand:taskmark.deleteTask",
+    "onCommand:taskmark.toggleMark",
+    "onCommand:taskmark.copyToClipboard",
+    "onCommand:taskmark.pasteFromClipboard",
+    "onCommand:taskmark.nextMark",
+    "onCommand:taskmark.previousMark"
   ],
   "main": "./out/extension.js",
   "contributes": {

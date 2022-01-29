@@ -1,3 +1,9 @@
+## notice
+
+- this is a fork from Klein Norbert's Taskmarks (Little helper for teams to navigate through files. https://github.com/norbertK/taskmarks)
+
+All Credit for original work to Klein Norbert.
+
 # Taskmarks
 
 VSCode Extension - Persist bookmarks for different tasks.
