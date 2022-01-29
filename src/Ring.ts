@@ -3,7 +3,7 @@
 // import { DebLog } from './DebLog';
 // not a 'real' ring class - only stuff I need
 export class Ring<T> extends Array<T | undefined> {
-  private _current: number = -1;
+  private _current = -1;
 
   get current(): T | undefined {
     if (this._current === -1) {

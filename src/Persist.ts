@@ -16,7 +16,8 @@ export class Persist {
 
   public static initAndLoad(newTasks: Tasks): Tasks {
     this.tasks = newTasks;
-    var taskmarksFile = Persist.tasksDataFilePath;
+
+    const taskmarksFile = Persist.tasksDataFilePath;
     if (taskmarksFile) {
       if (!fs.existsSync(taskmarksFile)) {
         return newTasks;
@@ -37,9 +38,11 @@ export class Persist {
 
         return newTasks;
       } catch (error) {
-        vscode.window.showErrorMessage(
-          'Error loading taskmarks: ' + error.toString() + ' Using "default"'
-        );
+        if (error instanceof Error) {
+          vscode.window.showErrorMessage(
+            'Error loading taskmarks: ' + error.toString() + ' Using "default"'
+          );
+        }
         return newTasks;
       }
     }
@@ -47,12 +50,12 @@ export class Persist {
   }
 
   public static saveTasks(): void {
-    var taskmarksFile = Persist.tasksDataFilePath;
+    const taskmarksFile = Persist.tasksDataFilePath;
     if (!taskmarksFile || !fs.existsSync(path.dirname(taskmarksFile))) {
       fs.mkdirSync(path.dirname(taskmarksFile));
     }
 
-    let persistTaskArray: Array<IPersistTask> = [];
+    const persistTaskArray: Array<IPersistTask> = [];
 
     this.tasks.allTasks.forEach((task) => {
       const persistTask: IPersistTask = this.persistTask(task);
@@ -89,16 +92,16 @@ export class Persist {
     return persistedTask;
   }
 
-  private static persistedToTask(persistedTask: IPersistTask): Task {
-    let task = new Task(persistedTask.name);
-    //this.tasks.use(persistedTask.name);
-    persistedTask.files.forEach((persistedFile) => {
-      let file: File = new File(persistedFile.filepath, -1);
-      file.setMarksFromPersist(persistedFile.marks);
-      task.files.push(file);
-    });
-    return task;
-  }
+  // private static persistedToTask(persistedTask: IPersistTask): Task {
+  //   const task = new Task(persistedTask.name);
+  //   //this.tasks.use(persistedTask.name);
+  //   persistedTask.files.forEach((persistedFile) => {
+  //     const file: File = new File(persistedFile.filepath, -1);
+  //     file.setMarksFromPersist(persistedFile.marks);
+  //     task.files.push(file);
+  //   });
+  //   return task;
+  // }
 
   public static get tasksDataFilePath(): string {
     if (!this._tasksDataFilePath) {
@@ -152,7 +155,7 @@ export class Persist {
   }
 
   public static dumpIPersistTask(persistedTask: IPersistTask) {
-    let indent = 0;
+    const indent = 0;
     console.log('persistedTask.name - ' + persistedTask.name);
     persistedTask.files.forEach((persistedFile) => {
       this.dumpIPersistFile(indent, persistedFile);

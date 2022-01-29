@@ -38,22 +38,21 @@ export class Task {
     return this._files;
   }
 
-  public get allMarks(): Array<Mark> {
-    let marks: Array<Mark> = [];
-
-    this._files.forEach((file) => {
-      if (file) {
-        marks.push(...file.allMarks);
+  public get allMarks(): Mark[] {
+    return this._files.reduce<Mark[]>((a, file) => {
+      if (file != null) {
+        const fileMarks = file.allMarks;
+        a.push(...fileMarks);
       }
-    });
-    return marks;
+      return a;
+    }, []);
   }
 
   public mergeWith(taskToMerge: IPersistTask): Task {
-    let filesToAdd: Array<IPersistFile> = [];
+    const filesToAdd: Array<IPersistFile> = [];
 
     taskToMerge.files.forEach((fileToMerge) => {
-      let file: File | undefined = this._files.find((fm) => {
+      const file: File | undefined = this._files.find((fm) => {
         if (fm) {
           return fm.filepath === fileToMerge.filepath;
         }
@@ -66,7 +65,7 @@ export class Task {
       }
     });
     filesToAdd.forEach((fileToAdd) => {
-      let file = this.use(fileToAdd.filepath);
+      const file = this.use(fileToAdd.filepath);
       fileToAdd.marks.forEach((mark) => file.addMark(mark));
     });
     return this;
@@ -107,7 +106,7 @@ export class Task {
   }
 
   public getFile(reducedFilePath: string): File | undefined {
-    let fileMark: File | undefined = this._files.find((fm) => {
+    const fileMark: File | undefined = this._files.find((fm) => {
       if (fm) {
         return fm.filepath === reducedFilePath;
       }

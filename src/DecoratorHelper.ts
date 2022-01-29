@@ -24,10 +24,11 @@ export class DecoratorHelper {
     if (!activeEditor) {
       return;
     }
-    let ranges: vscode.Range[] = [];
+    const ranges: vscode.Range[] = [];
 
+    // eslint-disable-next-line prefer-const
     for (let mark of marks) {
-      let vscRange = new vscode.Range(mark, 0, mark, 0);
+      const vscRange = new vscode.Range(mark, 0, mark, 0);
       ranges.push(vscRange);
     }
 
@@ -45,7 +46,7 @@ export class DecoratorHelper {
       textEditorRevealType =
         vscode.TextEditorRevealType.InCenterIfOutsideViewport;
     }
-    let selection = new vscode.Selection(line, 0, line, 0);
+    const selection = new vscode.Selection(line, 0, line, 0);
     activeTextEditor.selection = selection;
     activeTextEditor.revealRange(selection, textEditorRevealType);
   }

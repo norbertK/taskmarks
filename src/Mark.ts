@@ -75,7 +75,7 @@ export class Mark {
     mark: number
   ): Promise<vscode.QuickPickItem> {
     return new Promise<vscode.QuickPickItem>((resolve, reject) => {
-      let fullPath = PathHelper.getFullPath(filepath);
+      const fullPath = PathHelper.getFullPath(filepath);
       let quickPickItem: vscode.QuickPickItem;
 
       if (!fullPath) {
@@ -86,10 +86,10 @@ export class Mark {
         reject('Mark not set! - ' + filepath);
         return;
       }
-      let uri: vscode.Uri = vscode.Uri.file(fullPath);
+      const uri: vscode.Uri = vscode.Uri.file(fullPath);
       vscode.workspace.openTextDocument(uri).then((doc) => {
         if (mark <= doc.lineCount) {
-          let lineText = doc.lineAt(mark).text;
+          const lineText = doc.lineAt(mark).text;
           quickPickItem = {
             label: mark.toString(),
             description: lineText,

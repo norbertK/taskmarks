@@ -40,7 +40,7 @@ export class Tasks {
   }
 
   public setActiveTask(taskname: string) {
-    let activeTask = _.find(this._allTasks, (task) => task.name === taskname);
+    const activeTask = _.find(this._allTasks, (task) => task.name === taskname);
     if (activeTask) {
       this._activeTask = activeTask;
       this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
@@ -52,7 +52,7 @@ export class Tasks {
   }
 
   public addTask(task: IPersistTask) {
-    let current = this.use(task.name);
+    const current = this.use(task.name);
 
     current.mergeWith(task);
     // this.dumpToLog();
@@ -72,7 +72,7 @@ export class Tasks {
   }
 
   public delete(taskname: string): Task {
-    let task = _.find(this._allTasks, (task) => task.name === taskname);
+    const task = _.find(this._allTasks, (task) => task.name === taskname);
 
     if (task) {
       _.remove(this._allTasks, (task) => task.name === taskname);
@@ -83,7 +83,7 @@ export class Tasks {
   }
 
   public nextMark(activeFile: string, currentline: number) {
-    let activeTask = this.activeTask;
+    const activeTask = this.activeTask;
     if (!activeTask || !activeTask.files || activeTask.files.length === 0) {
       return;
     }
@@ -91,6 +91,7 @@ export class Tasks {
     if (!activeTask.activeFile) {
       return;
     }
+    // eslint-disable-next-line prefer-const
     for (let mark of activeTask.activeFile.marks) {
       if (mark > currentline) {
         DecoratorHelper.showLine(mark);
@@ -102,7 +103,7 @@ export class Tasks {
   }
 
   public previousMark(activeFile: string, currentline: number) {
-    let activeTask = this.activeTask;
+    const activeTask = this.activeTask;
     if (!activeTask || !activeTask.files || activeTask.files.length === 0) {
       return;
     }
@@ -165,7 +166,7 @@ export class Tasks {
   }
 
   public get taskNames(): Array<string> {
-    let taskNames: Array<string> = [];
+    const taskNames: Array<string> = [];
 
     this._allTasks.forEach((task) => {
       taskNames.push(task.name);
@@ -175,7 +176,7 @@ export class Tasks {
   }
 
   public dumpToLog(): void {
-    let indent = 0;
+    const indent = 0;
     console.log(indent, '');
     console.log(
       indent,

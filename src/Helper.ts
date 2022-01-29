@@ -16,9 +16,9 @@ export class Helper {
 
   public static init(context: vscode.ExtensionContext) {
     const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders || workspaceFolders.length === 0) {
-      vscode.window.showErrorMessage('Error loading vscode.workspace! Stop!');
-      throw new Error('Error loading vscode.workspace! Stop!');
+    if (!workspaceFolders) {
+      // vscode.window.showErrorMessage('Could not find a workspace');
+      throw new Error('Could not find a workspace');
     }
 
     const workspaceFolder: vscode.WorkspaceFolder = workspaceFolders[0];
@@ -65,7 +65,7 @@ export class Helper {
         if (!this._tasks.activeTask || !this._tasks.activeTask.activeFile) {
           return;
         }
-        let allMarks = this._tasks.activeTask.activeFile.allMarks;
+        const allMarks = this._tasks.activeTask.activeFile.allMarks;
         if (allMarks.length === 0) {
           return;
         }
@@ -92,11 +92,11 @@ export class Helper {
 
   private static handleSave() {
     vscode.workspace.onDidSaveTextDocument((textDocument) => {
-      var activeTask = this._tasks.activeTask;
+      const activeTask = this._tasks.activeTask;
       if (!activeTask) {
         return;
       }
-      var file = activeTask.getFile(
+      const file = activeTask.getFile(
         PathHelper.reducePath(textDocument.fileName)
       );
       if (file) {
@@ -110,19 +110,22 @@ export class Helper {
     if (!this._tasks.activeTask) {
       return;
     }
-    let allMarks: Array<vscode.QuickPickItem> = [];
-    let all = this._tasks.activeTask.allMarks.map((mark) => mark.quickPickItem);
-    all.forEach((qpi) => {
-      if (qpi) {
-        allMarks.push(qpi);
+    const allMarks = this._tasks.activeTask.allMarks.reduce<
+      vscode.QuickPickItem[]
+    >((a, i) => {
+      if (i != null && i.quickPickItem != null) {
+        a.push(i.quickPickItem);
       }
-    });
+      return a;
+    }, []);
+
     const options: vscode.QuickPickOptions = {
       placeHolder: 'select Bookmark',
     };
+
     vscode.window.showQuickPick(allMarks, options).then((result) => {
       if (result && result.detail) {
-        let mark = Number.parseInt(result.label);
+        const mark = Number.parseInt(result.label);
 
         DecoratorHelper.openAndShow(result.detail, mark);
       }
@@ -133,7 +136,7 @@ export class Helper {
     const options: vscode.QuickPickOptions = {
       placeHolder: 'select Task ',
     };
-    let taskNames: Array<string> = [];
+    const taskNames: Array<string> = [];
     taskNames.push(this._tasks.activeTask.name);
     this._tasks.taskNames.forEach((tn) => {
       if (tn !== this._tasks.activeTask.name) {
@@ -161,7 +164,7 @@ export class Helper {
     });
   }
 
-  public static deleteTask(): any {
+  public static deleteTask() {
     vscode.window
       .showQuickPick(this._tasks.taskNames, { placeHolder: 'delete Task ' })
       .then((result) => {
@@ -194,7 +197,7 @@ export class Helper {
     if (!activeTextEditor) {
       return;
     }
-    let line = activeTextEditor.selection.active.line;
+    const line = activeTextEditor.selection.active.line;
     this._tasks.nextMark(activeTextEditor.document.fileName, line);
   }
 
@@ -203,7 +206,7 @@ export class Helper {
     if (!activeTextEditor) {
       return;
     }
-    let line = activeTextEditor.selection.active.line;
+    const line = activeTextEditor.selection.active.line;
     this._tasks.previousMark(activeTextEditor.document.fileName, line);
   }
 
@@ -217,8 +220,8 @@ export class Helper {
       return;
     }
 
-    let activeLine = activeTextEditor.selection.active.line;
-    let isDirty = activeTextEditor.document.isDirty;
+    const activeLine = activeTextEditor.selection.active.line;
+    const isDirty = activeTextEditor.document.isDirty;
 
     this._tasks.activeTask.toggle(
       activeTextEditor.document.fileName,

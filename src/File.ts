@@ -51,7 +51,7 @@ export class File {
   }
 
   public mergeWith(file: IPersistFile): File {
-    let diff = _.difference(file.marks, this.marks);
+    const diff = _.difference(file.marks, this.marks);
     diff.forEach((mark) => {
       this.addMark(mark);
     });
