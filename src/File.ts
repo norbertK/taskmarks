@@ -1,6 +1,7 @@
 'use strict';
 
 import * as _ from 'lodash';
+import type { IPersistFile } from './Models';
 
 import { Mark } from './Mark';
 
@@ -94,15 +95,20 @@ export class File {
 
   public dumpToLog(indent: number): void {
     indent++;
+    // eslint-disable-next-line no-console
     console.log(indent, '--------------------------');
+    // eslint-disable-next-line no-console
     console.log(indent, '---------- File ----------');
+    // eslint-disable-next-line no-console
     console.log(indent, '_filepath - ' + this._filepath);
     let marks = '';
     this._marks.forEach((mark) => {
       // mark.dumpToLog(indent);
       marks += mark.lineNumber + ' ';
     });
+    // eslint-disable-next-line no-console
     console.log(indent, marks);
+    // eslint-disable-next-line no-console
     console.log(indent, '');
   }
 }

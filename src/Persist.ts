@@ -6,9 +6,10 @@ import fs = require('fs');
 import path = require('path');
 import { write, readSync } from 'clipboardy';
 
-import { File } from './File';
 import { Tasks } from './Tasks';
 import { Task } from './Task';
+
+import type { IPersistFile, IPersistTask, IPersistTasks } from './Models';
 
 export class Persist {
   private static tasks: Tasks;
@@ -156,7 +157,7 @@ export class Persist {
 
   public static dumpIPersistTask(persistedTask: IPersistTask) {
     const indent = 0;
-    console.log('persistedTask.name - ' + persistedTask.name);
+    // console.log('persistedTask.name - ' + persistedTask.name);
     persistedTask.files.forEach((persistedFile) => {
       this.dumpIPersistFile(indent, persistedFile);
     });
@@ -164,16 +165,22 @@ export class Persist {
 
   public static dumpIPersistFile(indent: number, persistedFile: IPersistFile) {
     indent++;
+    // eslint-disable-next-line no-console
     console.log(indent, '------------------------------------------');
+    // eslint-disable-next-line no-console
     console.log(indent, '-------------- IPersistFile --------------');
+    // eslint-disable-next-line no-console
     console.log(
       indent,
       'persistedTask.name           - ' + persistedFile.filepath
     );
+    // eslint-disable-next-line no-console
     console.log(indent + 1, '-------------- Mark --------------');
     persistedFile.marks.forEach((mark) => {
+      // eslint-disable-next-line no-console
       console.log(indent + 1, 'mark - ' + mark);
     });
+    // eslint-disable-next-line no-console
     console.log(indent, '');
   }
 }

@@ -59,7 +59,7 @@ export class DecoratorHelper {
 
     vscode.workspace.openTextDocument(fullPath).then((textDocument) => {
       if (textDocument) {
-        vscode.window.showTextDocument(textDocument).then((editor) => {
+        vscode.window.showTextDocument(textDocument).then(() => {
           if (!mark) {
             return;
           }

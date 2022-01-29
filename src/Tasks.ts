@@ -5,6 +5,7 @@ import * as _ from 'lodash';
 import { Task } from './Task';
 import { DecoratorHelper } from './DecoratorHelper';
 import { StatusBarItem, window, StatusBarAlignment } from 'vscode';
+import type { IPersistTask } from './Models';
 
 export class Tasks {
   private static _instance: Tasks;
@@ -177,23 +178,23 @@ export class Tasks {
 
   public dumpToLog(): void {
     const indent = 0;
-    console.log(indent, '');
-    console.log(
-      indent,
-      '---------------------------------------------------------------------------------'
-    );
-    console.log(
-      indent,
-      '------------------------------------- Tasks -------------------------------------'
-    );
-    console.log(indent, '_activeTask.name - ' + this._activeTask.name);
+    // console.log(indent, '');
+    // console.log(
+    //   indent,
+    //   '---------------------------------------------------------------------------------'
+    // );
+    // console.log(
+    //   indent,
+    //   '------------------------------------- Tasks -------------------------------------'
+    // );
+    // console.log(indent, '_activeTask.name - ' + this._activeTask.name);
     this._allTasks.forEach((task) => {
       task.dumpToLog(indent);
     });
-    console.log(
-      indent,
-      '---------------------------------------------------------------------------------'
-    );
-    console.log(indent, '');
+    // console.log(
+    //   indent,
+    //   '---------------------------------------------------------------------------------'
+    // );
+    // console.log(indent, '');
   }
 }

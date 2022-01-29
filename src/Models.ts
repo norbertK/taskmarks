@@ -13,17 +13,17 @@
 //   allTasks: Array<ITask>;
 // }
 
-interface IPersistFile {
+export interface IPersistFile {
   filepath: string;
   marks: Array<number>;
 }
 
-interface IPersistTask {
+export interface IPersistTask {
   name: string;
   files: Array<IPersistFile>;
 }
 
-interface IPersistTasks {
+export interface IPersistTasks {
   activeTaskName: string;
   tasks: Array<IPersistTask>;
 }

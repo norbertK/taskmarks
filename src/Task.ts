@@ -4,6 +4,7 @@ import { File } from './File';
 import { Mark } from './Mark';
 import { Ring } from './Ring';
 import { PathHelper } from './PathHelper';
+import type { IPersistFile, IPersistTask } from './Models';
 
 export class Task {
   private _name: string;
@@ -117,14 +118,14 @@ export class Task {
 
   public dumpToLog(indent: number): void {
     indent++;
-    console.log(indent, '--------------------------');
-    console.log(indent, '---------- Task ----------');
-    console.log(indent, '_name - ' + this._name);
+    // console.log(indent, '--------------------------');
+    // console.log(indent, '---------- Task ----------');
+    // console.log(indent, '_name - ' + this._name);
     this._files.forEach((file) => {
       if (file) {
         file.dumpToLog(indent);
       }
     });
-    console.log(indent, '');
+    // console.log(indent, '');
   }
 }

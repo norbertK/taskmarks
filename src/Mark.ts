@@ -55,7 +55,10 @@ export class Mark {
       .then((value) => {
         this._quickPickItem = value;
       })
-      .catch((reason) => console.log('error : ' + reason));
+      .catch((reason) => {
+        // eslint-disable-next-line no-console
+        console.log('error : ' + reason);
+      });
   }
 
   public unDirty() {
@@ -103,10 +106,14 @@ export class Mark {
 
   public dumpToLog(indent: number): void {
     indent++;
+    // eslint-disable-next-line no-console
     console.log(indent, '--------------------------');
+    // eslint-disable-next-line no-console
     console.log(indent, '---------- Mark ----------');
+    // eslint-disable-next-line no-console
     console.log(indent, '_isDirty            - ' + this._isDirty);
     if (this._isDirty) {
+      // eslint-disable-next-line no-console
       console.log(
         indent,
         '_dirtyLineNumber    - ' +
@@ -115,11 +122,15 @@ export class Mark {
           this._lineNumber +
           ')'
       );
+      // eslint-disable-next-line no-console
       console.log(indent, '_dirtyQuickPickItem - ' + this._dirtyQuickPickItem);
     } else {
+      // eslint-disable-next-line no-console
       console.log(indent, '_lineNumber         - ' + this._lineNumber);
+      // eslint-disable-next-line no-console
       console.log(indent, '_quickPickItem      - ' + this._quickPickItem);
     }
+    // eslint-disable-next-line no-console
     console.log(indent, '');
   }
 }
