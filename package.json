@@ -2,13 +2,13 @@
   "name": "taskmarks2",
   "displayName": "Taskmarks2",
   "description": "Forked from original Taskmarks",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "publisher": "bdubba",
   "contributors": [
     "Klein Norbert"
   ],
   "engines": {
-    "vscode": "^1.46.0"
+    "vscode": "1.63.2"
   },
   "license": "(MIT OR Apache-2.0)",
   "icon": "images/taskmarks-icon.png",
@@ -114,7 +114,7 @@
     "@types/lodash": "^4.14.168",
     "@types/mocha": "^8.0.4",
     "@types/node": "^12.11.7",
-    "@types/vscode": "^1.46.0",
+    "@types/vscode": "^1.63.1",
     "@typescript-eslint/eslint-plugin": "^4.14.1",
     "@typescript-eslint/parser": "^4.14.1",
     "@types/clipboardy": "2.0.1",

@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 'use strict';
 
 import * as vscode from 'vscode';
@@ -7,7 +8,7 @@ import { Helper } from './Helper';
 // import { DebLog } from './DebLog';
 
 export function activate(context: vscode.ExtensionContext) {
-  // const blackList: Array<string> = [];
+  // let blackList: Array<string> = [];
   // // blackList.push('extension.ts');
   // // blackList.push('File');
   // // blackList.push('Mark');
@@ -20,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   Helper.init(context);
 
-  const selectMarkFromListDisposable = vscode.commands.registerCommand(
+  let selectMarkFromListDisposable = vscode.commands.registerCommand(
     'taskmark.selectMarkFromList',
     () => {
       Helper.selectMarkFromList();
@@ -28,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(selectMarkFromListDisposable);
 
-  const selectTaskDisposable = vscode.commands.registerCommand(
+  let selectTaskDisposable = vscode.commands.registerCommand(
     'taskmark.selectTask',
     () => {
       Helper.selectTask();
@@ -36,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(selectTaskDisposable);
 
-  const createTaskDisposable = vscode.commands.registerCommand(
+  let createTaskDisposable = vscode.commands.registerCommand(
     'taskmark.createTask',
     () => {
       Helper.createTask();
@@ -44,12 +45,12 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(createTaskDisposable);
 
-  // const renameTaskDisposable = vscode.commands.registerCommand('taskmark.renameTask', () => {
+  // let renameTaskDisposable = vscode.commands.registerCommand('taskmark.renameTask', () => {
   //   Helper.renameTask();
   // });
   // context.subscriptions.push(renameTaskDisposable);
 
-  const deleteTaskDisposable = vscode.commands.registerCommand(
+  let deleteTaskDisposable = vscode.commands.registerCommand(
     'taskmark.deleteTask',
     () => {
       Helper.deleteTask();
@@ -57,7 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(deleteTaskDisposable);
 
-  const toggleMarkDisposable = vscode.commands.registerCommand(
+  let toggleMarkDisposable = vscode.commands.registerCommand(
     'taskmark.toggleMark',
     () => {
       Helper.toggleMark();
@@ -65,7 +66,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(toggleMarkDisposable);
 
-  const copyToClipboardDisposable = vscode.commands.registerCommand(
+  let copyToClipboardDisposable = vscode.commands.registerCommand(
     'taskmark.copyToClipboard',
     () => {
       Persist.copyToClipboard();
@@ -74,7 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(copyToClipboardDisposable);
 
-  const pasteFromClipboardDisposable = vscode.commands.registerCommand(
+  let pasteFromClipboardDisposable = vscode.commands.registerCommand(
     'taskmark.pasteFromClipboard',
     () => {
       Persist.pasteFromClipboard();
@@ -83,7 +84,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(pasteFromClipboardDisposable);
 
-  const nextMarkDisposable = vscode.commands.registerCommand(
+  let nextMarkDisposable = vscode.commands.registerCommand(
     'taskmark.nextMark',
     () => {
       Helper.nextMark();
@@ -91,7 +92,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(nextMarkDisposable);
 
-  const previousMarkDisposable = vscode.commands.registerCommand(
+  let previousMarkDisposable = vscode.commands.registerCommand(
     'taskmark.previousMark',
     () => {
       Helper.previousMark();
