@@ -2,6 +2,13 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
+## [0.8.0] - 2022-01-29
+
+## forked
+
+- cleaned up problems
+- cleaned up types
+
 ## [0.7.1] - 2021-03-09
 
 ### update to newest libs, some tests, change from yarn to npm
