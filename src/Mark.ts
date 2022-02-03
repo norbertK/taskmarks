@@ -75,7 +75,7 @@ export class Mark {
 
   public async getQuickPickItem(
     filepath: string,
-    mark: number
+    lineNumber: number
   ): Promise<vscode.QuickPickItem> {
     return new Promise<vscode.QuickPickItem>((resolve, reject) => {
       const fullPath = PathHelper.getFullPath(filepath);
@@ -85,16 +85,16 @@ export class Mark {
         reject('File not found! - ' + filepath);
         return;
       }
-      if (!mark) {
+      if (lineNumber == null) {
         reject('Mark not set! - ' + filepath);
         return;
       }
       const uri: vscode.Uri = vscode.Uri.file(fullPath);
       vscode.workspace.openTextDocument(uri).then((doc) => {
-        if (mark <= doc.lineCount) {
-          const lineText = doc.lineAt(mark).text;
+        if (lineNumber <= doc.lineCount) {
+          const lineText = doc.lineAt(lineNumber).text;
           quickPickItem = {
-            label: mark.toString(),
+            label: lineNumber.toString(),
             description: lineText,
             detail: fullPath,
           };

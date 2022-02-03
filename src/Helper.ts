@@ -106,10 +106,13 @@ export class Helper {
     });
   }
 
+  //SELECT FROM LIST
+
   public static async selectMarkFromList() {
     if (!this._tasks.activeTask) {
       return;
     }
+
     const allMarks = this._tasks.activeTask.allMarks.reduce<
       vscode.QuickPickItem[]
     >((a, i) => {
@@ -180,10 +183,6 @@ export class Helper {
       });
   }
 
-  // public static renameTask(): any {
-  //   throw new Error('Method not implemented.');
-  // }
-
   private static persistActiveFile() {
     if (Helper.activeEditor && this._tasks.activeTask) {
       this._tasks.activeTask.use(Helper.activeEditor.document.fileName);
@@ -227,7 +226,6 @@ export class Helper {
       activeTextEditor.document.fileName,
       activeLine
     );
-    // this._tasks.dumpToLog();
 
     if (!isDirty) {
       Persist.saveTasks();
@@ -251,6 +249,7 @@ export class Helper {
   public static refresh() {
     if (this._activeEditor) {
       const activeFile = this._tasks.activeTask.activeFile;
+
       if (activeFile) {
         DecoratorHelper.refresh(this._activeEditor, activeFile.marks);
       }

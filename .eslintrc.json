@@ -19,6 +19,7 @@
     "curly": "warn",
     "eqeqeq": "off",
     "no-throw-literal": "warn",
+    "no-debugger": "off",
     "semi": "off",
     "no-console": 1, // Means warning
     "prettier/prettier": 2 // Means error
