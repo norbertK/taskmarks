@@ -50,7 +50,7 @@ export class Task {
   }
 
   public mergeWith(taskToMerge: IPersistTask): Task {
-    const filesToAdd: Array<IPersistFile> = [];
+    const filesToAdd: IPersistFile[] = [];
 
     taskToMerge.files.forEach((fileToMerge) => {
       const file: File | undefined = this._files.find((fm) => {
@@ -65,10 +65,12 @@ export class Task {
         filesToAdd.push(fileToMerge);
       }
     });
+
     filesToAdd.forEach((fileToAdd) => {
       const file = this.use(fileToAdd.filepath);
       fileToAdd.marks.forEach((mark) => file.addMark(mark));
     });
+
     return this;
   }
 
@@ -116,16 +118,16 @@ export class Task {
     return fileMark;
   }
 
-  public dumpToLog(indent: number): void {
-    indent++;
-    // console.log(indent, '--------------------------');
-    // console.log(indent, '---------- Task ----------');
-    // console.log(indent, '_name - ' + this._name);
-    this._files.forEach((file) => {
-      if (file) {
-        file.dumpToLog(indent);
-      }
-    });
-    // console.log(indent, '');
-  }
+  // public dumpToLog(indent: number): void {
+  //   indent++;
+  //   // console.log(indent, '--------------------------');
+  //   // console.log(indent, '---------- Task ----------');
+  //   // console.log(indent, '_name - ' + this._name);
+  //   this._files.forEach((file) => {
+  //     if (file) {
+  //       file.dumpToLog(indent);
+  //     }
+  //   });
+  //   // console.log(indent, '');
+  // }
 }

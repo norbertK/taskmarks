@@ -13,11 +13,11 @@ export class File {
     return this._filepath;
   }
 
-  public get allMarks(): Array<Mark> {
+  public get allMarks(): Mark[] {
     return this._marks;
   }
 
-  public get marks(): Array<number> {
+  public get marks(): number[] {
     const marks: number[] = [];
     this._marks.forEach((mark) => {
       if (mark.lineNumber !== undefined) {
@@ -28,7 +28,7 @@ export class File {
     return marks;
   }
 
-  public get marksForPersist(): Array<number> {
+  public get marksForPersist(): number[] {
     const marks: number[] = [];
     this._marks.forEach((mark) => {
       if (mark.lineNumberForPersist !== undefined) {
@@ -60,7 +60,7 @@ export class File {
     return this;
   }
 
-  public setMarksFromPersist(marks: Array<number>) {
+  public setMarksFromPersist(marks: number[]) {
     marks.forEach(async (mark) => {
       this.addMark(mark);
     });
@@ -71,13 +71,10 @@ export class File {
   }
 
   public toggleTask(lineNumber: number): boolean {
-    const mark: Mark | undefined = _.find(
-      this._marks,
-      (mark: Mark) => mark.lineNumber === lineNumber
-    );
+    const found = this._marks.findIndex((m) => m.lineNumber === lineNumber);
 
-    if (mark) {
-      _.remove(this._marks, (mark: Mark) => mark.lineNumber === lineNumber);
+    if (found > -1) {
+      this._marks.splice(found, 1);
     } else {
       this.addMark(lineNumber);
     }
@@ -93,22 +90,22 @@ export class File {
     return this._marks.length > 0;
   }
 
-  public dumpToLog(indent: number): void {
-    indent++;
-    // eslint-disable-next-line no-console
-    console.log(indent, '--------------------------');
-    // eslint-disable-next-line no-console
-    console.log(indent, '---------- File ----------');
-    // eslint-disable-next-line no-console
-    console.log(indent, '_filepath - ' + this._filepath);
-    let marks = '';
-    this._marks.forEach((mark) => {
-      // mark.dumpToLog(indent);
-      marks += mark.lineNumber + ' ';
-    });
-    // eslint-disable-next-line no-console
-    console.log(indent, marks);
-    // eslint-disable-next-line no-console
-    console.log(indent, '');
-  }
+  // public dumpToLog(indent: number): void {
+  //   indent++;
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent, '--------------------------');
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent, '---------- File ----------');
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent, '_filepath - ' + this._filepath);
+  //   let marks = '';
+  //   this._marks.forEach((mark) => {
+  //     // mark.dumpToLog(indent);
+  //     marks += mark.lineNumber + ' ';
+  //   });
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent, marks);
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent, '');
+  // }
 }

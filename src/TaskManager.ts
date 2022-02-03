@@ -1,7 +1,5 @@
 'use strict';
 
-import * as _ from 'lodash';
-
 import { Task } from './Task';
 import { DecoratorHelper } from './DecoratorHelper';
 import { StatusBarItem, window, StatusBarAlignment } from 'vscode';
@@ -18,8 +16,8 @@ export class TaskManager {
     this._activeTask = this.useActiveTask();
   }
 
-  static instance(): TaskManager {
-    if (!this._instance) {
+  static get instance(): TaskManager {
+    if (this._instance == null) {
       this._instance = new TaskManager();
     }
 
@@ -29,13 +27,12 @@ export class TaskManager {
   get activeTask(): Task {
     return this._activeTask;
   }
-
-  set activeTask(task: Task) {
-    this.setActiveTask(task.name);
+  get taskNames(): string[] {
+    return this.allTasks.map((task) => task.name);
   }
 
   setActiveTask(taskname: string) {
-    const activeTask = _.find(this.allTasks, (task) => task.name === taskname);
+    const activeTask = this.allTasks.find((task) => task.name === taskname);
     if (activeTask) {
       this._activeTask = activeTask;
       this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
@@ -48,9 +45,7 @@ export class TaskManager {
 
   addTask(task: IPersistTask) {
     const current = this.useActiveTask(task.name);
-
     current.mergeWith(task);
-    // this.dumpToLog();
   }
 
   useActiveTask(taskname = 'default'): Task {
@@ -68,13 +63,12 @@ export class TaskManager {
   }
 
   delete(taskname: string): Task {
-    const task = _.find(this.allTasks, (task) => task.name === taskname);
+    const found = this.allTasks.findIndex((task) => task.name === taskname);
 
-    if (task) {
-      _.remove(this.allTasks, (task) => task.name === taskname);
+    if (found > -1) {
+      this.allTasks.splice(found, 1);
     }
 
-    // this.dumpToLog();
     return this.useActiveTask();
   }
 
@@ -162,35 +156,25 @@ export class TaskManager {
     }
   }
 
-  get taskNames(): Array<string> {
-    const taskNames: Array<string> = [];
-
-    this.allTasks.forEach((task) => {
-      taskNames.push(task.name);
-    });
-
-    return taskNames;
-  }
-
-  dumpToLog(): void {
-    const indent = 0;
-    // console.log(indent, '');
-    // console.log(
-    //   indent,
-    //   '---------------------------------------------------------------------------------'
-    // );
-    // console.log(
-    //   indent,
-    //   '------------------------------------- Tasks -------------------------------------'
-    // );
-    // console.log(indent, '_activeTask.name - ' + this._activeTask.name);
-    this.allTasks.forEach((task) => {
-      task.dumpToLog(indent);
-    });
-    // console.log(
-    //   indent,
-    //   '---------------------------------------------------------------------------------'
-    // );
-    // console.log(indent, '');
-  }
+  // dumpToLog(): void {
+  //   const indent = 0;
+  // console.log(indent, '');
+  // console.log(
+  //   indent,
+  //   '---------------------------------------------------------------------------------'
+  // );
+  // console.log(
+  //   indent,
+  //   '------------------------------------- Tasks -------------------------------------'
+  // );
+  // console.log(indent, '_activeTask.name - ' + this._activeTask.name);
+  // this.allTasks.forEach((task) => {
+  //   task.dumpToLog(indent);
+  // });
+  // console.log(
+  //   indent,
+  //   '---------------------------------------------------------------------------------'
+  // );
+  // console.log(indent, '');
+  // }
 }

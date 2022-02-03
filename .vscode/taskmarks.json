@@ -1,5 +1,5 @@
 {
-	"activeTaskName": "taskmarks",
+	"activeTaskName": "where I use Persist",
 	"tasks": [
 		{
 			"name": "default",
@@ -26,15 +26,6 @@
 			"name": "where I use Persist",
 			"files": [
 				{
-					"filepath": "/src/Helper.ts",
-					"marks": [
-						110,
-						160,
-						205,
-						35
-					]
-				},
-				{
 					"filepath": "/src/Persist.ts",
 					"marks": [
 						13
@@ -50,14 +41,7 @@
 		},
 		{
 			"name": "taskmarks",
-			"files": [
-				{
-					"filepath": "/package.json",
-					"marks": [
-						20
-					]
-				}
-			]
+			"files": []
 		}
 	]
 }

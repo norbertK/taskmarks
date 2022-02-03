@@ -2,15 +2,15 @@
 
 export interface IPersistFile {
   filepath: string;
-  marks: Array<number>;
+  marks: number[];
 }
 
 export interface IPersistTask {
   name: string;
-  files: Array<IPersistFile>;
+  files: IPersistFile[];
 }
 
 export interface IPersistTasks {
   activeTaskName: string;
-  tasks: Array<IPersistTask>;
+  tasks: IPersistTask[];
 }

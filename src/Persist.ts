@@ -9,45 +9,25 @@ import { write, readSync } from 'clipboardy';
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
 
-import type { IPersistFile, IPersistTask, IPersistTasks } from './types';
+import type { IPersistTask, IPersistTasks } from './types';
 
 export class Persist {
-  private static tasks: TaskManager;
+  private static taskManager: TaskManager;
   private static _tasksDataFilePath: string;
 
-  public static initAndLoad(newTasks: TaskManager): TaskManager {
-    this.tasks = newTasks;
-
+  public static initAndLoad(taskManager: TaskManager) {
+    this.taskManager = taskManager;
     const taskmarksFile = Persist.tasksDataFilePath;
-    if (taskmarksFile) {
-      if (!fs.existsSync(taskmarksFile)) {
-        return newTasks;
-      }
-      try {
-        const stringFromFile: string = fs
-          .readFileSync(taskmarksFile)
-          .toString();
+    if (taskmarksFile == null || !fs.existsSync(taskmarksFile)) return;
 
-        const persistedTasks = <IPersistTasks>JSON.parse(stringFromFile);
+    const stringFromFile = fs.readFileSync(taskmarksFile).toString();
+    const { tasks, activeTaskName }: IPersistTasks = JSON.parse(stringFromFile);
 
-        persistedTasks.tasks.forEach((persistedTask) => {
-          // todo ??? const newTask = Persist.persistedToTask(persistedTask);
-          newTasks.addTask(persistedTask);
-        });
+    tasks.forEach((task) => {
+      taskManager.addTask(task);
+    });
 
-        newTasks.useActiveTask(persistedTasks.activeTaskName);
-
-        return newTasks;
-      } catch (error) {
-        if (error instanceof Error) {
-          vscode.window.showErrorMessage(
-            'Error loading taskmarks: ' + error.toString() + ' Using "default"'
-          );
-        }
-        return newTasks;
-      }
-    }
-    return newTasks;
+    taskManager.useActiveTask(activeTaskName);
   }
 
   public static saveTasks(): void {
@@ -56,18 +36,18 @@ export class Persist {
       fs.mkdirSync(path.dirname(taskmarksFile));
     }
 
-    const persistTaskArray: Array<IPersistTask> = [];
+    const persistTaskArray: IPersistTask[] = [];
 
-    this.tasks.allTasks.forEach((task) => {
+    this.taskManager.allTasks.forEach((task) => {
       const persistTask: IPersistTask = this.persistTask(task);
       persistTaskArray.push(persistTask);
     });
 
-    if (!this.tasks.activeTask) {
+    if (!this.taskManager.activeTask) {
       return;
     }
     const persistTasks: IPersistTasks = {
-      activeTaskName: this.tasks.activeTask.name,
+      activeTaskName: this.taskManager.activeTask.name,
       tasks: persistTaskArray,
     };
 
@@ -93,17 +73,6 @@ export class Persist {
     return persistedTask;
   }
 
-  // private static persistedToTask(persistedTask: IPersistTask): Task {
-  //   const task = new Task(persistedTask.name);
-  //   //this.tasks.use(persistedTask.name);
-  //   persistedTask.files.forEach((persistedFile) => {
-  //     const file: File = new File(persistedFile.filepath, -1);
-  //     file.setMarksFromPersist(persistedFile.marks);
-  //     task.files.push(file);
-  //   });
-  //   return task;
-  // }
-
   public static get tasksDataFilePath(): string {
     if (!this._tasksDataFilePath) {
       if (!vscode.workspace.workspaceFolders) {
@@ -121,10 +90,10 @@ export class Persist {
   }
 
   public static copyToClipboard(): void {
-    if (!this.tasks.activeTask) {
+    if (!this.taskManager.activeTask) {
       return;
     }
-    const persistedActiveTask = this.persistTask(this.tasks.activeTask);
+    const persistedActiveTask = this.persistTask(this.taskManager.activeTask);
 
     const activeTaskString = JSON.stringify(persistedActiveTask);
 
@@ -145,7 +114,7 @@ export class Persist {
       const persistedTask = <IPersistTask>JSON.parse(activeTaskString);
       // this.dumpIPersistTask(persistedTask);
 
-      this.tasks.addTask(persistedTask);
+      this.taskManager.addTask(persistedTask);
 
       this.saveTasks();
     } catch (error) {
@@ -155,32 +124,43 @@ export class Persist {
     }
   }
 
-  public static dumpIPersistTask(persistedTask: IPersistTask) {
-    const indent = 0;
-    // console.log('persistedTask.name - ' + persistedTask.name);
-    persistedTask.files.forEach((persistedFile) => {
-      this.dumpIPersistFile(indent, persistedFile);
-    });
-  }
+  // public static dumpIPersistTask(persistedTask: IPersistTask) {
+  //   const indent = 0;
+  //   // console.log('persistedTask.name - ' + persistedTask.name);
+  //   persistedTask.files.forEach((persistedFile) => {
+  //     this.dumpIPersistFile(indent, persistedFile);
+  //   });
+  // }
 
-  public static dumpIPersistFile(indent: number, persistedFile: IPersistFile) {
-    indent++;
-    // eslint-disable-next-line no-console
-    console.log(indent, '------------------------------------------');
-    // eslint-disable-next-line no-console
-    console.log(indent, '-------------- IPersistFile --------------');
-    // eslint-disable-next-line no-console
-    console.log(
-      indent,
-      'persistedTask.name           - ' + persistedFile.filepath
-    );
-    // eslint-disable-next-line no-console
-    console.log(indent + 1, '-------------- Mark --------------');
-    persistedFile.marks.forEach((mark) => {
-      // eslint-disable-next-line no-console
-      console.log(indent + 1, 'mark - ' + mark);
-    });
-    // eslint-disable-next-line no-console
-    console.log(indent, '');
-  }
+  // public static dumpIPersistFile(indent: number, persistedFile: IPersistFile) {
+  //   indent++;
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent, '------------------------------------------');
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent, '-------------- IPersistFile --------------');
+  //   // eslint-disable-next-line no-console
+  //   console.log(
+  //     indent,
+  //     'persistedTask.name           - ' + persistedFile.filepath
+  //   );
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent + 1, '-------------- Mark --------------');
+  //   persistedFile.marks.forEach((mark) => {
+  //     // eslint-disable-next-line no-console
+  //     console.log(indent + 1, 'mark - ' + mark);
+  //   });
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent, '');
+  // }
+
+  // private static persistedToTask(persistedTask: IPersistTask): Task {
+  //   const task = new Task(persistedTask.name);
+  //   //this.tasks.use(persistedTask.name);
+  //   persistedTask.files.forEach((persistedFile) => {
+  //     const file: File = new File(persistedFile.filepath, -1);
+  //     file.setMarksFromPersist(persistedFile.marks);
+  //     task.files.push(file);
+  //   });
+  //   return task;
+  // }
 }

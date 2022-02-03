@@ -6,7 +6,7 @@ import { Persist } from './Persist';
 import { Helper } from './Helper';
 
 export function activate(context: vscode.ExtensionContext) {
-  // let blackList: Array<string> = [];
+  // let blackList: string[] = [];
   // // blackList.push('extension.ts');
   // // blackList.push('File');
   // // blackList.push('Mark');

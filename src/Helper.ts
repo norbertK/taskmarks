@@ -17,7 +17,7 @@ import { PathHelper } from './PathHelper';
 export class Helper {
   private static _activeEditorLineCount: number;
   private static _activeEditor: TextEditor | undefined;
-  private static _tasks: TaskManager;
+  private static taskManager: TaskManager;
 
   static get activeEditor() {
     return this._activeEditor;
@@ -34,8 +34,8 @@ export class Helper {
     const uri: Uri = workspaceFolder.uri;
     PathHelper.basePath = uri.fsPath;
 
-    this._tasks = TaskManager.instance();
-    Persist.initAndLoad(this._tasks);
+    this.taskManager = TaskManager.instance;
+    Persist.initAndLoad(this.taskManager);
 
     DecoratorHelper.initDecorator(context);
 
@@ -69,10 +69,13 @@ export class Helper {
           lastEditorWithChanges = this._activeEditor;
           lastLineCount = this._activeEditorLineCount;
         }
-        if (!this._tasks.activeTask || !this._tasks.activeTask.activeFile) {
+        if (
+          !this.taskManager.activeTask ||
+          !this.taskManager.activeTask.activeFile
+        ) {
           return;
         }
-        const allMarks = this._tasks.activeTask.activeFile.allMarks;
+        const allMarks = this.taskManager.activeTask.activeFile.allMarks;
         if (allMarks.length === 0) {
           return;
         }
@@ -99,7 +102,7 @@ export class Helper {
 
   private static handleSave() {
     workspace.onDidSaveTextDocument((textDocument) => {
-      const activeTask = this._tasks.activeTask;
+      const activeTask = this.taskManager.activeTask;
       if (!activeTask) {
         return;
       }
@@ -117,19 +120,18 @@ export class Helper {
   //SELECT FROM LIST
 
   static async selectMarkFromList() {
-    if (!this._tasks.activeTask) {
+    if (!this.taskManager.activeTask) {
       return;
     }
 
-    const allMarks = this._tasks.activeTask.allMarks.reduce<QuickPickItem[]>(
-      (a, i) => {
-        if (i != null && i.quickPickItem != null) {
-          a.push(i.quickPickItem);
-        }
-        return a;
-      },
-      []
-    );
+    const allMarks = this.taskManager.activeTask.allMarks.reduce<
+      QuickPickItem[]
+    >((a, i) => {
+      if (i != null && i.quickPickItem != null) {
+        a.push(i.quickPickItem);
+      }
+      return a;
+    }, []);
 
     const options: QuickPickOptions = {
       placeHolder: 'select Bookmark',
@@ -148,18 +150,18 @@ export class Helper {
     const options: QuickPickOptions = {
       placeHolder: 'select Task ',
     };
-    const taskNames: Array<string> = [];
-    taskNames.push(this._tasks.activeTask.name);
-    this._tasks.taskNames.forEach((tn) => {
-      if (tn !== this._tasks.activeTask.name) {
+    const taskNames: string[] = [];
+    taskNames.push(this.taskManager.activeTask.name);
+    this.taskManager.taskNames.forEach((tn) => {
+      if (tn !== this.taskManager.activeTask.name) {
         taskNames.push(tn);
       }
     });
     window.showQuickPick(taskNames, options).then((result) => {
       if (result) {
-        this._tasks.useActiveTask(result);
-      } else if (!this._tasks.activeTask) {
-        this._tasks.useActiveTask('default');
+        this.taskManager.useActiveTask(result);
+      } else if (!this.taskManager.activeTask) {
+        this.taskManager.useActiveTask('default');
       }
       Helper.persistActiveFile();
     });
@@ -168,7 +170,7 @@ export class Helper {
   static async createTask() {
     window.showInputBox().then((result) => {
       if (result) {
-        this._tasks.useActiveTask(result);
+        this.taskManager.useActiveTask(result);
         Helper.persistActiveFile();
       }
     });
@@ -176,14 +178,16 @@ export class Helper {
 
   static deleteTask() {
     window
-      .showQuickPick(this._tasks.taskNames, { placeHolder: 'delete Task ' })
+      .showQuickPick(this.taskManager.taskNames, {
+        placeHolder: 'delete Task ',
+      })
       .then((result) => {
         if (result) {
-          this._tasks.useActiveTask(result);
-          this._tasks.delete(result);
+          this.taskManager.useActiveTask(result);
+          this.taskManager.delete(result);
         } else {
-          if (!this._tasks.activeTask) {
-            this._tasks.useActiveTask('default');
+          if (!this.taskManager.activeTask) {
+            this.taskManager.useActiveTask('default');
           }
         }
         Helper.persistActiveFile();
@@ -191,8 +195,8 @@ export class Helper {
   }
 
   private static persistActiveFile() {
-    if (Helper.activeEditor && this._tasks.activeTask) {
-      this._tasks.activeTask.use(Helper.activeEditor.document.fileName);
+    if (Helper.activeEditor && this.taskManager.activeTask) {
+      this.taskManager.activeTask.use(Helper.activeEditor.document.fileName);
     }
     Persist.saveTasks();
     this.refresh();
@@ -204,7 +208,7 @@ export class Helper {
       return;
     }
     const line = activeTextEditor.selection.active.line;
-    this._tasks.nextMark(activeTextEditor.document.fileName, line);
+    this.taskManager.nextMark(activeTextEditor.document.fileName, line);
   }
 
   static async previousMark() {
@@ -213,47 +217,45 @@ export class Helper {
       return;
     }
     const line = activeTextEditor.selection.active.line;
-    this._tasks.previousMark(activeTextEditor.document.fileName, line);
+    this.taskManager.previousMark(activeTextEditor.document.fileName, line);
   }
 
   static async toggleMark() {
-    window.showInputBox({ prompt: 'Enter a mark label' }).then((label) => {
-      const activeTextEditor = window.activeTextEditor;
+    const activeTextEditor = window.activeTextEditor;
 
-      if (!activeTextEditor || !this._tasks.activeTask) {
-        return;
-      }
-      const activeLine = activeTextEditor.selection.active.line;
-      const isDirty = activeTextEditor.document.isDirty;
+    if (!activeTextEditor || !this.taskManager.activeTask) {
+      return;
+    }
+    const activeLine = activeTextEditor.selection.active.line;
+    const isDirty = activeTextEditor.document.isDirty;
 
-      this._tasks.activeTask.toggle(
-        activeTextEditor.document.fileName,
-        activeLine
-      );
+    this.taskManager.activeTask.toggle(
+      activeTextEditor.document.fileName,
+      activeLine
+    );
 
-      if (!isDirty) {
-        Persist.saveTasks();
-      }
+    if (!isDirty) {
+      Persist.saveTasks();
+    }
 
-      this.refresh();
-    });
+    this.refresh();
   }
 
   static changeActiveFile(editor: TextEditor | undefined) {
-    if (this._activeEditor === editor || !this._tasks.activeTask) {
+    if (this._activeEditor === editor || !this.taskManager.activeTask) {
       return;
     }
     this._activeEditor = editor;
     if (editor) {
       this._activeEditorLineCount = editor.document.lineCount;
-      this._tasks.activeTask.use(editor.document.uri.fsPath);
+      this.taskManager.activeTask.use(editor.document.uri.fsPath);
       this.refresh();
     }
   }
 
   static refresh() {
     if (this._activeEditor) {
-      const activeFile = this._tasks.activeTask.activeFile;
+      const activeFile = this.taskManager.activeTask.activeFile;
 
       if (activeFile) {
         DecoratorHelper.refresh(this._activeEditor, activeFile.marks);
