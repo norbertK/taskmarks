@@ -1,6 +1,6 @@
 'use strict';
 
-import * as vscode from 'vscode';
+import { Uri, QuickPickItem, workspace } from 'vscode';
 
 import { File } from './File';
 import { PathHelper } from './PathHelper';
@@ -8,12 +8,21 @@ import { PathHelper } from './PathHelper';
 export class Mark {
   private _isDirty: boolean;
   private _parent: File;
+  private _label = '';
   private _lineNumber: number;
-  private _quickPickItem: vscode.QuickPickItem | undefined;
+  private _quickPickItem: QuickPickItem | undefined;
   private _dirtyLineNumber: number;
-  private _dirtyQuickPickItem: vscode.QuickPickItem | undefined;
+  private _dirtyQuickPickItem: QuickPickItem | undefined;
 
-  public get quickPickItem(): vscode.QuickPickItem | undefined {
+  public constructor(parent: File, lineNumber: number, dirty = true) {
+    this._isDirty = dirty;
+    this._parent = parent;
+    this._lineNumber = -1;
+    this._dirtyLineNumber = -1;
+    this.setLineNumber(lineNumber);
+  }
+
+  public get quickPickItem(): QuickPickItem | undefined {
     if (this._isDirty) {
       return this._dirtyQuickPickItem;
     }
@@ -33,14 +42,6 @@ export class Mark {
 
   public set lineNumber(lineNumber: number) {
     this._isDirty = true;
-    this.setLineNumber(lineNumber);
-  }
-
-  public constructor(parent: File, lineNumber: number, dirty = true) {
-    this._isDirty = dirty;
-    this._parent = parent;
-    this._lineNumber = -1;
-    this._dirtyLineNumber = -1;
     this.setLineNumber(lineNumber);
   }
 
@@ -75,62 +76,60 @@ export class Mark {
 
   public async getQuickPickItem(
     filepath: string,
-    lineNumber: number
-  ): Promise<vscode.QuickPickItem> {
-    return new Promise<vscode.QuickPickItem>((resolve, reject) => {
-      const fullPath = PathHelper.getFullPath(filepath);
-      let quickPickItem: vscode.QuickPickItem;
+    lineNumber: number | null
+  ): Promise<QuickPickItem> {
+    if (lineNumber == null) {
+      throw new Error(`Mark not set! - ${filepath}`);
+    }
 
-      if (!fullPath) {
-        reject('File not found! - ' + filepath);
-        return;
+    return new Promise<QuickPickItem>((res) => {
+      const fullPath = PathHelper.getFullPath(filepath);
+      if (fullPath == null) {
+        throw new Error(`File not found! - ${filepath}`);
       }
-      if (lineNumber == null) {
-        reject('Mark not set! - ' + filepath);
-        return;
-      }
-      const uri: vscode.Uri = vscode.Uri.file(fullPath);
-      vscode.workspace.openTextDocument(uri).then((doc) => {
+      const uri = Uri.file(fullPath);
+
+      workspace.openTextDocument(uri).then((doc) => {
         if (lineNumber <= doc.lineCount) {
           const lineText = doc.lineAt(lineNumber).text;
-          quickPickItem = {
+          const quickPickItem: QuickPickItem = {
             label: lineNumber.toString(),
-            description: lineText,
+            description: this._label ? this._label : lineText,
             detail: fullPath,
           };
-          resolve(quickPickItem);
+          res(quickPickItem);
         }
       });
     });
   }
 
-  public dumpToLog(indent: number): void {
-    indent++;
-    // eslint-disable-next-line no-console
-    console.log(indent, '--------------------------');
-    // eslint-disable-next-line no-console
-    console.log(indent, '---------- Mark ----------');
-    // eslint-disable-next-line no-console
-    console.log(indent, '_isDirty            - ' + this._isDirty);
-    if (this._isDirty) {
-      // eslint-disable-next-line no-console
-      console.log(
-        indent,
-        '_dirtyLineNumber    - ' +
-          this._dirtyLineNumber +
-          '(_lineNumber === ' +
-          this._lineNumber +
-          ')'
-      );
-      // eslint-disable-next-line no-console
-      console.log(indent, '_dirtyQuickPickItem - ' + this._dirtyQuickPickItem);
-    } else {
-      // eslint-disable-next-line no-console
-      console.log(indent, '_lineNumber         - ' + this._lineNumber);
-      // eslint-disable-next-line no-console
-      console.log(indent, '_quickPickItem      - ' + this._quickPickItem);
-    }
-    // eslint-disable-next-line no-console
-    console.log(indent, '');
-  }
+  // public dumpToLog(indent: number): void {
+  //   indent++;
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent, '--------------------------');
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent, '---------- Mark ----------');
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent, '_isDirty            - ' + this._isDirty);
+  //   if (this._isDirty) {
+  //     // eslint-disable-next-line no-console
+  //     console.log(
+  //       indent,
+  //       '_dirtyLineNumber    - ' +
+  //         this._dirtyLineNumber +
+  //         '(_lineNumber === ' +
+  //         this._lineNumber +
+  //         ')'
+  //     );
+  //     // eslint-disable-next-line no-console
+  //     console.log(indent, '_dirtyQuickPickItem - ' + this._dirtyQuickPickItem);
+  //   } else {
+  //     // eslint-disable-next-line no-console
+  //     console.log(indent, '_lineNumber         - ' + this._lineNumber);
+  //     // eslint-disable-next-line no-console
+  //     console.log(indent, '_quickPickItem      - ' + this._quickPickItem);
+  //   }
+  //   // eslint-disable-next-line no-console
+  //   console.log(indent, '');
+  // }
 }

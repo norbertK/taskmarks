@@ -20,32 +20,28 @@ export class DecoratorHelper {
     );
   }
 
-  public static refresh(activeEditor: vscode.TextEditor, marks: Array<number>) {
-    if (!activeEditor) {
-      return;
-    }
-    const ranges: vscode.Range[] = [];
+  public static refresh(activeEditor: vscode.TextEditor, marks: number[]) {
+    if (activeEditor == null) return;
 
-    // eslint-disable-next-line prefer-const
-    for (let mark of marks) {
-      const vscRange = new vscode.Range(mark, 0, mark, 0);
-      ranges.push(vscRange);
-    }
+    const ranges = marks.map((mark) => {
+      return new vscode.Range(mark, 0, mark, 0);
+    });
 
     activeEditor.setDecorations(this._vscTextEditorDecorationType, ranges);
   }
 
   public static showLine(line: number) {
     const activeTextEditor = vscode.window.activeTextEditor;
-    if (!activeTextEditor) {
-      return;
-    }
+    if (activeTextEditor == null) return;
+
     let textEditorRevealType: vscode.TextEditorRevealType =
       vscode.TextEditorRevealType.InCenter;
+
     if (line === activeTextEditor.selection.active.line) {
       textEditorRevealType =
         vscode.TextEditorRevealType.InCenterIfOutsideViewport;
     }
+
     const selection = new vscode.Selection(line, 0, line, 0);
     activeTextEditor.selection = selection;
     activeTextEditor.revealRange(selection, textEditorRevealType);

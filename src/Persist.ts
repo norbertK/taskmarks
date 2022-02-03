@@ -6,16 +6,16 @@ import fs = require('fs');
 import path = require('path');
 import { write, readSync } from 'clipboardy';
 
-import { Tasks } from './Tasks';
+import { TaskManager } from './TaskManager';
 import { Task } from './Task';
 
-import type { IPersistFile, IPersistTask, IPersistTasks } from './Models';
+import type { IPersistFile, IPersistTask, IPersistTasks } from './types';
 
 export class Persist {
-  private static tasks: Tasks;
+  private static tasks: TaskManager;
   private static _tasksDataFilePath: string;
 
-  public static initAndLoad(newTasks: Tasks): Tasks {
+  public static initAndLoad(newTasks: TaskManager): TaskManager {
     this.tasks = newTasks;
 
     const taskmarksFile = Persist.tasksDataFilePath;
@@ -35,7 +35,7 @@ export class Persist {
           newTasks.addTask(persistedTask);
         });
 
-        newTasks.use(persistedTasks.activeTaskName);
+        newTasks.useActiveTask(persistedTasks.activeTaskName);
 
         return newTasks;
       } catch (error) {

@@ -4,7 +4,7 @@ import { File } from './File';
 import { Mark } from './Mark';
 import { Ring } from './Ring';
 import { PathHelper } from './PathHelper';
-import type { IPersistFile, IPersistTask } from './Models';
+import type { IPersistFile, IPersistTask } from './types';
 
 export class Task {
   private _name: string;

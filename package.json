@@ -68,32 +68,6 @@
         "command": "taskmark.previousMark",
         "title": "Taskmarks: Find previous Bookmark"
       }
-    ],
-    "keybindings": [
-      {
-        "command": "taskmark.previousMark",
-        "key": "ctrl+shift+r",
-        "mac": "cmd+shift+r",
-        "when": "editorTextFocus"
-      },
-      {
-        "command": "taskmark.selectTask",
-        "key": "ctrl+shift+i",
-        "mac": "cmd+shift+i",
-        "when": "editorTextFocus"
-      },
-      {
-        "command": "taskmark.toggleMark",
-        "key": "ctrl+shift+t",
-        "mac": "cmd+shift+t",
-        "when": "editorTextFocus"
-      },
-      {
-        "command": "taskmark.nextMark",
-        "key": "ctrl+shift+z",
-        "mac": "cmd+shift+z",
-        "when": "editorTextFocus"
-      }
     ]
   },
   "scripts": {

@@ -15,13 +15,14 @@
   "rules": {
     "@typescript-eslint/naming-convention": "warn",
     "@typescript-eslint/explicit-module-boundary-types": "off",
-    "@typescript-eslint/semi": "warn",
-    "curly": "warn",
+    "@typescript-eslint/semi": "off",
+    "curly": "off",
+    "prettier/prettier": "off",
+    "prefer-const": "off",
     "eqeqeq": "off",
     "no-throw-literal": "warn",
     "no-debugger": "off",
     "semi": "off",
-    "no-console": 1, // Means warning
-    "prettier/prettier": 2 // Means error
+    "no-console": 1 // Means warning
   }
 }

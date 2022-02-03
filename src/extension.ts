@@ -1,11 +1,9 @@
-/* eslint-disable prefer-const */
 'use strict';
 
 import * as vscode from 'vscode';
 
 import { Persist } from './Persist';
 import { Helper } from './Helper';
-// import { DebLog } from './DebLog';
 
 export function activate(context: vscode.ExtensionContext) {
   // let blackList: Array<string> = [];
@@ -102,6 +100,6 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {
-  return Promise.resolve();
+export async function deactivate() {
+  return;
 }

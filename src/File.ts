@@ -1,13 +1,13 @@
 'use strict';
 
 import * as _ from 'lodash';
-import type { IPersistFile } from './Models';
+import type { IPersistFile } from './types';
 
 import { Mark } from './Mark';
 
 export class File {
   private _filepath: string;
-  private _marks: Array<Mark> = [];
+  private _marks: Mark[] = [];
 
   public get filepath(): string {
     return this._filepath;
