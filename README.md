@@ -1,6 +1,6 @@
 ## Intro
 
-- This is a fork from Klein Norbert's Taskmarks (Little helper for teams to navigate through files. https://github.com/norbertK/taskmarks)
+- Integrated fork of Brent Whitehead (https://github.com/bheadwhite/taskmarks)
 
 # Taskmarks
 
