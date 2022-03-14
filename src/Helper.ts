@@ -1,13 +1,5 @@
-import {
-  window,
-  workspace,
-  ExtensionContext,
-  QuickPickItem,
-  QuickPickOptions,
-  TextEditor,
-  Uri,
-  WorkspaceFolder,
-} from 'vscode';
+import * as vscode from 'vscode';
+
 
 import { TaskManager } from './TaskManager';
 import { Persist } from './Persist';
@@ -16,22 +8,21 @@ import { PathHelper } from './PathHelper';
 
 export class Helper {
   private static _activeEditorLineCount: number;
-  private static _activeEditor: TextEditor | undefined;
+  private static _activeEditor: vscode.TextEditor | undefined;
   private static taskManager: TaskManager;
 
   static get activeEditor() {
     return this._activeEditor;
   }
 
-  static init(context: ExtensionContext) {
-    const workspaceFolders = workspace.workspaceFolders;
+  static init(context: vscode.ExtensionContext) {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders) {
-      // window.showErrorMessage('Could not find a workspace');
       throw new Error('Could not find a workspace');
     }
 
-    const workspaceFolder: WorkspaceFolder = workspaceFolders[0];
-    const uri: Uri = workspaceFolder.uri;
+    const workspaceFolder: vscode.WorkspaceFolder = workspaceFolders[0];
+    const uri: vscode.Uri = workspaceFolder.uri;
     PathHelper.basePath = uri.fsPath;
 
     console.log('fsPath', uri.fsPath);
@@ -51,19 +42,19 @@ export class Helper {
   }
 
   private static handleEditorChange() {
-    const activeTextEditor = window.activeTextEditor;
+    const activeTextEditor = vscode.window.activeTextEditor;
     if (activeTextEditor) {
       this.changeActiveFile(activeTextEditor);
     }
-    window.onDidChangeActiveTextEditor((editor) => {
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
       this.changeActiveFile(editor);
     }, null);
   }
 
-  private static handleChange(context: ExtensionContext) {
-    let lastEditorWithChanges: TextEditor | undefined = undefined;
+  private static handleChange(context: vscode.ExtensionContext) {
+    let lastEditorWithChanges: vscode.TextEditor | undefined = undefined;
     let lastLineCount: number;
-    workspace.onDidChangeTextDocument(
+    vscode.workspace.onDidChangeTextDocument(
       (event) => {
         if (
           !this._activeEditor ||
@@ -107,7 +98,7 @@ export class Helper {
   }
 
   private static handleSave() {
-    workspace.onDidSaveTextDocument((textDocument) => {
+    vscode.workspace.onDidSaveTextDocument((textDocument) => {
       const activeTask = this.taskManager.activeTask;
       if (!activeTask) {
         return;
@@ -131,7 +122,7 @@ export class Helper {
     }
 
     const allMarks = this.taskManager.activeTask.allMarks.reduce<
-      QuickPickItem[]
+      vscode.QuickPickItem[]
     >((a, i) => {
       if (i != null && i.quickPickItem != null) {
         a.push(i.quickPickItem);
@@ -139,11 +130,11 @@ export class Helper {
       return a;
     }, []);
 
-    const options: QuickPickOptions = {
+    const options: vscode.QuickPickOptions = {
       placeHolder: 'select Bookmark',
     };
 
-    window.showQuickPick(allMarks, options).then((result) => {
+    vscode.window.showQuickPick(allMarks, options).then((result) => {
       if (result && result.detail) {
         const mark = Number.parseInt(result.label);
 
@@ -153,7 +144,7 @@ export class Helper {
   }
 
   static async selectTask() {
-    const options: QuickPickOptions = {
+    const options: vscode.QuickPickOptions = {
       placeHolder: 'select Task ',
     };
     const taskNames: string[] = [];
@@ -163,7 +154,7 @@ export class Helper {
         taskNames.push(tn);
       }
     });
-    window.showQuickPick(taskNames, options).then((result) => {
+    vscode.window.showQuickPick(taskNames, options).then((result) => {
       if (result) {
         this.taskManager.useActiveTask(result);
       } else if (!this.taskManager.activeTask) {
@@ -174,7 +165,7 @@ export class Helper {
   }
 
   static async createTask() {
-    window.showInputBox().then((result) => {
+    vscode.window.showInputBox().then((result) => {
       if (result) {
         this.taskManager.useActiveTask(result);
         Helper.persistActiveFile();
@@ -183,7 +174,7 @@ export class Helper {
   }
 
   static deleteTask() {
-    window
+    vscode.window
       .showQuickPick(this.taskManager.taskNames, {
         placeHolder: 'delete Task ',
       })
@@ -209,7 +200,7 @@ export class Helper {
   }
 
   static async nextMark() {
-    const activeTextEditor = window.activeTextEditor;
+    const activeTextEditor = vscode.window.activeTextEditor;
     if (!activeTextEditor) {
       return;
     }
@@ -218,7 +209,7 @@ export class Helper {
   }
 
   static async previousMark() {
-    const activeTextEditor = window.activeTextEditor;
+    const activeTextEditor = vscode.window.activeTextEditor;
     if (!activeTextEditor) {
       return;
     }
@@ -227,7 +218,7 @@ export class Helper {
   }
 
   static async toggleMark() {
-    const activeTextEditor = window.activeTextEditor;
+    const activeTextEditor = vscode.window.activeTextEditor;
 
     if (!activeTextEditor || !this.taskManager.activeTask) {
       return;
@@ -247,7 +238,7 @@ export class Helper {
     this.refresh();
   }
 
-  static changeActiveFile(editor: TextEditor | undefined) {
+  static changeActiveFile(editor: vscode.TextEditor | undefined) {
     if (this._activeEditor === editor || !this.taskManager.activeTask) {
       return;
     }

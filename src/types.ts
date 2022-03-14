@@ -1,5 +1,3 @@
-'use strict';
-
 export interface IPersistFile {
   filepath: string;
   marks: number[];

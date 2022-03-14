@@ -3,15 +3,15 @@ import { existsSync } from 'fs';
 export class PathHelper {
   private static _basePath: string;
 
-  public static get basePath(): string {
+  static get basePath(): string {
     return this._basePath;
   }
 
-  public static set basePath(basePath: string) {
+  static set basePath(basePath: string) {
     this._basePath = basePath;
   }
 
-  public static getFullPath(filepath: string | undefined): string | undefined {
+  static getFullPath(filepath: string | undefined): string | undefined {
     if (!filepath) {
       return undefined;
     }
@@ -29,7 +29,7 @@ export class PathHelper {
     return undefined;
   }
 
-  public static reducePath(filepath: string): string {
+  static reducePath(filepath: string): string {
     if (filepath.startsWith(this.basePath)) {
       filepath = filepath.substring(this._basePath.length);
     }

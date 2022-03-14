@@ -1,5 +1,3 @@
-'use strict';
-
 import { File } from './File';
 import { Mark } from './Mark';
 import { Ring } from './Ring';
@@ -16,30 +14,30 @@ export class Task {
     this._files = new Ring();
   }
 
-  public get name(): string {
+  get name(): string {
     return this._name;
   }
 
-  public get activeFileName(): string | undefined {
+  get activeFileName(): string | undefined {
     if (this._activeFile) {
       return this._activeFile.filepath;
     }
     return undefined;
   }
 
-  public get activeFile(): File | undefined {
+  get activeFile(): File | undefined {
     return this._activeFile;
   }
 
-  public set activeFile(file: File | undefined) {
+  set activeFile(file: File | undefined) {
     this._activeFile = file;
   }
 
-  public get files(): Ring<File> {
+  get files(): Ring<File> {
     return this._files;
   }
 
-  public get allMarks(): Mark[] {
+  get allMarks(): Mark[] {
     return this._files.reduce<Mark[]>((a, file) => {
       if (file != null) {
         const fileMarks = file.allMarks;
@@ -49,7 +47,7 @@ export class Task {
     }, []);
   }
 
-  public mergeWith(taskToMerge: IPersistTask): Task {
+  mergeWith(taskToMerge: IPersistTask): Task {
     const filesToAdd: IPersistFile[] = [];
 
     taskToMerge.files.forEach((fileToMerge) => {
@@ -74,7 +72,7 @@ export class Task {
     return this;
   }
 
-  public toggle(path: string, lineNumber: number): boolean {
+  toggle(path: string, lineNumber: number): boolean {
     const reducedPath = PathHelper.reducePath(path);
 
     let file: File | undefined = this._files.find((fm) => {
@@ -93,7 +91,7 @@ export class Task {
     return file.hasMarks();
   }
 
-  public use(path: string): File {
+  use(path: string): File {
     const filePath = PathHelper.reducePath(path);
 
     let file: File | undefined = this.getFile(filePath);
@@ -108,7 +106,7 @@ export class Task {
     return file;
   }
 
-  public getFile(reducedFilePath: string): File | undefined {
+  getFile(reducedFilePath: string): File | undefined {
     const fileMark: File | undefined = this._files.find((fm) => {
       if (fm) {
         return fm.filepath === reducedFilePath;
@@ -118,7 +116,7 @@ export class Task {
     return fileMark;
   }
 
-  // public dumpToLog(indent: number): void {
+  // dumpToLog(indent: number): void {
   //   indent++;
   //   // console.log(indent, '--------------------------');
   //   // console.log(indent, '---------- Task ----------');

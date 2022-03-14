@@ -1,9 +1,6 @@
-'use strict';
-
 import * as vscode from 'vscode';
-
-import { Persist } from './Persist';
 import { Helper } from './Helper';
+import { Persist } from './Persist';
 
 export function activate(context: vscode.ExtensionContext) {
   Helper.init(context);

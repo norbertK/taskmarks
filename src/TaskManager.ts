@@ -1,8 +1,6 @@
-'use strict';
-
 import { Task } from './Task';
 import { DecoratorHelper } from './DecoratorHelper';
-import { StatusBarItem, window, StatusBarAlignment } from 'vscode';
+import * as vscode from 'vscode';
 import type { IPersistTask } from './types';
 
 export class TaskManager {
@@ -19,11 +17,13 @@ export class TaskManager {
   allTasks: Task[];
 
   private _activeTask: Task;
-  private _statusBarItem: StatusBarItem;
+  private _statusBarItem: vscode.StatusBarItem;
 
   constructor() {
     this.allTasks = [];
-    this._statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right);
+    this._statusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Right
+    );
     this._activeTask = this.useActiveTask();
   }
 

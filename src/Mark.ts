@@ -1,6 +1,4 @@
-'use strict';
-
-import { Uri, QuickPickItem, workspace } from 'vscode';
+import * as vscode from 'vscode';
 
 import { File } from './File';
 import { PathHelper } from './PathHelper';
@@ -10,11 +8,11 @@ export class Mark {
   private _parent: File;
   private _label = '';
   private _lineNumber: number;
-  private _quickPickItem: QuickPickItem | undefined;
+  private _quickPickItem: vscode.QuickPickItem | undefined;
   private _dirtyLineNumber: number;
-  private _dirtyQuickPickItem: QuickPickItem | undefined;
+  private _dirtyQuickPickItem: vscode.QuickPickItem | undefined;
 
-  public constructor(parent: File, lineNumber: number, dirty = true) {
+  constructor(parent: File, lineNumber: number, dirty = true) {
     this._isDirty = dirty;
     this._parent = parent;
     this._lineNumber = -1;
@@ -22,25 +20,25 @@ export class Mark {
     this.setLineNumber(lineNumber);
   }
 
-  public get quickPickItem(): QuickPickItem | undefined {
+  get quickPickItem(): vscode.QuickPickItem | undefined {
     if (this._isDirty) {
       return this._dirtyQuickPickItem;
     }
     return this._quickPickItem;
   }
 
-  public get lineNumberForPersist(): number | undefined {
+  get lineNumberForPersist(): number | undefined {
     return this._lineNumber;
   }
 
-  public get lineNumber(): number {
+  get lineNumber(): number {
     if (this._isDirty) {
       return this._dirtyLineNumber;
     }
     return this._lineNumber;
   }
 
-  public set lineNumber(lineNumber: number) {
+  set lineNumber(lineNumber: number) {
     this._isDirty = true;
     this.setLineNumber(lineNumber);
   }
@@ -62,7 +60,7 @@ export class Mark {
       });
   }
 
-  public unDirty() {
+  unDirty() {
     if (this._isDirty) {
       this._quickPickItem = this._dirtyQuickPickItem;
       this._dirtyQuickPickItem = undefined;
@@ -74,25 +72,25 @@ export class Mark {
     }
   }
 
-  public async getQuickPickItem(
+  async getQuickPickItem(
     filepath: string,
     lineNumber: number | null
-  ): Promise<QuickPickItem> {
+  ): Promise<vscode.QuickPickItem> {
     if (lineNumber == null) {
       throw new Error(`Mark not set! - ${filepath}`);
     }
 
-    return new Promise<QuickPickItem>((res) => {
+    return new Promise<vscode.QuickPickItem>((res) => {
       const fullPath = PathHelper.getFullPath(filepath);
       if (fullPath == null) {
         throw new Error(`File not found! - ${filepath}`);
       }
-      const uri = Uri.file(fullPath);
+      const uri = vscode.Uri.file(fullPath);
 
-      workspace.openTextDocument(uri).then((doc) => {
+      vscode.workspace.openTextDocument(uri).then((doc) => {
         if (lineNumber <= doc.lineCount) {
           const lineText = doc.lineAt(lineNumber).text;
-          const quickPickItem: QuickPickItem = {
+          const quickPickItem: vscode.QuickPickItem = {
             label: lineNumber.toString(),
             description: this._label ? this._label : lineText,
             detail: fullPath,
@@ -103,7 +101,7 @@ export class Mark {
     });
   }
 
-  // public dumpToLog(indent: number): void {
+  // dumpToLog(indent: number): void {
   //   indent++;
   //   // eslint-disable-next-line no-console
   //   console.log(indent, '--------------------------');

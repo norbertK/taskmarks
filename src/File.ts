@@ -1,5 +1,3 @@
-'use strict';
-
 import * as _ from 'lodash';
 import type { IPersistFile } from './types';
 
@@ -9,15 +7,15 @@ export class File {
   private _filepath: string;
   private _marks: Mark[] = [];
 
-  public get filepath(): string {
+  get filepath(): string {
     return this._filepath;
   }
 
-  public get allMarks(): Mark[] {
+  get allMarks(): Mark[] {
     return this._marks;
   }
 
-  public get marks(): number[] {
+  get marks(): number[] {
     const marks: number[] = [];
     this._marks.forEach((mark) => {
       if (mark.lineNumber !== undefined) {
@@ -28,7 +26,7 @@ export class File {
     return marks;
   }
 
-  public get marksForPersist(): number[] {
+  get marksForPersist(): number[] {
     const marks: number[] = [];
     this._marks.forEach((mark) => {
       if (mark.lineNumberForPersist !== undefined) {
@@ -51,7 +49,7 @@ export class File {
     this.toggleTask(lineNumber);
   }
 
-  public mergeWith(file: IPersistFile): File {
+  mergeWith(file: IPersistFile): File {
     const diff = _.difference(file.marks, this.marks);
     diff.forEach((mark) => {
       this.addMark(mark);
@@ -60,17 +58,17 @@ export class File {
     return this;
   }
 
-  public setMarksFromPersist(marks: number[]) {
+  setMarksFromPersist(marks: number[]) {
     marks.forEach(async (mark) => {
       this.addMark(mark);
     });
   }
 
-  public addMark(mark: number) {
+  addMark(mark: number) {
     this._marks.push(new Mark(this, mark, false));
   }
 
-  public toggleTask(lineNumber: number): boolean {
+  toggleTask(lineNumber: number): boolean {
     const found = this._marks.findIndex((m) => m.lineNumber === lineNumber);
 
     if (found > -1) {
@@ -82,15 +80,15 @@ export class File {
     return this.hasMarks();
   }
 
-  public unDirty(): void {
+  unDirty(): void {
     this._marks.forEach((mark) => mark.unDirty());
   }
 
-  public hasMarks(): boolean {
+  hasMarks(): boolean {
     return this._marks.length > 0;
   }
 
-  // public dumpToLog(indent: number): void {
+  // dumpToLog(indent: number): void {
   //   indent++;
   //   // eslint-disable-next-line no-console
   //   console.log(indent, '--------------------------');

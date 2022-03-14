@@ -5,22 +5,21 @@ export class DecoratorHelper {
   private static _iconPath: string;
   private static _vscTextEditorDecorationType: vscode.TextEditorDecorationType;
 
-  public static get iconPath() {
+  static get iconPath() {
     return this._iconPath;
   }
 
-  public static initDecorator(context: vscode.ExtensionContext) {
+  static initDecorator(context: vscode.ExtensionContext) {
     this._iconPath = context.asAbsolutePath('images/bookmark.svg');
-    this._vscTextEditorDecorationType = vscode.window.createTextEditorDecorationType(
-      {
+    this._vscTextEditorDecorationType =
+      vscode.window.createTextEditorDecorationType({
         gutterIconPath: this._iconPath,
         overviewRulerLane: vscode.OverviewRulerLane.Full,
         overviewRulerColor: 'rgba(196, 196, 0, 0.8)',
-      }
-    );
+      });
   }
 
-  public static refresh(activeEditor: vscode.TextEditor, marks: number[]) {
+  static refresh(activeEditor: vscode.TextEditor, marks: number[]) {
     if (activeEditor == null) return;
 
     const ranges = marks.map((mark) => {
@@ -30,7 +29,7 @@ export class DecoratorHelper {
     activeEditor.setDecorations(this._vscTextEditorDecorationType, ranges);
   }
 
-  public static showLine(line: number) {
+  static showLine(line: number) {
     const activeTextEditor = vscode.window.activeTextEditor;
     if (activeTextEditor == null) return;
 
@@ -47,7 +46,7 @@ export class DecoratorHelper {
     activeTextEditor.revealRange(selection, textEditorRevealType);
   }
 
-  public static openAndShow(filepath: string, mark: number): void {
+  static openAndShow(filepath: string, mark: number): void {
     const fullPath = PathHelper.getFullPath(filepath);
     if (!fullPath) {
       return;
