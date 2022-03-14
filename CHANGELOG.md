@@ -2,6 +2,10 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
+## [0.8.5] - 2022-03-14
+
+- integrated fork ( https://github.com/bheadwhite/taskmarks )
+
 ## [0.8.0] - 2022-01-29
 
 ## forked
