@@ -1,4 +1,4 @@
-import fs = require('fs');
+import { existsSync } from 'fs';
 
 export class PathHelper {
   private static _basePath: string;
@@ -17,11 +17,11 @@ export class PathHelper {
     }
 
     const pathWithBasePath = PathHelper.basePath + filepath;
-    const pwbExists = fs.existsSync(pathWithBasePath);
+    const pwbExists = existsSync(pathWithBasePath);
     if (pwbExists) {
       return pathWithBasePath;
     }
-    const pExists = fs.existsSync(filepath);
+    const pExists = existsSync(filepath);
     if (pExists) {
       return filepath;
     }

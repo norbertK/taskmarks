@@ -1,15 +1,15 @@
 'use strict';
 
-import * as vscode from 'vscode';
+import { window, workspace } from 'vscode';
 
-import fs = require('fs');
-import path = require('path');
 import { write, readSync } from 'clipboardy';
 
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
 
 import type { IPersistTask, IPersistTasks } from './types';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { dirname, join } from 'path';
 
 export class Persist {
   private static taskManager: TaskManager;
@@ -18,9 +18,9 @@ export class Persist {
   public static initAndLoad(taskManager: TaskManager) {
     this.taskManager = taskManager;
     const taskmarksFile = Persist.tasksDataFilePath;
-    if (taskmarksFile == null || !fs.existsSync(taskmarksFile)) return;
+    if (taskmarksFile == null || !existsSync(taskmarksFile)) return;
 
-    const stringFromFile = fs.readFileSync(taskmarksFile).toString();
+    const stringFromFile = readFileSync(taskmarksFile).toString();
     const { tasks, activeTaskName }: IPersistTasks = JSON.parse(stringFromFile);
 
     tasks.forEach((task) => {
@@ -32,8 +32,8 @@ export class Persist {
 
   public static saveTasks(): void {
     const taskmarksFile = Persist.tasksDataFilePath;
-    if (!taskmarksFile || !fs.existsSync(path.dirname(taskmarksFile))) {
-      fs.mkdirSync(path.dirname(taskmarksFile));
+    if (!taskmarksFile || !existsSync(dirname(taskmarksFile))) {
+      mkdirSync(dirname(taskmarksFile));
     }
 
     const persistTaskArray: IPersistTask[] = [];
@@ -51,7 +51,7 @@ export class Persist {
       tasks: persistTaskArray,
     };
 
-    fs.writeFileSync(taskmarksFile, JSON.stringify(persistTasks, null, '\t'));
+    writeFileSync(taskmarksFile, JSON.stringify(persistTasks, null, '\t'));
   }
 
   private static persistTask(task: Task): IPersistTask {
@@ -75,12 +75,12 @@ export class Persist {
 
   public static get tasksDataFilePath(): string {
     if (!this._tasksDataFilePath) {
-      if (!vscode.workspace.workspaceFolders) {
-        vscode.window.showErrorMessage('Error loading vscode.workspace! Stop!');
+      if (!workspace.workspaceFolders) {
+        window.showErrorMessage('Error loading vscode.workspace! Stop!');
         throw new Error('Error loading vscode.workspace! Stop!');
       }
-      this._tasksDataFilePath = path.join(
-        vscode.workspace.workspaceFolders[0].uri.fsPath,
+      this._tasksDataFilePath = join(
+        workspace.workspaceFolders[0].uri.fsPath,
         '.vscode',
         'taskmarks.json'
       );
@@ -104,9 +104,7 @@ export class Persist {
     const activeTaskString = readSync();
 
     if (!activeTaskString) {
-      vscode.window.showInformationMessage(
-        'Could not paste Task from Clipboard.'
-      );
+      window.showInformationMessage('Could not paste Task from Clipboard.');
       return;
     }
 
@@ -118,9 +116,7 @@ export class Persist {
 
       this.saveTasks();
     } catch (error) {
-      vscode.window.showInformationMessage(
-        'PasteFromClipboar failed with ' + error
-      );
+      window.showInformationMessage('PasteFromClipboar failed with ' + error);
     }
   }
 

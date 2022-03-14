@@ -6,15 +6,7 @@ import { StatusBarItem, window, StatusBarAlignment } from 'vscode';
 import type { IPersistTask } from './types';
 
 export class TaskManager {
-  allTasks: Task[];
   private static _instance: TaskManager;
-  private _activeTask: Task;
-  private _statusBarItem: StatusBarItem;
-  constructor() {
-    this.allTasks = [];
-    this._statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right);
-    this._activeTask = this.useActiveTask();
-  }
 
   static get instance(): TaskManager {
     if (this._instance == null) {
@@ -24,9 +16,21 @@ export class TaskManager {
     return this._instance;
   }
 
+  allTasks: Task[];
+
+  private _activeTask: Task;
+  private _statusBarItem: StatusBarItem;
+
+  constructor() {
+    this.allTasks = [];
+    this._statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right);
+    this._activeTask = this.useActiveTask();
+  }
+
   get activeTask(): Task {
     return this._activeTask;
   }
+
   get taskNames(): string[] {
     return this.allTasks.map((task) => task.name);
   }

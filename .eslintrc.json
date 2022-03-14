@@ -23,6 +23,6 @@
     "no-throw-literal": "warn",
     "no-debugger": "off",
     "semi": "off",
-    "no-console": 1 // Means warning
+    "no-console": 0
   }
 }

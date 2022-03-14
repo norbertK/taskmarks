@@ -6,17 +6,6 @@ import { Persist } from './Persist';
 import { Helper } from './Helper';
 
 export function activate(context: vscode.ExtensionContext) {
-  // let blackList: string[] = [];
-  // // blackList.push('extension.ts');
-  // // blackList.push('File');
-  // // blackList.push('Mark');
-  // // blackList.push('Persist');
-  // // blackList.push('Task');
-  // // blackList.push('Tasks');
-  // // blackList.push('Helper');
-
-  // DebLog.initLogfile('C:\\_work\\log\\debLog.txt', false, blackList);
-
   Helper.init(context);
 
   let selectMarkFromListDisposable = vscode.commands.registerCommand(
@@ -43,11 +32,6 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(createTaskDisposable);
 
-  // let renameTaskDisposable = vscode.commands.registerCommand('taskmark.renameTask', () => {
-  //   Helper.renameTask();
-  // });
-  // context.subscriptions.push(renameTaskDisposable);
-
   let deleteTaskDisposable = vscode.commands.registerCommand(
     'taskmark.deleteTask',
     () => {
@@ -68,7 +52,6 @@ export function activate(context: vscode.ExtensionContext) {
     'taskmark.copyToClipboard',
     () => {
       Persist.copyToClipboard();
-      // Helper.dumpTasksToLog();
     }
   );
   context.subscriptions.push(copyToClipboardDisposable);

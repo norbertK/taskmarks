@@ -1,6 +1,6 @@
 ## Intro
 
-- Integrated fork of Brent Whitehead (https://github.com/bheadwhite/taskmarks)
+- Integrated fork from Brent Whitehead (https://github.com/bheadwhite/taskmarks)
 
 # Taskmarks
 

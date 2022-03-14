@@ -34,6 +34,12 @@ export class Helper {
     const uri: Uri = workspaceFolder.uri;
     PathHelper.basePath = uri.fsPath;
 
+    console.log('fsPath', uri.fsPath);
+    console.log('authority', uri.authority);
+    console.log('path', uri.path);
+    console.log('fragment', uri.fragment);
+    console.log('query', uri.query);
+
     this.taskManager = TaskManager.instance;
     Persist.initAndLoad(this.taskManager);
 
