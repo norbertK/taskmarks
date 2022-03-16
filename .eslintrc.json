@@ -14,15 +14,20 @@
   ],
   "rules": {
     "@typescript-eslint/naming-convention": "warn",
-    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "no-throw-literal": "warn",
+    "semi": "off",
     "@typescript-eslint/semi": "off",
     "curly": "off",
+    "eqeqeq": "off",
     "prettier/prettier": "off",
     "prefer-const": "off",
-    "eqeqeq": "off",
-    "no-throw-literal": "warn",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
     "no-debugger": "off",
-    "semi": "off",
     "no-console": 0
-  }
+  },
+    "ignorePatterns": [
+        "out",
+        "dist",
+        "**/*.d.ts"
+    ]
 }
