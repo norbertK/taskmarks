@@ -107,10 +107,9 @@
     "npm-check-updates": "^12.5.3",
     "prettier": "2.5.1",
     "prettier-eslint-cli": "5.0.1",
-    "esbuild": "^0.14.26",
+    "esbuild": "^0.14.27",
     "@types/clipboardy": "2.0.1",
-    "@types/lodash": "^4.14.179"
-
+    "@types/lodash": "^4.14.180"
   },
   "repository": {
     "type": "git",

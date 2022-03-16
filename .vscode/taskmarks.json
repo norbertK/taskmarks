@@ -38,6 +38,20 @@
 					]
 				},
 				{
+					"filepath": "\\src\\Persist.ts",
+					"marks": [
+						17,
+						32
+					]
+				},
+				{
+					"filepath": "\\src\\TaskManager.ts",
+					"marks": [
+						31,
+						50
+					]
+				},
+				{
 					"filepath": "\\src\\taskmarks.test.txt",
 					"marks": [
 						2,
