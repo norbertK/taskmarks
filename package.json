@@ -1,6 +1,6 @@
 {
-  "name": "taskmarks2",
-  "displayName": "Taskmarks2",
+  "name": "taskmarks",
+  "displayName": "Taskmarks",
   "description": "Little helper for teams to navigate through files. Persists bookmarks for different tasks.",
   "version": "0.8.5-beta.2",
   "publisher": "NorbertKlein",
@@ -66,7 +66,8 @@
     "vscode:prepublish": "npm run esbuild-base -- --minify",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
+    "pretest": "pwsh scripts\\fastDelete.ps1 out",
+    "pretestXX": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "jest",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
