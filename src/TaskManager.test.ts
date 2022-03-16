@@ -1,13 +1,13 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { Ring } from '../../Ring';
+import { TaskManager } from './TaskManager';
 
-suite('Ring Test Suite', () => {
-  vscode.window.showInformationMessage('Start Ring tests.');
+suite('TaskManager Test Suite', () => {
+  vscode.window.showInformationMessage('Start TaskManager tests.');
 
-  test('Ring tests', () => {
-    console.log('Init Ring');
-    const testRing = new Ring<string>();
+  test('TaskManager tests', () => {
+    console.log('Init TaskManager');
+    const taskManager = TaskManager.instance;
 
     let current = testRing.current;
     assert.strictEqual(undefined, current);

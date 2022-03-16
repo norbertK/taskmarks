@@ -7,7 +7,9 @@ export class TaskManager {
   private static _instance: TaskManager;
 
   static get instance(): TaskManager {
+    console.log('TaskManager get instance()');
     if (this._instance == null) {
+      console.log('TaskManager get instance() new TaskManager()');
       this._instance = new TaskManager();
     }
 
@@ -19,7 +21,7 @@ export class TaskManager {
   private _activeTask: Task;
   private _statusBarItem: vscode.StatusBarItem;
 
-  constructor() {
+  private constructor() {
     this.allTasks = [];
     this._statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 
-
 import { TaskManager } from './TaskManager';
 import { Persist } from './Persist';
 import { DecoratorHelper } from './DecoratorHelper';
@@ -20,6 +19,8 @@ export class Helper {
     if (!workspaceFolders) {
       throw new Error('Could not find a workspace');
     }
+
+    console.log('Helpers.init()');
 
     const workspaceFolder: vscode.WorkspaceFolder = workspaceFolders[0];
     const uri: vscode.Uri = workspaceFolder.uri;

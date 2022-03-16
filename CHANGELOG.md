@@ -2,7 +2,13 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
-## [0.8.5] - 2022-03-14
+## [0.8.5-beta.2] - 2022-03-16
+
+- temporary removed clipboard
+- added test for TaskManager
+- always change filepath to "current system 'pathtype' (/ or \\)"
+
+## [0.8.5-beta.1] - 2022-03-14
 
 - integrated fork ( https://github.com/bheadwhite/taskmarks )
 

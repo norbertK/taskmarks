@@ -1,7 +1,5 @@
 import * as vscode from 'vscode';
 
-import clipboard from 'clipboardy';
-
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
 
@@ -14,6 +12,8 @@ export class Persist {
   private static _tasksDataFilePath: string;
 
   static initAndLoad(taskManager: TaskManager) {
+    console.log('Persist.initAndLoad()');
+
     this.taskManager = taskManager;
     const taskmarksFile = Persist.taskmarksDataFilePath;
     if (taskmarksFile == null || !existsSync(taskmarksFile)) return;
@@ -53,6 +53,7 @@ export class Persist {
   }
 
   static get taskmarksDataFilePath(): string {
+    console.log('Persist.taskmarksDataFilePath()');
     if (!this._tasksDataFilePath) {
       if (!vscode.workspace.workspaceFolders) {
         throw new Error('Error loading vscode.workspace! Stop!');
@@ -67,40 +68,40 @@ export class Persist {
     return this._tasksDataFilePath;
   }
 
-  static copyToClipboard(): void {
-    if (!this.taskManager.activeTask) {
-      return;
-    }
-    const persistedActiveTask = this.persistTask(this.taskManager.activeTask);
+  // static copyToClipboard(): void {
+  //   if (!this.taskManager.activeTask) {
+  //     return;
+  //   }
+  //   const persistedActiveTask = this.persistTask(this.taskManager.activeTask);
 
-    const activeTaskString = JSON.stringify(persistedActiveTask);
+  //   const activeTaskString = JSON.stringify(persistedActiveTask);
 
-    clipboard.write(activeTaskString);
-  }
+  //   clipboard.write(activeTaskString);
+  // }
 
-  static pasteFromClipboard(): void {
-    const activeTaskString = clipboard.readSync();
+  // static pasteFromClipboard(): void {
+  //   const activeTaskString = clipboard.readSync();
 
-    if (!activeTaskString) {
-      vscode.window.showInformationMessage(
-        'Could not paste Task from Clipboard.'
-      );
-      return;
-    }
+  //   if (!activeTaskString) {
+  //     vscode.window.showInformationMessage(
+  //       'Could not paste Task from Clipboard.'
+  //     );
+  //     return;
+  //   }
 
-    try {
-      const persistedTask = <IPersistTask>JSON.parse(activeTaskString);
-      // this.dumpIPersistTask(persistedTask);
+  //   try {
+  //     const persistedTask = <IPersistTask>JSON.parse(activeTaskString);
+  //     // this.dumpIPersistTask(persistedTask);
 
-      this.taskManager.addTask(persistedTask);
+  //     this.taskManager.addTask(persistedTask);
 
-      this.saveTasks();
-    } catch (error) {
-      vscode.window.showInformationMessage(
-        'PasteFromClipboar failed with ' + error
-      );
-    }
-  }
+  //     this.saveTasks();
+  //   } catch (error) {
+  //     vscode.window.showInformationMessage(
+  //       'PasteFromClipboar failed with ' + error
+  //     );
+  //   }
+  // }
 
   private static persistTask(task: Task): IPersistTask {
     const persistedTask: IPersistTask = {
