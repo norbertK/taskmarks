@@ -1,5 +1,6 @@
 import { Ring } from './Ring';
 
+// makes only sense, if executed one after the other (and all of them)
 describe('Ring Tests', () => {
   const testRing = new Ring<string>();
 
@@ -9,62 +10,76 @@ describe('Ring Tests', () => {
     expect(current).toBeUndefined();
   });
 
-  it('push should return number of inserted elements', () => {
+  it('push should return the number of inserted elements', () => {
     expect(testRing.push('zero')).toBe(1);
     expect(testRing.pushA(['one', 'two'])).toBe(2);
     expect(testRing.push('three')).toBe(1);
   });
 
-  it('Ring.current should return current element (in this case, last inserted)', () => {
+  it('Ring.current should return the current element (in this case, last inserted)', () => {
     expect(testRing.current).toBe('three');
   });
 
-  // console.log('next');
-  // current = testRing.next;
-  // assert.strictEqual('zero', current);
+  it('Ring.next should return the next element (in this case, the first)', () => {
+    expect(testRing.next).toBe('zero');
+  });
 
-  // console.log('insert');
-  // testRing.insertBefore('before zero');
-  // assert.strictEqual(5, testRing.length);
-  // current = testRing.current;
-  // assert.strictEqual('before zero', current);
+  it('Ring.insertBefore(element) should return element', () => {
+    expect(testRing.insertBefore('before zero')).toBe('before zero');
+  });
 
-  // current = testRing.next;
-  // assert.strictEqual('zero', current);
+  it('Ring.length should now be 5', () => {
+    expect(testRing.length).toBe(5);
+  });
 
-  // testRing.insertAfter('after zero');
-  // assert.strictEqual(6, testRing.length);
-  // current = testRing.current;
-  // assert.strictEqual('after zero', current);
+  it('Ring.current should return the current element', () => {
+    expect(testRing.current).toBe('before zero');
+  });
 
-  // console.log('previous');
-  // current = testRing.previous;
-  // assert.strictEqual('zero', current);
+  it('Ring.next should return the next element', () => {
+    expect(testRing.next).toBe('zero');
+  });
 
-  // console.log('push out of order');
-  // testRing.push('four');
-  // assert.strictEqual(7, testRing.length);
-  // current = testRing.current;
-  // assert.strictEqual('four', current);
+  it('Ring.insertAfter(element) should return element', () => {
+    expect(testRing.insertAfter('after zero')).toBe('after zero');
+  });
 
-  // current = testRing.previous;
-  // assert.strictEqual('three', current);
+  it('Ring.length should now be 6', () => {
+    expect(testRing.length).toBe(6);
+  });
 
-  // console.log('delete');
-  // current = testRing.deleteCurrent();
-  // assert.strictEqual('four', current);
-  // current = testRing.previous;
-  // assert.strictEqual('two', current);
+  it('Ring.current should return the current element', () => {
+    expect(testRing.current).toBe('after zero');
+  });
 
-  // console.log('top && delete');
-  // current = testRing.top;
-  // assert.strictEqual('before zero', current);
-  // current = testRing.deleteCurrent();
-  // assert.strictEqual('zero', current);
+  it('Ring.next should return the next element', () => {
+    expect(testRing.next).toBe('one');
+  });
 
-  // console.log('bottom && delete');
-  // current = testRing.bottom;
-  // assert.strictEqual('four', current);
-  // current = testRing.deleteCurrent();
-  // assert.strictEqual('zero', current);
+  it('Ring.previous should return the previous element', () => {
+    expect(testRing.previous).toBe('after zero');
+  });
+
+  it('Ring.push(element) should insert element "at the end of the ring :-)" and return the number of inserted elements', () => {
+    expect(testRing.push('four')).toBe(1);
+    expect(testRing.length).toBe(7);
+  });
+
+  it('Ring.deleteCurrent() should delete the current element, move "current" to the next element and return this', () => {
+    expect(testRing.current).toBe('four');
+    expect(testRing.deleteCurrent()).toBe('before zero');
+    expect(testRing.current).toBe('before zero');
+    expect(testRing.length).toBe(6);
+    expect(testRing.previous).toBe('three');
+  });
+
+  it('Ring.top should return the "first" element and move "current" there', () => {
+    expect(testRing.top).toBe('before zero');
+    expect(testRing.current).toBe('before zero');
+  });
+
+  it('Ring.bottom should return the "last" element and move "current" there', () => {
+    expect(testRing.bottom).toBe('three');
+    expect(testRing.current).toBe('three');
+  });
 });
