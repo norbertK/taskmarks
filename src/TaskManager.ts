@@ -78,6 +78,9 @@ export class TaskManager {
     return this.useActiveTask();
   }
 
+  // ToDoNK - next ToDos are for nextMark, previousMark, nextDocument and previousDocument
+  // ToDoNK - check: can I use activeFile and current position instead of activeTask.activeFile to go on
+  // ToDoNK - check: can activeTask be null
   nextMark(activeFile: string, currentline: number) {
     const activeTask = this.activeTask;
     if (
@@ -89,7 +92,7 @@ export class TaskManager {
       return;
     }
 
-    for (let mark of activeTask.activeFile.marks) {
+    for (let mark of activeTask.activeFile.lineNumbers) {
       if (mark > currentline) {
         DecoratorHelper.showLine(mark);
         return;
@@ -109,11 +112,11 @@ export class TaskManager {
       return;
     }
     for (
-      let index = activeTask.activeFile.marks.length - 1;
+      let index = activeTask.activeFile.lineNumbers.length - 1;
       index > -1;
       index--
     ) {
-      const mark = activeTask.activeFile.marks[index];
+      const mark = activeTask.activeFile.lineNumbers[index];
 
       if (mark < currentline) {
         DecoratorHelper.showLine(mark);
@@ -132,14 +135,17 @@ export class TaskManager {
     let currentFile = this.activeTask.activeFile;
     let nextFile = this.activeTask.files.next;
     while (currentFile !== nextFile) {
-      if (nextFile && nextFile.marks && nextFile.marks.length > 0) {
+      if (nextFile && nextFile.lineNumbers && nextFile.lineNumbers.length > 0) {
         currentFile = nextFile;
       } else {
         nextFile = this.activeTask.files.next;
       }
     }
     if (currentFile) {
-      DecoratorHelper.openAndShow(currentFile.filepath, currentFile.marks[0]);
+      DecoratorHelper.openAndShow(
+        currentFile.filepath,
+        currentFile.lineNumbers[0]
+      );
     }
   }
 
@@ -151,14 +157,21 @@ export class TaskManager {
     let currentFile = this.activeTask.activeFile;
     let previousFile = this.activeTask.files.previous;
     while (currentFile !== previousFile) {
-      if (previousFile && previousFile.marks && previousFile.marks.length > 0) {
+      if (
+        previousFile &&
+        previousFile.lineNumbers &&
+        previousFile.lineNumbers.length > 0
+      ) {
         currentFile = previousFile;
       } else {
         previousFile = this.activeTask.files.next;
       }
     }
     if (currentFile) {
-      DecoratorHelper.openAndShow(currentFile.filepath, currentFile.marks[0]);
+      DecoratorHelper.openAndShow(
+        currentFile.filepath,
+        currentFile.lineNumbers[0]
+      );
     }
   }
 

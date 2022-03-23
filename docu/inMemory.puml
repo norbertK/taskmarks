@@ -1,0 +1,112 @@
+Object <|-- ArrayList
+
+Object : equals()
+ArrayList : Object[] elementData
+ArrayList : size()
+
+class Foo<? extends Element> {
+  int size()
+}
+Foo *- Element
+
+class Example {
+ -privateVar
+ #protectedVar
+ +publicVar
+ -privateMethod()
+ #protectedMethod()
+ +publicMethod()
+}
+
+@startuml
+
+class Task {
+ -_name: string
+ -_activeFile: File | undefined
+ -_files: Ring<File>
+
+ +get name()
+ +get activeFileFilePath(): string | undefined
+ +get activeFile(): File | undefined
+ +set activeFile(file: File | undefined)
+ +get files(): Ring<File>
+ +get allMarks(): Mark[] 
+
+ +mergeWith(taskToMerge: IPersistTask): Task
+ +toggle(path: string, lineNumber: number): boolean
+ +use(path: string): File
+ +getFile(reducedFilePath: string): File | undefined
+}
+
+abstract class Helper{
+    +{static}_activeEditorLineCount: number
+    +{static}_activeEditor: vscode.TextEditor | undefined
+    +{static}_taskManager: TaskManager
+    +{static}get activeEditor() : vscode.TextEditor | undefined
+    +{static}init(context: vscode.ExtensionContext): void
+    -{static}
+    -{static}handleEditorChange(): void
+    -{static}handleChange(context: vscode.ExtensionContext): void
+    -{static}handleSave(): void
+    -{static}
+    -{static}
+}
+
+class Ring<extends Array<T>> {
+    -_current = -1
+
+    +get current(): T | undefined
+    +get next(): T | undefined
+    +get previous(): T | undefined
+    +get top(): T | undefined
+    +get bottom(): T | undefined
+    
+    -checkPosition(): void
+
+    +insertBefore(item: T): T | undefined
+    +insertAfter(item: T): T | undefined
+    +pushArray(items: T[]): number
+    +push(item: T): number
+    +deleteCurrent(): T | undefined
+
+
+}
+
+class File {
+ -_filepath: string
+ -_marks: Mark[]
+
+ +get filepath
+ +get allMarks
+ +get lineNumbers
+
+ +mergeWith(file: IPersistFile): File
+ +setMarksFromPersist(lineNumbers: number[]): void
+ +addMark(lineNumber: number): void
+ +toggleTaskMark(lineNumber: number): void
+ +unDirtyAll(): void
+ +hasMarks(): boolean
+}
+
+class Mark {
+ -_isDirty: boolean
+ -_parent: File
+ -_label = ''
+ -_lineNumber: number
+ -_quickPickItem: vscode.QuickPickItem | undefined
+
+ +get quickPickItem(): vscode.QuickPickItem | undefined
+ +get lineNumberForPersist(): number | undefined
+ +get lineNumber(): number
+ +set lineNumber(lineNumber: number)
+
+ +unDirty(): void
+ +async getQuickPickItem(filepath: string,
+    lineNumber: number | null): Promise<vscode.QuickPickItem>
+}
+
+Mark "0.." -- "1" File 
+Task --* File 
+ 
+
+@enduml

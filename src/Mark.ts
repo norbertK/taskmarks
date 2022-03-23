@@ -9,6 +9,8 @@ export class Mark {
   private _label = '';
   private _lineNumber: number;
   private _quickPickItem: vscode.QuickPickItem | undefined;
+
+  // ToDoNK ????
   private _dirtyLineNumber: number;
   private _dirtyQuickPickItem: vscode.QuickPickItem | undefined;
 

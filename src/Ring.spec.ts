@@ -12,7 +12,7 @@ describe('Ring Tests', () => {
 
   it('push should return the number of inserted elements', () => {
     expect(testRing.push('zero')).toBe(1);
-    expect(testRing.pushA(['one', 'two'])).toBe(2);
+    expect(testRing.pushArray(['one', 'two'])).toBe(2);
     expect(testRing.push('three')).toBe(1);
   });
 

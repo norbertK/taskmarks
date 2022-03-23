@@ -1,7 +1,3 @@
-## Intro
-
-- Integrated fork from Brent Whitehead (https://github.com/bheadwhite/taskmarks)
-
 # Taskmarks
 
 VSCode Extension - Persist bookmarks for different tasks.
@@ -12,7 +8,9 @@ New topic - just add a new Task and keep them forever.
 
 Or copy a Task and share it with your co-workers. Or create a new one, to tell him or her: 'Please look here and here. Do we have a problem? / Could you please ...'
 
-## Features / Command / Keyboard
+## Intro
+
+- Integrated fork from Brent Whitehead (https://github.com/bheadwhite/taskmarks)
 
 ### Available commands
 
@@ -25,6 +23,17 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 - **Taskmarks: Toggle** Toggle Bookmark at Current Position
 - **Taskmarks: Find next Bookmark** Move the cursor to the next bookmark
 - **Taskmarks: Find previous Bookmark** Move the cursor to the previous bookmark
+
+## Features / Command / Keyboard / ToDos / Ideas
+
+- Tests
+- rename Task
+- disable taskbar display (and perhaps other things) in settings
+- sort marks
+- make little demo, how to work with taskmarks
+- find better shortcuts and make them work outside the edit mode (eg 'goto next' or 'Select Active Task' should work always)
+- add debug points to task (toggle, switch all on or off)
+- perhaps? be able to leave comments on tasks - for starters, just keep them in taskmarks.json
 
 ## Requirements
 

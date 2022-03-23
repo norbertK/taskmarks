@@ -15,7 +15,7 @@ export class File {
     return this._marks;
   }
 
-  get marks(): number[] {
+  get lineNumbers(): number[] {
     const marks: number[] = [];
     this._marks.forEach((mark) => {
       if (mark.lineNumber !== undefined) {
@@ -26,7 +26,7 @@ export class File {
     return marks;
   }
 
-  get marksForPersist(): number[] {
+  get lineNumbersForPersist(): number[] {
     const marks: number[] = [];
     this._marks.forEach((mark) => {
       if (mark.lineNumberForPersist !== undefined) {
@@ -46,11 +46,11 @@ export class File {
     if (lineNumber === -1) {
       return;
     }
-    this.toggleTask(lineNumber);
+    this.toggleTaskMark(lineNumber);
   }
 
   mergeWith(file: IPersistFile): File {
-    const diff = _.difference(file.marks, this.marks);
+    const diff = _.difference(file.marks, this.lineNumbers);
     diff.forEach((mark) => {
       this.addMark(mark);
     });
@@ -58,29 +58,29 @@ export class File {
     return this;
   }
 
-  setMarksFromPersist(marks: number[]) {
-    marks.forEach(async (mark) => {
-      this.addMark(mark);
+  setMarksFromPersist(lineNumbers: number[]): void {
+    lineNumbers.forEach(async (lineNumber) => {
+      this.addMark(lineNumber);
     });
   }
 
-  addMark(mark: number) {
-    this._marks.push(new Mark(this, mark, false));
+  addMark(lineNumber: number): void {
+    this._marks.push(new Mark(this, lineNumber, false));
   }
 
-  toggleTask(lineNumber: number): boolean {
-    const found = this._marks.findIndex((m) => m.lineNumber === lineNumber);
+  toggleTaskMark(lineNumber: number): void {
+    const found = this._marks.findIndex(
+      (mark) => mark.lineNumber === lineNumber
+    );
 
     if (found > -1) {
       this._marks.splice(found, 1);
     } else {
       this.addMark(lineNumber);
     }
-
-    return this.hasMarks();
   }
 
-  unDirty(): void {
+  unDirtyAll(): void {
     this._marks.forEach((mark) => mark.unDirty());
   }
 

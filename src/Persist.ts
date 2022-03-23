@@ -110,8 +110,8 @@ export class Persist {
     };
 
     task.files.forEach((file) => {
-      if (file && file.marks && file.marks.length > 0) {
-        const marks: number[] = file.marksForPersist;
+      if (file && file.lineNumbers && file.lineNumbers.length > 0) {
+        const marks: number[] = file.lineNumbersForPersist;
 
         persistedTask.files.push({
           filepath: file.filepath,

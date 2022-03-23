@@ -1,0 +1,70 @@
+@startjson
+{
+  "activeTaskName": "where I use Persist",
+  "tasks": [
+    {
+      "name": "default",
+      "files": []
+    },
+    {
+      "name": "Version",
+      "files": [
+        {
+          "filepath": "/package.json",
+          "marks": [
+            4
+          ]
+        },
+        {
+          "filepath": "/CHANGELOG.md",
+          "marks": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "name": "where I use Persist",
+      "files": [
+        {
+          "filepath": "/src/Persist.ts",
+          "marks": [
+            13
+          ]
+        },
+        {
+          "filepath": "/src/Models.ts",
+          "marks": [
+            15
+          ]
+        },
+        {
+          "filepath": "\\src\\Persist.ts",
+          "marks": [
+            19,
+            34
+          ]
+        },
+        {
+          "filepath": "\\src\\TaskManager.ts",
+          "marks": [
+            33,
+            52
+          ]
+        },
+        {
+          "filepath": "\\src\\taskmarks.test.txt",
+          "marks": [
+            2,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "name": "taskmarks",
+      "files": []
+    }
+  ]
+}
+@endjson
