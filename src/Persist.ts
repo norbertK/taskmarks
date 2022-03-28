@@ -12,7 +12,7 @@ export class Persist {
   private static _tasksDataFilePath: string;
 
   static initAndLoad(taskManager: TaskManager) {
-    console.log('Persist.initAndLoad()');
+    // console.log('Persist.initAndLoad()');
 
     this.taskManager = taskManager;
     const taskmarksFile = Persist.taskmarksDataFilePath;
@@ -53,7 +53,7 @@ export class Persist {
   }
 
   static get taskmarksDataFilePath(): string {
-    console.log('Persist.taskmarksDataFilePath()');
+    // console.log('Persist.taskmarksDataFilePath()');
     if (!this._tasksDataFilePath) {
       if (!vscode.workspace.workspaceFolders) {
         throw new Error('Error loading vscode.workspace! Stop!');

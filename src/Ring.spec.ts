@@ -60,6 +60,18 @@ describe('Ring Tests', () => {
     expect(testRing.previous).toBe('after zero');
   });
 
+  it('Ring.previous should return the previous element (in thiS case, the last element)', () => {
+    expect(testRing.previous).toBe('zero');
+  });
+
+  it('Ring.previous should return the previous element (in thiS case, the last element)', () => {
+    expect(testRing.previous).toBe('before zero');
+  });
+
+  it('Ring.previous should return the previous element', () => {
+    expect(testRing.previous).toBe('three');
+  });
+
   it('Ring.push(element) should insert element "at the end of the ring :-)" and return the number of inserted elements', () => {
     expect(testRing.push('four')).toBe(1);
     expect(testRing.length).toBe(7);

@@ -68,6 +68,10 @@ export class File {
     this._marks.push(new Mark(this, lineNumber, false));
   }
 
+  // addMark(mark: Mark): void {
+  //   this._marks.push(mark);
+  // }
+
   toggleTaskMark(lineNumber: number): void {
     const found = this._marks.findIndex(
       (mark) => mark.lineNumber === lineNumber

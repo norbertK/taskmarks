@@ -20,17 +20,17 @@ export abstract class Helper {
       throw new Error('Could not find a workspace');
     }
 
-    console.log('Helpers.init()');
+    // console.log('Helpers.init()');
 
     const workspaceFolder: vscode.WorkspaceFolder = workspaceFolders[0];
     const uri: vscode.Uri = workspaceFolder.uri;
     PathHelper.basePath = uri.fsPath;
 
-    console.log('fsPath', uri.fsPath);
-    console.log('authority', uri.authority);
-    console.log('path', uri.path);
-    console.log('fragment', uri.fragment);
-    console.log('query', uri.query);
+    // console.log('fsPath', uri.fsPath);
+    // console.log('authority', uri.authority);
+    // console.log('path', uri.path);
+    // console.log('fragment', uri.fragment);
+    // console.log('query', uri.query);
 
     this._taskManager = TaskManager.instance;
     Persist.initAndLoad(this._taskManager);
@@ -73,6 +73,7 @@ export abstract class Helper {
         ) {
           return;
         }
+        const activeFile = this._taskManager.activeTask.activeFile;
         const allMarks = this._taskManager.activeTask.activeFile.allMarks;
         if (allMarks.length === 0) {
           return;
@@ -86,7 +87,7 @@ export abstract class Helper {
           diffLine = event.document.lineCount - lastLineCount;
           allMarks.forEach((mark) => {
             if (mark.lineNumber && mark.lineNumber > startLine) {
-              mark.lineNumber += diffLine;
+              mark.setLineNumber(activeFile, diffLine + 1);
             }
           });
           lastLineCount += diffLine;
@@ -210,11 +211,14 @@ export abstract class Helper {
   }
 
   static async previousMark(): Promise<void> {
+    // console.log('Helper.previousMark()');
+
     const activeTextEditor = vscode.window.activeTextEditor;
     if (!activeTextEditor) {
       return;
     }
     const line = activeTextEditor.selection.active.line;
+    // console.log('Helper.previousMark() line ==', line);
     this._taskManager.previousMark(activeTextEditor.document.fileName, line);
   }
 

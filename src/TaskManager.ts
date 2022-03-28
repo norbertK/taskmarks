@@ -99,6 +99,8 @@ export class TaskManager {
   }
 
   previousMark(activeFile: string, currentline: number): void {
+    // console.log('TaskManager.previousMark()');
+
     const activeTask = this.activeTask;
     if (!activeTask || !activeTask.files || activeTask.files.length === 0) {
       return;
@@ -160,13 +162,13 @@ export class TaskManager {
       ) {
         currentFile = previousFile;
       } else {
-        previousFile = this.activeTask.files.next;
+        previousFile = this.activeTask.files.previous;
       }
     }
     if (currentFile) {
       DecoratorHelper.openAndShow(
         currentFile.filepath,
-        currentFile.lineNumbers[0]
+        currentFile.lineNumbers[currentFile.lineNumbers.length - 1]
       );
     }
   }

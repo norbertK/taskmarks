@@ -5,27 +5,21 @@ import { PathHelper } from './PathHelper';
 
 export class Mark {
   private _isDirty: boolean;
-  private _parent: File;
+  // private _parent: File;
   private _label = '';
-  private _lineNumber: number;
+  private _lineNumber = -1;
   private _quickPickItem: vscode.QuickPickItem | undefined;
 
   // TODO NK ????
-  private _dirtyLineNumber: number;
-  private _dirtyQuickPickItem: vscode.QuickPickItem | undefined;
+  // private _dirtyLineNumber: number;
+  // private _dirtyQuickPickItem: vscode.QuickPickItem | undefined;
 
   constructor(parent: File, lineNumber: number, dirty = true) {
     this._isDirty = dirty;
-    this._parent = parent;
-    this._lineNumber = -1;
-    this._dirtyLineNumber = -1;
-    this.setLineNumber(lineNumber);
+    this.setLineNumber(parent, lineNumber);
   }
 
   get quickPickItem(): vscode.QuickPickItem | undefined {
-    if (this._isDirty) {
-      return this._dirtyQuickPickItem;
-    }
     return this._quickPickItem;
   }
 
@@ -34,25 +28,14 @@ export class Mark {
   }
 
   get lineNumber(): number {
-    if (this._isDirty) {
-      return this._dirtyLineNumber;
-    }
     return this._lineNumber;
   }
 
-  set lineNumber(lineNumber: number) {
+  setLineNumber(parent: File, lineNumber: number) {
     this._isDirty = true;
-    this.setLineNumber(lineNumber);
-  }
+    this._lineNumber = lineNumber;
 
-  private setLineNumber(lineNumber: number) {
-    if (this._isDirty) {
-      this._dirtyLineNumber = lineNumber;
-    } else {
-      this._lineNumber = lineNumber;
-    }
-
-    this.getQuickPickItem(this._parent.filepath, lineNumber)
+    this.getQuickPickItem(parent.filepath, lineNumber)
       .then((value) => {
         this._quickPickItem = value;
       })
@@ -64,12 +47,6 @@ export class Mark {
 
   unDirty() {
     if (this._isDirty) {
-      this._quickPickItem = this._dirtyQuickPickItem;
-      this._dirtyQuickPickItem = undefined;
-
-      this._lineNumber = this._dirtyLineNumber;
-      this._dirtyLineNumber = -1;
-
       this._isDirty = false;
     }
   }

@@ -10,9 +10,7 @@ import { Task } from './Task';
 describe('Task Tests', () => {
   const testTask = new Task('fancy');
   const testRing = new Ring<File>();
-  const file123 = new File('firstFile');
-  const parentFile = new File('parentFile');
-  // const mark123 = new Mark(file123, 123);
+  const firstFile = new File('firstFile');
 
   it('a new task should have a name, no activeFile, an empty file-Ring and no Marks', () => {
     expect(testTask.name).toBe('fancy');
@@ -22,12 +20,12 @@ describe('Task Tests', () => {
   });
 
   it('first toggle should add File and Mark - activeFile should not change', () => {
-    testTask.toggle('parentFile', 123);
-    new Mark(parentFile, 123);
-    testRing.push(parentFile);
+    testTask.toggle('firstFile', 123);
+    firstFile.addMark(123);
+    testRing.push(firstFile);
 
     expect(testTask.activeFile).toEqual(undefined);
     expect(testTask.files).toEqual(testRing);
-    // expect(testTask.allMarks).toEqual([]);
+    expect(testTask.allMarks).toEqual(firstFile.allMarks);
   });
 });
