@@ -7,16 +7,9 @@ import {
 } from 'fs';
 import { dirname } from 'path';
 
-export class WriteFile {
+export abstract class WriteFile {
   private static _filePath: string;
-  private static stream: WriteStream;
-
-  static enabled(): boolean {
-    if (this._filePath) {
-      return true;
-    }
-    return false;
-  }
+  private static _stream: WriteStream;
 
   static init(filePath: string, clear = true): void {
     this._filePath = filePath;
@@ -31,10 +24,17 @@ export class WriteFile {
       unlinkSync(this._filePath);
     }
 
-    this.stream = createWriteStream(this._filePath, { flags: 'a' });
+    this._stream = createWriteStream(this._filePath, { flags: 'a' });
+  }
+
+  static enabled(): boolean {
+    if (this._filePath) {
+      return true;
+    }
+    return false;
   }
 
   static saveLine(line: string): void {
-    this.stream.write(line + '\n');
+    this._stream.write(line + '\n');
   }
 }

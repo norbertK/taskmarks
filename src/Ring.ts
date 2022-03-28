@@ -1,4 +1,3 @@
-
 // import { DebLog } from './DebLog';
 // not a 'real' ring class - only stuff I need
 export class Ring<T> extends Array<T | undefined> {
@@ -33,7 +32,7 @@ export class Ring<T> extends Array<T | undefined> {
     return this.current;
   }
 
-  private checkPosition() {
+  private checkPosition(): void {
     if (this._current === -1) {
       this._current = this.length - 1;
     } else {
@@ -54,7 +53,7 @@ export class Ring<T> extends Array<T | undefined> {
     return this.current;
   }
 
-  pushA(items: T[]): number {
+  pushArray(items: T[]): number {
     super.push(...items);
     this._current = this.length - 1;
     return items.length;

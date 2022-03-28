@@ -7,7 +7,6 @@ describe('TaskManager Tests', () => {
   const activeTask = new Task('activeTask');
 
   const defaultTaskList: Task[] = [defaultTask];
-  [];
 
   it('the active Task should be default and tasks empty', () => {
     expect(taskManager.activeTask).toEqual(defaultTask);

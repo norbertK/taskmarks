@@ -18,7 +18,7 @@ export class Task {
     return this._name;
   }
 
-  get activeFileName(): string | undefined {
+  get activeFileFilePath(): string | undefined {
     if (this._activeFile) {
       return this._activeFile.filepath;
     }
@@ -82,7 +82,7 @@ export class Task {
     });
 
     if (file) {
-      file.toggleTask(lineNumber);
+      file.toggleTaskMark(lineNumber);
     } else {
       file = new File(reducedPath, lineNumber);
       this._files.push(file);

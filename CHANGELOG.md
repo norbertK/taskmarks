@@ -2,11 +2,23 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
+## has to be done or fixed
+
+- always change filepath to "current system 'pathtype' (/ or \\)"
+
+## [0.8.5-beta.3] - 2022-03-23
+
+- renamed File.get marks() to lineNumbers()
+- renamed File.get marksForPersist() to lineNumbersForPersist()
+- renamed File.get toggleTask() to toggleTaskMark()
+
+- more test
+- moved Ideas from CHANGELOG to README
+
 ## [0.8.5-beta.2] - 2022-03-16
 
 - temporary removed clipboard
 - added test for TaskManager
-- always change filepath to "current system 'pathtype' (/ or \\)"
 
 ## [0.8.5-beta.1] - 2022-03-14
 
@@ -31,16 +43,6 @@ All notable changes to the "taskmarks" extension will be documented in this file
 - possibility to delete task
 - 'switch Task' and 'next' now always work
 - start 'Select Active Task' on Active Task, not always on default
-
-## [Unreleased - Ideas - not ideal]
-
-- rename Task
-- disable taskbar display (and perhaps other things) in settings
-- sort marks
-- make little demo, how to work with taskmarks
-- find better shortcuts and make them work outside the edit mode (eg 'goto next' or 'Select Active Task' should work always)
-- add debug points to task (toggle, switch all on or off)
-- perhaps? be able to leave comments on tasks - for starters, just keep them in taskmarks.json
 
 ## [0.5.4] - 2018-04-06
 

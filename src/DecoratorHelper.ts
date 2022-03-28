@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
 import { PathHelper } from './PathHelper';
 
-export class DecoratorHelper {
+export abstract class DecoratorHelper {
   private static _iconPath: string;
   private static _vscTextEditorDecorationType: vscode.TextEditorDecorationType;
 
-  static get iconPath() {
+  static get iconPath(): string {
     return this._iconPath;
   }
 
-  static initDecorator(context: vscode.ExtensionContext) {
+  static initDecorator(context: vscode.ExtensionContext): void {
     this._iconPath = context.asAbsolutePath('images/bookmark.svg');
     this._vscTextEditorDecorationType =
       vscode.window.createTextEditorDecorationType({
@@ -19,7 +19,7 @@ export class DecoratorHelper {
       });
   }
 
-  static refresh(activeEditor: vscode.TextEditor, marks: number[]) {
+  static refresh(activeEditor: vscode.TextEditor, marks: number[]): void {
     if (activeEditor == null) return;
 
     const ranges = marks.map((mark) => {
@@ -29,7 +29,7 @@ export class DecoratorHelper {
     activeEditor.setDecorations(this._vscTextEditorDecorationType, ranges);
   }
 
-  static showLine(line: number) {
+  static showLine(line: number): void {
     const activeTextEditor = vscode.window.activeTextEditor;
     if (activeTextEditor == null) return;
 
