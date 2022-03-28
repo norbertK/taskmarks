@@ -1,24 +1,27 @@
-Object <|-- ArrayList
 
-Object : equals()
-ArrayList : Object[] elementData
-ArrayList : size()
-
-class Foo<? extends Element> {
-  int size()
-}
-Foo *- Element
-
-class Example {
- -privateVar
- #protectedVar
- +publicVar
- -privateMethod()
- #protectedMethod()
- +publicMethod()
-}
 
 @startuml
+
+class TaskManager {
+    -{static}_instance: TaskManager
+    +{static}get instance(): TaskManager
+    -constructor()
+ -_activeTask: Task
+ -_allTasks: Task[]
+ -_statusBarItem: vscode.StatusBarItem
+
+ +activeTask(): Task
+ +get allTasks(): Task[]
+ +taskNames(): string[]
+ +setActiveTask(taskname: string): void
+ +addTask(task: IPersistTask): void
+ +useActiveTask(taskname = 'default'): Task
+ +delete(taskname: string): Task
+ +nextMark(activeFile: string, currentline: number): void
+ +previousMark(activeFile: string, currentline: number): void
+ +nextDocument(): void
+ +previousDocument(): void
+}
 
 class Task {
  -_name: string
@@ -39,17 +42,50 @@ class Task {
 }
 
 abstract class Helper{
-    +{static}_activeEditorLineCount: number
-    +{static}_activeEditor: vscode.TextEditor | undefined
-    +{static}_taskManager: TaskManager
-    +{static}get activeEditor() : vscode.TextEditor | undefined
+    -{static}_activeEditorLineCount: number
+    -{static}_activeEditor: vscode.TextEditor | undefined
+    -{static}_taskManager: TaskManager
     +{static}init(context: vscode.ExtensionContext): void
-    -{static}
+    +{static}get activeEditor() : vscode.TextEditor | undefined
+    +{static}deleteTask(): void
+    +{static}persistActiveFile(): void
+    +{static}changeActiveFile(editor: vscode.TextEditor | undefined): void
+    +{static}refresh(): void
+    +{static}async toggleMark(): Promise<void>
+    +{static}async selectMarkFromList(): Promise<void>
+    +{static}async selectTask(): Promise<void>
+    +{static}async createTask(): Promise<void>
+    +{static}async nextMark(): Promise<void>
+    +{static}async previousMark(): Promise<void>
     -{static}handleEditorChange(): void
     -{static}handleChange(context: vscode.ExtensionContext): void
     -{static}handleSave(): void
-    -{static}
-    -{static}
+}
+
+abstract class PathHelper{
+    -{static}_basePath: string
+    +{static}get basePath(): string
+    +{static}set basePath(basePath: string)
+    +{static}getFullPath(filepath: string | undefined): string | undefined
+    +{static}reducePath(filepath: string): string
+}
+
+abstract class WriteFile{
+    -{static}_filePath: string
+    -{static}_stream: WriteStream
+    +{static}init(filePath: string, clear = true): void
+    +{static}enabled(): boolean
+    +{static}saveLine(line: string): void
+}
+
+abstract class DecoratorHelper{
+    -{static}_iconPath: string
+    -{static}_vscTextEditorDecorationType: vscode.TextEditorDecorationType
+    +{static}initDecorator(context: vscode.ExtensionContext): void
+    +{static}get iconPath(): string
+    +{static}refresh(activeEditor: vscode.TextEditor, marks: number[]): void
+    +{static}showLine(line: number): void
+    +{static}openAndShow(filepath: string, mark: number): void
 }
 
 class Ring<extends Array<T>> {
@@ -105,8 +141,8 @@ class Mark {
     lineNumber: number | null): Promise<vscode.QuickPickItem>
 }
 
-Mark "0.." -- "1" File 
-Task --* File 
- 
+TaskManager "1" -- "0..*" Task
+Task "1" -- "0..*" File
+File "1" -- "0..*" Mark
 
 @enduml

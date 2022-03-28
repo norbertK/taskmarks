@@ -1,6 +1,6 @@
 import { existsSync } from 'fs';
 
-export class PathHelper {
+export abstract class PathHelper {
   private static _basePath: string;
 
   static get basePath(): string {

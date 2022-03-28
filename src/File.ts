@@ -37,7 +37,7 @@ export class File {
     return marks;
   }
 
-  constructor(filePath: string, lineNumber: number) {
+  constructor(filePath: string, lineNumber = -1) {
     this._filepath = filePath;
 
     if (!this._marks) {

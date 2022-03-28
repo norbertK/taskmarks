@@ -69,7 +69,7 @@
     "pretest": "pwsh scripts\\fastDelete.ps1 out",
     "pretestXX": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "jest --runInBand",
+    "test": "jest --runInBand --detectOpenHandles",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
     "esbuild": "npm run esbuild-base -- --sourcemap",
     "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
