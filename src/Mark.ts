@@ -10,7 +10,7 @@ export class Mark {
   private _lineNumber: number;
   private _quickPickItem: vscode.QuickPickItem | undefined;
 
-  // ToDoNK ????
+  // TODO NK ????
   private _dirtyLineNumber: number;
   private _dirtyQuickPickItem: vscode.QuickPickItem | undefined;
 
