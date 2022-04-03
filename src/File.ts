@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+// import * as _ from 'lodash';
 import type { IPersistFile } from './types';
 
 import { Mark } from './Mark';
@@ -50,9 +50,13 @@ export class File {
   }
 
   mergeWith(file: IPersistFile): File {
-    const diff = _.difference(file.marks, this.lineNumbers);
-    diff.forEach((mark) => {
-      this.addMark(mark);
+    // const diff = _.difference(file.marks, this.lineNumbers);
+    // diff.forEach((mark) => {
+    this.lineNumbers.forEach((lineNumber) => {
+      const condition = file.marks.indexOf(lineNumber);
+      if (condition == -1) {
+        this.addMark(lineNumber);
+      }
     });
 
     return this;

@@ -20,7 +20,7 @@ export abstract class DecoratorHelper {
   }
 
   static refresh(activeEditor: vscode.TextEditor, marks: number[]): void {
-    if (activeEditor == null) return;
+    if (activeEditor === null) {return;}
 
     const ranges = marks.map((mark) => {
       return new vscode.Range(mark, 0, mark, 0);
@@ -31,7 +31,7 @@ export abstract class DecoratorHelper {
 
   static showLine(line: number): void {
     const activeTextEditor = vscode.window.activeTextEditor;
-    if (activeTextEditor == null) return;
+    if (activeTextEditor === null || activeTextEditor === undefined) {return;}
 
     let textEditorRevealType: vscode.TextEditorRevealType =
       vscode.TextEditorRevealType.InCenter;

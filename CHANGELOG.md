@@ -5,6 +5,14 @@ All notable changes to the "taskmarks" extension will be documented in this file
 ## has to be done or fixed
 
 - always change filepath to "current system 'pathtype' (/ or \\)"
+- rewrite all tests
+
+## [0.8.13] - 2022-03-28
+
+- still trying to publish pre release version
+- removed all tests
+- from scratch with webpack
+- some new bugs?
 
 ## [0.8.11] - 2022-03-28
 
