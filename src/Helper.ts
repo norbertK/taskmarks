@@ -126,7 +126,11 @@ export abstract class Helper {
     const allMarks = this._taskManager.activeTask.allMarks.reduce<
       vscode.QuickPickItem[]
     >((a, i) => {
-      if (i != null && i.quickPickItem != null) {
+      if (
+        i !== null &&
+        i.quickPickItem !== null &&
+        i.quickPickItem !== undefined
+      ) {
         a.push(i.quickPickItem);
       }
       return a;

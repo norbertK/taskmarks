@@ -55,13 +55,13 @@ export class Mark {
     filepath: string,
     lineNumber: number | null
   ): Promise<vscode.QuickPickItem> {
-    if (lineNumber == null) {
+    if (lineNumber === null) {
       throw new Error(`Mark not set! - ${filepath}`);
     }
 
     return new Promise<vscode.QuickPickItem>((res) => {
       const fullPath = PathHelper.getFullPath(filepath);
-      if (fullPath == null) {
+      if (fullPath === null || fullPath === undefined) {
         throw new Error(`File not found! - ${filepath}`);
       }
       const uri = vscode.Uri.file(fullPath);

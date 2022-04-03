@@ -16,7 +16,9 @@ export class Persist {
 
     this.taskManager = taskManager;
     const taskmarksFile = Persist.taskmarksDataFilePath;
-    if (taskmarksFile == null || !existsSync(taskmarksFile)) return;
+    if (taskmarksFile === null || !existsSync(taskmarksFile)) {
+      return;
+    }
 
     const stringFromFile = readFileSync(taskmarksFile).toString();
     const { tasks, activeTaskName }: IPersistTasks = JSON.parse(stringFromFile);

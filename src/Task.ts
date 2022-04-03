@@ -39,7 +39,7 @@ export class Task {
 
   get allMarks(): Mark[] {
     return this._files.reduce<Mark[]>((a, file) => {
-      if (file != null) {
+      if (file !== null && file !== undefined) {
         const fileMarks = file.allMarks;
         a.push(...fileMarks);
       }

@@ -54,7 +54,7 @@ export class File {
     // diff.forEach((mark) => {
     this.lineNumbers.forEach((lineNumber) => {
       const condition = file.marks.indexOf(lineNumber);
-      if (condition == -1) {
+      if (condition === -1) {
         this.addMark(lineNumber);
       }
     });
