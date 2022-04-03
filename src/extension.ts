@@ -5,7 +5,7 @@ export function activate(context: vscode.ExtensionContext) {
   Helper.init(context);
 
   let selectMarkFromListDisposable = vscode.commands.registerCommand(
-    'taskmark.selectMarkFromList',
+    'taskmarks.selectMarkFromList',
     () => {
       Helper.selectMarkFromList();
     }
@@ -13,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(selectMarkFromListDisposable);
 
   let selectTaskDisposable = vscode.commands.registerCommand(
-    'taskmark.selectTask',
+    'taskmarks.selectTask',
     () => {
       Helper.selectTask();
     }
@@ -21,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(selectTaskDisposable);
 
   let createTaskDisposable = vscode.commands.registerCommand(
-    'taskmark.createTask',
+    'taskmarks.createTask',
     () => {
       Helper.createTask();
     }
@@ -29,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(createTaskDisposable);
 
   let deleteTaskDisposable = vscode.commands.registerCommand(
-    'taskmark.deleteTask',
+    'taskmarks.deleteTask',
     () => {
       Helper.deleteTask();
     }
@@ -37,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(deleteTaskDisposable);
 
   let toggleMarkDisposable = vscode.commands.registerCommand(
-    'taskmark.toggleMark',
+    'taskmarks.toggleMark',
     () => {
       Helper.toggleMark();
     }
@@ -45,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(toggleMarkDisposable);
 
   // let copyToClipboardDisposable = vscode.commands.registerCommand(
-  //   'taskmark.copyToClipboard',
+  //   'taskmarks.copyToClipboard',
   //   () => {
   //     Persist.copyToClipboard();
   //   }
@@ -53,7 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
   // context.subscriptions.push(copyToClipboardDisposable);
 
   // let pasteFromClipboardDisposable = vscode.commands.registerCommand(
-  //   'taskmark.pasteFromClipboard',
+  //   'taskmarks.pasteFromClipboard',
   //   () => {
   //     Persist.pasteFromClipboard();
   //     Helper.refresh();
@@ -62,7 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
   // context.subscriptions.push(pasteFromClipboardDisposable);
 
   let nextMarkDisposable = vscode.commands.registerCommand(
-    'taskmark.nextMark',
+    'taskmarks.nextMark',
     () => {
       Helper.nextMark();
     }
@@ -70,7 +70,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(nextMarkDisposable);
 
   let previousMarkDisposable = vscode.commands.registerCommand(
-    'taskmark.previousMark',
+    'taskmarks.previousMark',
     () => {
       Helper.previousMark();
     }
@@ -79,6 +79,4 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // this method is called when your extension is deactivated
-export async function deactivate() {
-  return;
-}
+export function deactivate() {}
