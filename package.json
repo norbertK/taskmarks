@@ -2,7 +2,7 @@
   "name": "taskmarks",
   "displayName": "Taskmarks",
   "description": "Little helper for teams to navigate through files. Persists bookmarks for different tasks.",
-  "version": "0.8.5-beta.3",
+  "version": "0.8.7",
   "publisher": "NorbertKlein",
   "contributors": [
     "Klein Norbert",
@@ -20,13 +20,7 @@
     "Bookmark, Tasks, Remember, Places, Teamwork, Collaboration"
   ],
   "activationEvents": [
-    "onCommand:taskmark.selectMarkFromList",
-    "onCommand:taskmark.selectTask",
-    "onCommand:taskmark.createTask",
-    "onCommand:taskmark.deleteTask",
-    "onCommand:taskmark.toggleMark",
-    "onCommand:taskmark.nextMark",
-    "onCommand:taskmark.previousMark"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -59,6 +53,32 @@
         "command": "taskmark.previousMark",
         "title": "Taskmarks: Find previous Bookmark"
       }
+    ],
+    "keybindings": [
+      {
+        "command": "taskmark.previousMark",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "taskmark.selectTask",
+        "key": "ctrl+shift+i",
+        "mac": "cmd+shift+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "taskmark.toggleMark",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "taskmark.nextMark",
+        "key": "ctrl+shift+z",
+        "mac": "cmd+shift+z",
+        "when": "editorTextFocus"
+      }
     ]
   },
   "scripts": {
@@ -76,10 +96,11 @@
     "test-compile": "tsc -p ./",
     "checkForUpgrade": "ncu",
     "upgrade": "ncu -u && npm install",
-    "build package": "vsce package"
+    "build package": "vsce package",
+    "publish": "vsce publish",
+    "publish pre-release": "vsce publish --pre-release"
   },
   "dependencies": {
-    "clipboardy": "3.0.0",
     "lodash": "4.17.21"
   },
   "devDependencies": {

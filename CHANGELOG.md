@@ -6,6 +6,10 @@ All notable changes to the "taskmarks" extension will be documented in this file
 
 - always change filepath to "current system 'pathtype' (/ or \\)"
 
+## [0.8.7] - 2022-03-28
+
+- trying to publish pre release version
+
 ## [0.8.5-beta.3] - 2022-03-23
 
 - renamed File.get marks() to lineNumbers()
