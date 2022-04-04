@@ -80,10 +80,12 @@ export class TaskManager {
   nextMark(activeFile: string, currentline: number): void {
     const activeTask = this.activeTask;
     if (
-      activeTask == null ||
-      activeTask.files == null ||
+      activeTask === null ||
+      activeTask === undefined ||
+      activeTask.files === null ||
       activeTask.files.length === 0 ||
-      activeTask.activeFile == null
+      activeTask.activeFile === null ||
+      activeTask.activeFile === undefined
     ) {
       return;
     }

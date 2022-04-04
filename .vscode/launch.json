@@ -25,6 +25,22 @@
       ],
       "outFiles": ["${workspaceFolder}/out/test/**/*.js"],
       "preLaunchTask": "npm: watch"
+    },
+    {
+      "name": "Mocha Tests",
+      "args": [
+        "-u",
+        "tdd",
+        "--timeout",
+        "999999",
+        "--colors",
+        "${workspaceFolder}/out/test/"
+      ],
+      "internalConsoleOptions": "openOnSessionStart",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "request": "launch",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     }
   ]
 }
