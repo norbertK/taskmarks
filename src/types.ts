@@ -1,6 +1,6 @@
 export interface IPersistFile {
   filepath: string;
-  marks: number[];
+  lineNumbers: number[];
 }
 
 export interface IPersistTask {

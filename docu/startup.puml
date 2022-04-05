@@ -1,0 +1,69 @@
+@startuml startup
+
+hide footbox
+
+mainframe **startup**
+
+actor VSCode
+participant extensions.ts as ext
+participant Helper as help
+participant PathHelper as ph
+participant Persist as p
+
+participant TaskManager as tm
+
+VSCode -> ext: activate(context)
+ext -> help: init(context)
+activate help #FFBBBB
+help -> VSCode: get workspaceFolders
+activate help #DarkSalmon
+activate VSCode #DarkSalmon
+VSCode -> help
+deactivate VSCode
+deactivate help
+
+help -> ph: set workspaceFolder
+activate help #SkyBlue
+activate ph #SkyBlue
+ph --> help
+deactivate ph
+deactivate help
+
+help -> tm: get _taskManager (instance)
+activate help #LightGoldenRodYellow
+activate tm #LightGoldenRodYellow
+tm -> tm: setActiveTask default
+tm -> help
+deactivate tm
+deactivate help
+
+
+help -> p: initAndLoad(_taskManager)
+activate help #IndianRed
+activate p #IndianRed
+p -> p: init _taskmarksDataFilePath
+activate p #SeaGreen
+note right of p
+if taskmarks.json exists
+end note
+p -> p: read taskmarks.json
+p -> p: adjust path type
+p -> tm: taskManager.useActiveTask(activeTaskName)
+tm --> p
+deactivate p
+p --> help
+deactivate help
+deactivate p
+
+note right of help
+set handler for:
+onDidChangeActiveTextEditor
+onDidSaveTextDocument
+onDidChangeTextDocument
+end note 
+
+help -> help: handleEditorChange()
+help -> help: handleSave()
+help -> help: handleChange()
+
+@endjson

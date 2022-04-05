@@ -1,6 +1,5 @@
 // import * as _ from 'lodash';
 import type { IPersistFile } from './types';
-
 import { Mark } from './Mark';
 
 export class File {
@@ -16,14 +15,14 @@ export class File {
   }
 
   get lineNumbers(): number[] {
-    const marks: number[] = [];
+    const lineNumbers: number[] = [];
     this._marks.forEach((mark) => {
       if (mark.lineNumber !== undefined) {
-        marks.push(mark.lineNumber);
+        lineNumbers.push(mark.lineNumber);
       }
     });
 
-    return marks;
+    return lineNumbers;
   }
 
   get lineNumbersForPersist(): number[] {
@@ -49,15 +48,35 @@ export class File {
     this.toggleTaskMark(lineNumber);
   }
 
-  mergeWith(file: IPersistFile): File {
-    // const diff = _.difference(file.marks, this.lineNumbers);
-    // diff.forEach((mark) => {
-    this.lineNumbers.forEach((lineNumber) => {
-      const condition = file.marks.indexOf(lineNumber);
-      if (condition === -1) {
-        this.addMark(lineNumber);
-      }
-    });
+  mergeMarksAndLineNumbers(persistFile: IPersistFile): File {
+    // start with an empty array
+    const newMarks: Mark[] = [];
+    // copy all old, but check for doubles
+    if (this._marks.length > 0) {
+      this._marks.forEach((mark) => {
+        const pos = newMarks.findIndex(
+          (newMark) => mark.lineNumber === newMark.lineNumber
+        );
+        if (pos === -1) {
+          newMarks.push(mark);
+        }
+      });
+    }
+
+    // now do the same with file.lineNumbers
+    if (persistFile.lineNumbers.length > 0) {
+      persistFile.lineNumbers.forEach((lineNumber) => {
+        const pos = newMarks.findIndex(
+          (newMark) => lineNumber === newMark.lineNumber
+        );
+        if (pos === -1) {
+          newMarks.push(new Mark(this, lineNumber, false));
+        }
+      });
+    }
+
+    // replace old _marks array with newMarks
+    this._marks = newMarks;
 
     return this;
   }

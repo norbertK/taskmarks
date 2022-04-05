@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
 
-import type { IPersistTask, IPersistTasks } from './types';
+import type { IPersistFile, IPersistTask, IPersistTasks } from './types';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { PathHelper } from './PathHelper';
@@ -15,46 +15,52 @@ enum PathType {
 
 export class Persist {
   private static _taskManager: TaskManager;
-  private static _tasksDataFilePath: string;
-  // private static _pathType: PathType;
+  private static _taskmarksDataFilePath: string;
   private static _activePathChar: string;
   private static _inactivePathChar: string;
 
   static initAndLoad(taskManager: TaskManager): void {
-    // console.log('Persist.initAndLoad()');
-
     this._taskManager = taskManager;
-    const taskmarksFile = Persist.taskmarksDataFilePath;
-    if (taskmarksFile === null || !existsSync(taskmarksFile)) {
+    Persist.taskmarksDataFilePath;
+    if (
+      Persist._taskmarksDataFilePath === null ||
+      Persist._taskmarksDataFilePath === undefined ||
+      !existsSync(Persist._taskmarksDataFilePath)
+    ) {
       return;
     }
 
-    const stringFromFile = readFileSync(taskmarksFile).toString();
+    const stringFromFile = readFileSync(
+      Persist._taskmarksDataFilePath
+    ).toString();
     const { tasks, activeTaskName }: IPersistTasks = JSON.parse(stringFromFile);
+    const files: IPersistFile[] = [];
 
     tasks.forEach((task) => {
       if (task.name === activeTaskName) {
         task.files.forEach((file) => {
-          console.log(file.filepath);
-
           file.filepath = file.filepath.replace(
             Persist._inactivePathChar,
             Persist._activePathChar
           );
 
-          console.log(file.filepath);
-
-          if (existsSync(PathHelper.basePath + file.filepath)) {
-            console.log(file.filepath, 'used');
-            taskManager.addTask(task);
+          const fullPath = PathHelper.getFullPath(file.filepath);
+          if (fullPath === undefined) {
+            console.log(file.filepath, 'not found and not used');
           } else {
-            console.log(file.filepath, 'not used');
+            files.push(file);
           }
         });
+
+        if (files.length > 0) {
+          task.files = files;
+          taskManager.addTask(task);
+        }
       }
     });
-
-    taskManager.useActiveTask(activeTaskName);
+    if (taskManager.activeTask.name !== activeTaskName) {
+      taskManager.useActiveTask(activeTaskName);
+    }
   }
 
   static saveTasks(): void {
@@ -83,17 +89,17 @@ export class Persist {
 
   static get taskmarksDataFilePath(): string {
     // console.log('Persist.taskmarksDataFilePath()');
-    if (!this._tasksDataFilePath) {
+    if (!this._taskmarksDataFilePath) {
       if (!vscode.workspace.workspaceFolders) {
         throw new Error('Error loading vscode.workspace! Stop!');
       }
-      this._tasksDataFilePath = join(
+      this._taskmarksDataFilePath = join(
         vscode.workspace.workspaceFolders[0].uri.fsPath,
         '.vscode',
         'taskmarks.json'
       );
 
-      if (this._tasksDataFilePath.indexOf('/') > -1) {
+      if (this._taskmarksDataFilePath.indexOf('/') > -1) {
         // Persist._pathType = PathType.unixLike;
         Persist._activePathChar = '/';
         Persist._inactivePathChar = '\\';
@@ -104,7 +110,7 @@ export class Persist {
       }
     }
 
-    return this._tasksDataFilePath;
+    return this._taskmarksDataFilePath;
   }
 
   // static copyToClipboard(): void {
@@ -155,7 +161,7 @@ export class Persist {
 
         persistTask.files.push({
           filepath: file.filepath,
-          marks: marks.sort(),
+          lineNumbers: marks.sort(),
         });
       }
     });

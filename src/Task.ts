@@ -47,27 +47,58 @@ export class Task {
     }, []);
   }
 
-  mergeWith(taskToMerge: IPersistTask): Task {
-    const filesToAdd: IPersistFile[] = [];
+  // private _files: Ring<File>;
 
-    taskToMerge.files.forEach((fileToMerge) => {
-      const file: File | undefined = this._files.find((fm) => {
-        if (fm) {
-          return fm.filepath === fileToMerge.filepath;
+  // constructor(name: string) {
+  //   this._name = name;
+  //   this._files = new Ring();
+
+  mergeFilesWithPersistFiles(persistTaskToMerge: IPersistTask): Task {
+    // start with an empty Ring
+    const newFiles: Ring<File> = new Ring();
+
+    // copy all old, but check for doubles
+    if (this._files && this._files.length > 0) {
+      this._files.forEach((oldFile) => {
+        if (oldFile !== undefined) {
+          const fileFound: File | undefined = newFiles.find(
+            (newFile) => oldFile?.filepath === newFile?.filepath
+          );
+
+          if (fileFound === undefined) {
+            newFiles.push(oldFile);
+          } else {
+            // if double, merge line numbers
+            fileFound.mergeMarksAndLineNumbers(oldFile);
+          }
         }
       });
+    }
 
-      if (file) {
-        file.mergeWith(fileToMerge);
-      } else {
-        filesToAdd.push(fileToMerge);
-      }
-    });
+    // now do the same with persistTaskToMerge.files
+    if (persistTaskToMerge.files.length > 0) {
+      persistTaskToMerge.files.forEach((persistFile) => {
+        const fileFound: File | undefined = newFiles.find(
+          (newFile) => persistFile.filepath === newFile?.filepath
+        );
 
-    filesToAdd.forEach((fileToAdd) => {
-      const file = this.use(fileToAdd.filepath);
-      fileToAdd.marks.forEach((mark) => file.addMark(mark));
-    });
+        if (fileFound === undefined) {
+          const newFile = new File(persistFile.filepath, -1);
+          if (persistFile.lineNumbers.length > 0) {
+            persistFile.lineNumbers.forEach((lineNumber) => {
+              newFile.addMark(lineNumber);
+            });
+          }
+          newFiles.push(newFile);
+        } else {
+          // if double, merge line numbers
+          fileFound.mergeMarksAndLineNumbers(persistFile);
+        }
+      });
+    }
+
+    // replace old _files Ring with newFiles
+    this._files = newFiles;
 
     return this;
   }

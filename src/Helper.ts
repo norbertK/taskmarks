@@ -20,17 +20,9 @@ export abstract class Helper {
       throw new Error('Could not find a workspace');
     }
 
-    // console.log('Helpers.init()');
-
     const workspaceFolder: vscode.WorkspaceFolder = workspaceFolders[0];
     const uri: vscode.Uri = workspaceFolder.uri;
     PathHelper.basePath = uri.fsPath;
-
-    // console.log('fsPath', uri.fsPath);
-    // console.log('authority', uri.authority);
-    // console.log('path', uri.path);
-    // console.log('fragment', uri.fragment);
-    // console.log('query', uri.query);
 
     this._taskManager = TaskManager.instance;
     Persist.initAndLoad(this._taskManager);
@@ -50,6 +42,23 @@ export abstract class Helper {
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       this.changeActiveFile(editor);
     }, null);
+  }
+
+  private static handleSave(): void {
+    vscode.workspace.onDidSaveTextDocument((textDocument) => {
+      const activeTask = this._taskManager.activeTask;
+      if (!activeTask) {
+        return;
+      }
+      const file = activeTask.getFile(
+        PathHelper.reducePath(textDocument.fileName)
+      );
+
+      if (file) {
+        file.unDirtyAll();
+      }
+      Persist.saveTasks();
+    });
   }
 
   private static handleChange(context: vscode.ExtensionContext): void {
@@ -98,23 +107,6 @@ export abstract class Helper {
       null,
       context.subscriptions
     );
-  }
-
-  private static handleSave(): void {
-    vscode.workspace.onDidSaveTextDocument((textDocument) => {
-      const activeTask = this._taskManager.activeTask;
-      if (!activeTask) {
-        return;
-      }
-      const file = activeTask.getFile(
-        PathHelper.reducePath(textDocument.fileName)
-      );
-
-      if (file) {
-        file.unDirtyAll();
-      }
-      Persist.saveTasks();
-    });
   }
 
   //SELECT FROM LIST

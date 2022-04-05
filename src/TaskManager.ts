@@ -9,13 +9,6 @@ export class TaskManager {
   static get instance(): TaskManager {
     return this._instance || (this._instance = new this());
   }
-  private constructor() {
-    this._allTasks = [];
-    this._statusBarItem = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Right
-    );
-    this._activeTask = this.useActiveTask();
-  }
 
   private _activeTask: Task;
   private _allTasks: Task[];
@@ -33,35 +26,47 @@ export class TaskManager {
     return this._allTasks.map((task) => task.name);
   }
 
-  setActiveTask(taskname: string): void {
-    const activeTask = this._allTasks.find((task) => task.name === taskname);
-    if (activeTask) {
-      this._activeTask = activeTask;
-      this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
-      this._statusBarItem.show();
-    } else {
-      this._statusBarItem.hide();
-      this.useActiveTask();
-    }
-  }
-
-  addTask(task: IPersistTask): void {
-    const current = this.useActiveTask(task.name);
-    current.mergeWith(task);
+  private constructor() {
+    this._allTasks = [];
+    this._statusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Right
+    );
+    this._activeTask = this.useActiveTask();
   }
 
   useActiveTask(taskname = 'default'): Task {
-    let task = this._allTasks.find((task) => task.name === taskname);
+    if (this.activeTask && this.activeTask.name === taskname) {
+      return this.activeTask;
+    }
 
+    let task = this._allTasks.find((task) => task.name === taskname);
     if (!task) {
       task = new Task(taskname);
       this._allTasks.push(task);
     }
-
-    this.setActiveTask(task.name);
+    this.setActiveTask(taskname);
 
     // this.dumpToLog();
     return task;
+  }
+
+  setActiveTask(taskname: string): void {
+    console.log('TaskManager.setActiveTask(', taskname, ') start');
+    const task = this._allTasks.find((task) => task.name === taskname);
+    if (task) {
+      this._activeTask = task;
+      this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
+      this._statusBarItem.show();
+    } else {
+      this._statusBarItem.hide();
+      this.useActiveTask(taskname);
+    }
+    console.log('TaskManager.setActiveTask(', taskname, ') end');
+  }
+
+  addTask(task: IPersistTask): void {
+    const current = this.useActiveTask(task.name);
+    current.mergeFilesWithPersistFiles(task);
   }
 
   delete(taskname: string): Task {
