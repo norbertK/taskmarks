@@ -2,6 +2,22 @@
 
 @startuml
 
+interface IPersistFile {
+  filepath: string;
+  marks: number[];
+}
+
+interface IPersistTask {
+  name: string;
+  files: IPersistFile[];
+}
+
+interface IPersistTasks {
+  activeTaskName: string;
+  tasks: IPersistTask[];
+}
+
+
 class TaskManager {
     -{static}_instance: TaskManager
     +{static}get instance(): TaskManager
@@ -68,6 +84,16 @@ abstract class PathHelper{
     +{static}set basePath(basePath: string)
     +{static}getFullPath(filepath: string | undefined): string | undefined
     +{static}reducePath(filepath: string): string
+}
+
+abstract class Persist{
+    -{static}_taskManager: TaskManager;
+    -{static}_tasksDataFilePath: string;
+    -{static}_pathType: PathType;
+    +{static}initAndLoad(taskManager: TaskManager): void
+    +{static}saveTasks(): void
+    +{static}get taskmarksDataFilePath(): string
+    +{static}taskToPersistTask(task: Task): IPersistTask
 }
 
 abstract class WriteFile{

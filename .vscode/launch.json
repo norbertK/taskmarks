@@ -6,41 +6,26 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Extension",
-      "type": "extensionHost",
-      "request": "launch",
-      "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "name": "Launch Extension",
       "outFiles": ["${workspaceFolder}/out/**/*.js"],
-      "preLaunchTask": "npm: watch"
+      "preLaunchTask": "npm compile",
+      "request": "launch",
+      "type": "extensionHost"
     },
     {
-      "name": "Extension Tests",
-      "type": "extensionHost",
+      "type": "node",
+      "name": "vscode-jest-tests",
       "request": "launch",
-      "runtimeExecutable": "${execPath}",
-      "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
-        "--extensionTestsPath=${workspaceFolder}/out/test"
-      ],
-      "outFiles": ["${workspaceFolder}/out/test/**/*.js"],
-      "preLaunchTask": "npm: watch"
-    },
-    {
-      "name": "Mocha Tests",
-      "args": [
-        "-u",
-        "tdd",
-        "--timeout",
-        "999999",
-        "--colors",
-        "${workspaceFolder}/out/test/"
-      ],
-      "internalConsoleOptions": "openOnSessionStart",
-      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-      "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "args": ["--runInBand", "--watchAll=false"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true,
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/jest/bin/jest"
+      }
     }
   ]
 }

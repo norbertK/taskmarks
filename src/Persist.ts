@@ -6,15 +6,24 @@ import { Task } from './Task';
 import type { IPersistTask, IPersistTasks } from './types';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
+import { PathHelper } from './PathHelper';
+
+enum PathType {
+  unixLike,
+  windowsLike,
+}
 
 export class Persist {
-  private static taskManager: TaskManager;
+  private static _taskManager: TaskManager;
   private static _tasksDataFilePath: string;
+  // private static _pathType: PathType;
+  private static _activePathChar: string;
+  private static _inactivePathChar: string;
 
-  static initAndLoad(taskManager: TaskManager) {
+  static initAndLoad(taskManager: TaskManager): void {
     // console.log('Persist.initAndLoad()');
 
-    this.taskManager = taskManager;
+    this._taskManager = taskManager;
     const taskmarksFile = Persist.taskmarksDataFilePath;
     if (taskmarksFile === null || !existsSync(taskmarksFile)) {
       return;
@@ -24,7 +33,25 @@ export class Persist {
     const { tasks, activeTaskName }: IPersistTasks = JSON.parse(stringFromFile);
 
     tasks.forEach((task) => {
-      taskManager.addTask(task);
+      if (task.name === activeTaskName) {
+        task.files.forEach((file) => {
+          console.log(file.filepath);
+
+          file.filepath = file.filepath.replace(
+            Persist._inactivePathChar,
+            Persist._activePathChar
+          );
+
+          console.log(file.filepath);
+
+          if (existsSync(PathHelper.basePath + file.filepath)) {
+            console.log(file.filepath, 'used');
+            taskManager.addTask(task);
+          } else {
+            console.log(file.filepath, 'not used');
+          }
+        });
+      }
     });
 
     taskManager.useActiveTask(activeTaskName);
@@ -38,16 +65,16 @@ export class Persist {
 
     const persistTaskArray: IPersistTask[] = [];
 
-    this.taskManager.allTasks.forEach((task) => {
-      const persistTask: IPersistTask = this.persistTask(task);
+    this._taskManager.allTasks.forEach((task) => {
+      const persistTask: IPersistTask = this.taskToPersistTask(task);
       persistTaskArray.push(persistTask);
     });
 
-    if (!this.taskManager.activeTask) {
+    if (!this._taskManager.activeTask) {
       return;
     }
     const persistTasks: IPersistTasks = {
-      activeTaskName: this.taskManager.activeTask.name,
+      activeTaskName: this._taskManager.activeTask.name,
       tasks: persistTaskArray,
     };
 
@@ -65,6 +92,16 @@ export class Persist {
         '.vscode',
         'taskmarks.json'
       );
+
+      if (this._tasksDataFilePath.indexOf('/') > -1) {
+        // Persist._pathType = PathType.unixLike;
+        Persist._activePathChar = '/';
+        Persist._inactivePathChar = '\\';
+      } else {
+        // Persist._pathType = PathType.windowsLike;
+        Persist._activePathChar = '\\';
+        Persist._inactivePathChar = '/';
+      }
     }
 
     return this._tasksDataFilePath;
@@ -105,23 +142,24 @@ export class Persist {
   //   }
   // }
 
-  private static persistTask(task: Task): IPersistTask {
-    const persistedTask: IPersistTask = {
+  private static taskToPersistTask(task: Task): IPersistTask {
+    const persistTask: IPersistTask = {
       name: task.name,
       files: [],
     };
 
     task.files.forEach((file) => {
+      // TODO NK && file.exists()
       if (file && file.lineNumbers && file.lineNumbers.length > 0) {
         const marks: number[] = file.lineNumbersForPersist;
 
-        persistedTask.files.push({
+        persistTask.files.push({
           filepath: file.filepath,
           marks: marks.sort(),
         });
       }
     });
-    return persistedTask;
+    return persistTask;
   }
 
   // static dumpIPersistTask(persistedTask: IPersistTask) {

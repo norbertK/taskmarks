@@ -87,6 +87,7 @@ export abstract class Helper {
           diffLine = event.document.lineCount - lastLineCount;
           allMarks.forEach((mark) => {
             if (mark.lineNumber && mark.lineNumber > startLine) {
+              // console.log('Helper.handleChange() ');
               mark.setLineNumber(activeFile, diffLine + 1);
             }
           });

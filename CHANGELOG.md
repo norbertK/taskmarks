@@ -5,7 +5,12 @@ All notable changes to the "taskmarks" extension will be documented in this file
 ## has to be done or fixed
 
 - always change filepath to "current system 'pathtype' (/ or \\)"
-- rewrite all tests
+- on load check if files exist, remove from list if not
+
+## [0.8.15] - 2022-03-28
+
+- pre release version published
+- most tests are back
 
 ## [0.8.13] - 2022-03-28
 

@@ -16,6 +16,7 @@ export class Mark {
 
   constructor(parent: File, lineNumber: number, dirty = true) {
     this._isDirty = dirty;
+    // console.log('Mark.constructor() parent : ' + parent);
     this.setLineNumber(parent, lineNumber);
   }
 
@@ -41,7 +42,7 @@ export class Mark {
       })
       .catch((reason) => {
         // eslint-disable-next-line no-console
-        console.log('error : ' + reason);
+        console.log('error in Mark.setLineNumber() : ' + reason);
       });
   }
 
