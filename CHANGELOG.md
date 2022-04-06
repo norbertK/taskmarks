@@ -4,26 +4,23 @@ All notable changes to the "taskmarks" extension will be documented in this file
 
 ## has to be done or fixed
 
-## [0.8.15] - 2022-03-28
+## [0.8.17] - 2022-04-05
 
 - pre release version published
-- most tests are back
-- old taskmarks.json broken
-- always change filepath to "current system 'pathtype' (/ or \\)"
-- on load check if files exist, remove from list if not
+- old taskmarks.json will be 'converted'
 
-## [0.8.13] - 2022-03-28
+## [0.8.13] - 2022-03-01
 
 - still trying to publish pre release version
 - removed all tests
 - from scratch with webpack
 - some new bugs?
 
-## [0.8.11] - 2022-03-28
+## [0.8.11] - 2022-03-31
 
 - trying to publish pre release version
 
-## [0.8.9] - 2022-03-28
+## [0.8.9] - 2022-03-29
 
 - trying to publish pre release version
 

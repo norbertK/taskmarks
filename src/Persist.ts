@@ -13,6 +13,16 @@ enum PathType {
   windowsLike,
 }
 
+type ReplaceAll<
+  S extends string,
+  From extends string,
+  To extends string
+> = From extends ''
+  ? S
+  : S extends `${infer Start}${From}${infer End}`
+  ? `${Start}${To}${ReplaceAll<End, From, To>}`
+  : S;
+
 export class Persist {
   private static _taskManager: TaskManager;
   private static _taskmarksDataFilePath: string;
@@ -29,10 +39,18 @@ export class Persist {
     ) {
       return;
     }
-
-    const stringFromFile = readFileSync(
+    let stringFromFile = readFileSync(
       Persist._taskmarksDataFilePath
     ).toString();
+
+    if (stringFromFile.indexOf('marks') > -1) {
+      stringFromFile = stringFromFile.replace('marks', 'lineNumbers');
+
+      while (stringFromFile.indexOf('marks') > -1) {
+        stringFromFile = stringFromFile.replace('marks', 'lineNumbers');
+      }
+    }
+
     const { tasks, activeTaskName }: IPersistTasks = JSON.parse(stringFromFile);
     const files: IPersistFile[] = [];
 
@@ -52,7 +70,7 @@ export class Persist {
           }
         });
 
-        if (files.length > 0) {
+        if (files && files.length > 0) {
           task.files = files;
           taskManager.addTask(task);
         }
@@ -157,12 +175,15 @@ export class Persist {
     task.files.forEach((file) => {
       // TODO NK && file.exists()
       if (file && file.lineNumbers && file.lineNumbers.length > 0) {
-        const marks: number[] = file.lineNumbersForPersist;
+        const fullPath = PathHelper.getFullPath(file.filepath);
+        if (fullPath !== undefined && existsSync(fullPath)) {
+          const marks: number[] = file.lineNumbersForPersist;
 
-        persistTask.files.push({
-          filepath: file.filepath,
-          lineNumbers: marks.sort(),
-        });
+          persistTask.files.push({
+            filepath: file.filepath,
+            lineNumbers: marks.sort(),
+          });
+        }
       }
     });
     return persistTask;

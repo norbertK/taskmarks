@@ -2,7 +2,7 @@
   "name": "taskmarks",
   "displayName": "Taskmarks",
   "description": "Little helper for teams to navigate through files. Persists bookmarks for different tasks.",
-  "version": "0.8.13",
+  "version": "0.8.17",
   "publisher": "NorbertKlein",
   "contributors": [
     "Klein Norbert",
@@ -151,6 +151,9 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "./coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "modulePathIgnorePatterns": [
+      "<rootDir>/out"
+    ]
   }
 }

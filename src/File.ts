@@ -52,7 +52,7 @@ export class File {
     // start with an empty array
     const newMarks: Mark[] = [];
     // copy all old, but check for doubles
-    if (this._marks.length > 0) {
+    if (this._marks && this._marks.length > 0) {
       this._marks.forEach((mark) => {
         const pos = newMarks.findIndex(
           (newMark) => mark.lineNumber === newMark.lineNumber
@@ -61,6 +61,10 @@ export class File {
           newMarks.push(mark);
         }
       });
+    }
+
+    if (persistFile === undefined || persistFile.lineNumbers === undefined) {
+      return this;
     }
 
     // now do the same with file.lineNumbers

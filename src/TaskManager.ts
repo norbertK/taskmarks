@@ -51,7 +51,7 @@ export class TaskManager {
   }
 
   setActiveTask(taskname: string): void {
-    console.log('TaskManager.setActiveTask(', taskname, ') start');
+    // console.log('TaskManager.setActiveTask(', taskname, ') start');
     const task = this._allTasks.find((task) => task.name === taskname);
     if (task) {
       this._activeTask = task;
@@ -61,7 +61,7 @@ export class TaskManager {
       this._statusBarItem.hide();
       this.useActiveTask(taskname);
     }
-    console.log('TaskManager.setActiveTask(', taskname, ') end');
+    // console.log('TaskManager.setActiveTask(', taskname, ') end');
   }
 
   addTask(task: IPersistTask): void {
@@ -79,15 +79,13 @@ export class TaskManager {
     return this.useActiveTask();
   }
 
-  // TODO NK - next ToDos are for nextMark, previousMark, nextDocument and previousDocument
-  // TODO NK - check: can I use activeFile and current position instead of activeTask.activeFile to go on
-  // TODO NK - check: can activeTask be null
   nextMark(activeFile: string, currentline: number): void {
     const activeTask = this.activeTask;
     if (
       activeTask === null ||
       activeTask === undefined ||
       activeTask.files === null ||
+      activeTask.files === undefined ||
       activeTask.files.length === 0 ||
       activeTask.activeFile === null ||
       activeTask.activeFile === undefined

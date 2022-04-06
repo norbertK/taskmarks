@@ -16,11 +16,6 @@ describe('TaskManager Tests', () => {
     expect(taskManager.allTasks).toStrictEqual(defaultTaskList);
   });
 
-  it('the active Task should remain as before', () => {
-    taskManager.setActiveTask('activeTask');
-    expect(taskManager.activeTask).toEqual(defaultTask);
-  });
-
   it('the active Task should be activeTask', () => {
     taskManager.useActiveTask('activeTask');
 

@@ -75,6 +75,12 @@ export class Task {
       });
     }
 
+    if (
+      persistTaskToMerge === undefined ||
+      persistTaskToMerge.files === undefined
+    ) {
+      return this;
+    }
     // now do the same with persistTaskToMerge.files
     if (persistTaskToMerge.files.length > 0) {
       persistTaskToMerge.files.forEach((persistFile) => {
@@ -84,7 +90,7 @@ export class Task {
 
         if (fileFound === undefined) {
           const newFile = new File(persistFile.filepath, -1);
-          if (persistFile.lineNumbers.length > 0) {
+          if (persistFile.lineNumbers && persistFile.lineNumbers.length > 0) {
             persistFile.lineNumbers.forEach((lineNumber) => {
               newFile.addMark(lineNumber);
             });

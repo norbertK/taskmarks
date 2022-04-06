@@ -1,4 +1,5 @@
 {
+  "exclude": ["**/__mocks__/*"],
   "compilerOptions": {
     "module": "commonjs",
     "target": "ES2020",
