@@ -27,9 +27,12 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 ## Features / Command / Keyboard / ToDos / Ideas
 
 - new command : remove unused (empty) Tasks
+- rename Tasks
 - Tests
+- perhaps? move all vscode stuff to helpers? should make testing easier
 - disable taskbar display (and perhaps other things) in settings
 - sort marks
+- always sort line numbers
 - make little demo, how to work with taskmarks
 - find better shortcuts and make them work outside the edit mode (eg 'goto next' or 'Select Active Task' should work always)
 - add debug points to task (toggle, switch all on or off)
@@ -42,8 +45,9 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 ## Known Issues
 
-## Release Notes
+- loosing tasks
+- insert from clipboard (only first task inserted)
 
-## Installing your Extension Locally
+## Release Notes
 
 See [CHANGELOG.md](https://github.com/norbertK/taskmarks/blob/master/CHANGELOG.md)

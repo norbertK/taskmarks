@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { Helper } from './Helper';
+import { Persist } from './Persist';
 
 export function activate(context: vscode.ExtensionContext) {
   Helper.init(context);
@@ -44,22 +45,22 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(toggleMarkDisposable);
 
-  // let copyToClipboardDisposable = vscode.commands.registerCommand(
-  //   'taskmarks.copyToClipboard',
-  //   () => {
-  //     Persist.copyToClipboard();
-  //   }
-  // );
-  // context.subscriptions.push(copyToClipboardDisposable);
+  let copyToClipboardDisposable = vscode.commands.registerCommand(
+    'taskmarks.copyToClipboard',
+    () => {
+      Persist.copyToClipboard();
+    }
+  );
+  context.subscriptions.push(copyToClipboardDisposable);
 
-  // let pasteFromClipboardDisposable = vscode.commands.registerCommand(
-  //   'taskmarks.pasteFromClipboard',
-  //   () => {
-  //     Persist.pasteFromClipboard();
-  //     Helper.refresh();
-  //   }
-  // );
-  // context.subscriptions.push(pasteFromClipboardDisposable);
+  let pasteFromClipboardDisposable = vscode.commands.registerCommand(
+    'taskmarks.pasteFromClipboard',
+    () => {
+      Persist.pasteFromClipboard();
+      Helper.refresh();
+    }
+  );
+  context.subscriptions.push(pasteFromClipboardDisposable);
 
   let nextMarkDisposable = vscode.commands.registerCommand(
     'taskmarks.nextMark',

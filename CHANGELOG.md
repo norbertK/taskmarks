@@ -2,8 +2,6 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
-## has to be done or fixed
-
 ## [0.8.17] - 2022-04-05
 
 - pre release version published

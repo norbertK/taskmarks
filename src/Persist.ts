@@ -13,16 +13,6 @@ enum PathType {
   windowsLike,
 }
 
-type ReplaceAll<
-  S extends string,
-  From extends string,
-  To extends string
-> = From extends ''
-  ? S
-  : S extends `${infer Start}${From}${infer End}`
-  ? `${Start}${To}${ReplaceAll<End, From, To>}`
-  : S;
-
 export class Persist {
   private static _taskManager: TaskManager;
   private static _taskmarksDataFilePath: string;
@@ -90,7 +80,7 @@ export class Persist {
     const persistTaskArray: IPersistTask[] = [];
 
     this._taskManager.allTasks.forEach((task) => {
-      const persistTask: IPersistTask = this.taskToPersistTask(task);
+      const persistTask: IPersistTask = this.copyTaskToPersistTask(task);
       persistTaskArray.push(persistTask);
     });
 
@@ -131,58 +121,62 @@ export class Persist {
     return this._taskmarksDataFilePath;
   }
 
-  // static copyToClipboard(): void {
-  //   if (!this.taskManager.activeTask) {
-  //     return;
-  //   }
-  //   const persistedActiveTask = this.persistTask(this.taskManager.activeTask);
+  static copyToClipboard(): void {
+    if (!this._taskManager.activeTask) {
+      return;
+    }
+    const persistTaskVersionOfActiveTask = this.copyTaskToPersistTask(
+      this._taskManager.activeTask
+    );
 
-  //   const activeTaskString = JSON.stringify(persistedActiveTask);
+    const activeTaskString = JSON.stringify(persistTaskVersionOfActiveTask);
 
-  //   clipboard.write(activeTaskString);
-  // }
+    vscode.env.clipboard.writeText(activeTaskString);
+  }
 
-  // static pasteFromClipboard(): void {
-  //   const activeTaskString = clipboard.readSync();
+  static pasteFromClipboard(): void {
+    vscode.env.clipboard.readText().then((clip) => {
+      let activeTaskString = clip;
 
-  //   if (!activeTaskString) {
-  //     vscode.window.showInformationMessage(
-  //       'Could not paste Task from Clipboard.'
-  //     );
-  //     return;
-  //   }
+      if (!activeTaskString) {
+        vscode.window.showInformationMessage(
+          'Could not paste Task from Clipboard.'
+        );
+        return;
+      }
 
-  //   try {
-  //     const persistedTask = <IPersistTask>JSON.parse(activeTaskString);
-  //     // this.dumpIPersistTask(persistedTask);
+      try {
+        const persistedTask = <IPersistTask>JSON.parse(activeTaskString);
+        // this.dumpIPersistTask(persistedTask);
 
-  //     this.taskManager.addTask(persistedTask);
+        this._taskManager.addTask(persistedTask);
 
-  //     this.saveTasks();
-  //   } catch (error) {
-  //     vscode.window.showInformationMessage(
-  //       'PasteFromClipboar failed with ' + error
-  //     );
-  //   }
-  // }
+        this.saveTasks();
+      } catch (error) {
+        vscode.window.showInformationMessage(
+          'PasteFromClipboar failed with ' + error
+        );
+      }
+    });
+  }
 
-  private static taskToPersistTask(task: Task): IPersistTask {
+  private static copyTaskToPersistTask(task: Task): IPersistTask {
     const persistTask: IPersistTask = {
       name: task.name,
       files: [],
     };
 
     task.files.forEach((file) => {
-      // TODO NK && file.exists()
       if (file && file.lineNumbers && file.lineNumbers.length > 0) {
         const fullPath = PathHelper.getFullPath(file.filepath);
         if (fullPath !== undefined && existsSync(fullPath)) {
           const marks: number[] = file.lineNumbersForPersist;
 
-          persistTask.files.push({
+          const persistFile: IPersistFile = {
             filepath: file.filepath,
             lineNumbers: marks.sort(),
-          });
+          };
+          persistTask.files.push(persistFile);
         }
       }
     });
