@@ -1,0 +1,75 @@
+{
+	"activeTaskName": "where I use Persist",
+	"tasks": [
+		{
+			"name": "default",
+			"files": []
+		},
+		{
+			"name": "where I use Persist",
+			"files": [
+				{
+					"filepath": "\\src/Persist.ts",
+					"marks": [
+						13
+					]
+				},
+				{
+					"filepath": "/srccc/Models.ts",
+					"marks": [
+						15
+					]
+				},
+				{
+					"filepath": "/src/Models.ts",
+					"marks": [
+						15
+					]
+				},
+				{
+					"filepath": "\\src\\Persist.ts",
+					"marks": [
+						13,
+						15,
+						19,
+						34
+					]
+				},
+				{
+					"filepath": "\\src\\TaskManager.ts",
+					"marks": [
+						33,
+						52
+					]
+				},
+				{
+					"filepath": "\\src\\taskmarks.test.txt",
+					"marks": [
+						2,
+						8
+					]
+				},
+				{
+					"filepath": "\\package.json",
+					"marks": [
+						100,
+						101,
+						95
+					]
+				},
+				{
+					"filepath": "\\srccc/Models.ts",
+					"marks": [
+						15
+					]
+				},
+				{
+					"filepath": "\\src/Models.ts",
+					"marks": [
+						15
+					]
+				}
+			]
+		}
+	]
+}
