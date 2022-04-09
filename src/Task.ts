@@ -2,7 +2,7 @@ import { File } from './File';
 import { Mark } from './Mark';
 import { Ring } from './Ring';
 import { PathHelper } from './PathHelper';
-import type { IPersistFile, IPersistTask } from './types';
+import type { IPersistFile, IPersistTask, PathMark } from './types';
 
 export class Task {
   private _name: string;
@@ -37,13 +37,19 @@ export class Task {
     return this._files;
   }
 
-  get allMarks(): Mark[] {
-    return this._files.reduce<Mark[]>((a, file) => {
+  get allMarks(): PathMark[] {
+    return this._files.reduce<PathMark[]>((pathMarks, file) => {
       if (file !== null && file !== undefined) {
-        const fileMarks = file.allMarks;
-        a.push(...fileMarks);
+        const fileMarks: PathMark[] = [];
+        file.allMarks.forEach((mark) => {
+          fileMarks.push({
+            fullPath: file.filepath,
+            lineNumber: mark.lineNumber,
+          });
+        });
+        pathMarks.push(...fileMarks);
       }
-      return a;
+      return pathMarks;
     }, []);
   }
 
@@ -69,7 +75,7 @@ export class Task {
             newFiles.push(oldFile);
           } else {
             // if double, merge line numbers
-            fileFound.mergeMarksAndLineNumbers(oldFile);
+            fileFound.mergeMarksAndLineNumbers(oldFile.lineNumbers);
           }
         }
       });
@@ -98,7 +104,7 @@ export class Task {
           newFiles.push(newFile);
         } else {
           // if double, merge line numbers
-          fileFound.mergeMarksAndLineNumbers(persistFile);
+          fileFound.mergeMarksAndLineNumbers(persistFile.lineNumbers);
         }
       });
     }

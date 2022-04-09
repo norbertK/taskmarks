@@ -1,6 +1,6 @@
-export interface IPersistFile {
-  filepath: string;
-  lineNumbers: number[];
+export interface IPersistTaskManager {
+  activeTaskName: string;
+  tasks: IPersistTask[];
 }
 
 export interface IPersistTask {
@@ -8,7 +8,12 @@ export interface IPersistTask {
   files: IPersistFile[];
 }
 
-export interface IPersistTasks {
-  activeTaskName: string;
-  tasks: IPersistTask[];
+export interface IPersistFile {
+  filepath: string;
+  lineNumbers: number[];
+}
+
+export interface PathMark {
+  fullPath: string;
+  lineNumber: number;
 }

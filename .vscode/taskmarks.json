@@ -1,34 +1,23 @@
 {
-	"activeTaskName": "where I use Persist",
+	"activeTaskName": "taskMarks",
 	"tasks": [
 		{
 			"name": "default",
 			"files": []
 		},
 		{
-			"name": "where I use Persist",
+			"name": "taskMarks",
 			"files": [
 				{
-					"filepath": "\\src\\Persist.ts",
+					"filepath": "\\src\\Mark.ts",
 					"lineNumbers": [
-						15,
-						19,
-						34
+						-2
 					]
 				},
 				{
-					"filepath": "\\src\\TaskManager.ts",
+					"filepath": "\\src\\Helper.ts",
 					"lineNumbers": [
-						33,
-						52
-					]
-				},
-				{
-					"filepath": "\\package.json",
-					"lineNumbers": [
-						100,
-						101,
-						95
+						0
 					]
 				}
 			]
