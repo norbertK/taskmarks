@@ -96,8 +96,7 @@ export abstract class Helper {
           diffLine = event.document.lineCount - lastLineCount;
           allMarks.forEach((mark) => {
             if (mark.lineNumber && mark.lineNumber > startLine) {
-              // console.log('Helper.handleChange() ');
-              mark.setLineNumber(activeFile, diffLine + 1);
+              mark.lineNumber = diffLine + 1;
             }
           });
           lastLineCount += diffLine;
@@ -118,15 +117,15 @@ export abstract class Helper {
 
     const allMarks = this._taskManager.activeTask.allMarks.reduce<
       vscode.QuickPickItem[]
-    >((a, i) => {
-      if (
-        i !== null &&
-        i.quickPickItem !== null &&
-        i.quickPickItem !== undefined
-      ) {
-        a.push(i.quickPickItem);
+    >((quickPickItems, mark) => {
+      if (mark !== null) {
+        this.getQuickPickItem(mark.fullPath, mark.lineNumber).then(
+          (quickPickItem) => {
+            quickPickItems.push(quickPickItem);
+          }
+        );
       }
-      return a;
+      return quickPickItems;
     }, []);
 
     const options: vscode.QuickPickOptions = {
@@ -139,6 +138,45 @@ export abstract class Helper {
 
         DecoratorHelper.openAndShow(result.detail, mark);
       }
+    });
+  }
+
+  static async getQuickPickItem(
+    filepath: string,
+    lineNumber: number,
+    label = ''
+  ): Promise<vscode.QuickPickItem> {
+    if (lineNumber === null) {
+      throw new Error(
+        `Mark.getQuickPickItem() - lineNumber not set! - ${filepath}`
+      );
+    }
+
+    return new Promise<vscode.QuickPickItem>((res) => {
+      const fullPath = PathHelper.getFullPath(filepath);
+      if (fullPath === null || fullPath === undefined) {
+        throw new Error(
+          `Mark.getQuickPickItem() - File not found! - ${filepath}`
+        );
+      }
+      const uri = vscode.Uri.file(fullPath);
+
+      vscode.workspace.openTextDocument(uri).then((doc) => {
+        if (doc === undefined) {
+          throw new Error(
+            `Mark.getQuickPickItem() - vscode.workspace.openTextDocument(${uri}) should not be undefined`
+          );
+        }
+        if (lineNumber <= doc.lineCount) {
+          const lineText = doc.lineAt(lineNumber).text;
+          const quickPickItem: vscode.QuickPickItem = {
+            label: lineNumber.toString(),
+            description: label ? label : lineText,
+            detail: fullPath,
+          };
+          res(quickPickItem);
+        }
+      });
     });
   }
 

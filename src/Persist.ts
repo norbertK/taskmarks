@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
 
-import type { IPersistFile, IPersistTask, IPersistTasks } from './types';
+import type { IPersistFile, IPersistTask, IPersistTaskManager } from './types';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { PathHelper } from './PathHelper';
@@ -41,7 +41,8 @@ export class Persist {
       }
     }
 
-    const { tasks, activeTaskName }: IPersistTasks = JSON.parse(stringFromFile);
+    const { tasks, activeTaskName }: IPersistTaskManager =
+      JSON.parse(stringFromFile);
     const files: IPersistFile[] = [];
 
     tasks.forEach((task) => {
@@ -53,9 +54,7 @@ export class Persist {
           );
 
           const fullPath = PathHelper.getFullPath(file.filepath);
-          if (fullPath === undefined) {
-            console.log(file.filepath, 'not found and not used');
-          } else {
+          if (fullPath !== undefined) {
             files.push(file);
           }
         });
@@ -87,7 +86,7 @@ export class Persist {
     if (!this._taskManager.activeTask) {
       return;
     }
-    const persistTasks: IPersistTasks = {
+    const persistTasks: IPersistTaskManager = {
       activeTaskName: this._taskManager.activeTask.name,
       tasks: persistTaskArray,
     };
@@ -154,7 +153,7 @@ export class Persist {
         this.saveTasks();
       } catch (error) {
         vscode.window.showInformationMessage(
-          'PasteFromClipboar failed with ' + error
+          'PasteFromClipboard failed with ' + error
         );
       }
     });

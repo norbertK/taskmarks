@@ -5,7 +5,7 @@ import { PathHelper } from './PathHelper';
 import { Ring } from './Ring';
 import { Task } from './Task';
 
-jest.mock('./PathHelper');
+// jest.mock('./PathHelper');
 
 describe('Task Tests', () => {
   const testTask = new Task('fancy');

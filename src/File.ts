@@ -1,5 +1,5 @@
 // import * as _ from 'lodash';
-import type { IPersistFile } from './types';
+import type { IPersistFile, PathMark } from './types';
 import { Mark } from './Mark';
 
 export class File {
@@ -10,8 +10,17 @@ export class File {
     return this._filepath;
   }
 
-  get allMarks(): Mark[] {
-    return this._marks;
+  get allMarks(): PathMark[] {
+    console.log('outside this.filepath: ', this.filepath);
+
+    return this._marks.map((mark) => {
+      console.log('inside this.filepath: ', this.filepath);
+
+      return {
+        fullPath: this.filepath,
+        lineNumber: mark.lineNumber,
+      };
+    });
   }
 
   get lineNumbers(): number[] {
@@ -28,8 +37,8 @@ export class File {
   get lineNumbersForPersist(): number[] {
     const marks: number[] = [];
     this._marks.forEach((mark) => {
-      if (mark.lineNumberForPersist !== undefined) {
-        marks.push(mark.lineNumberForPersist);
+      if (mark.lineNumber !== undefined) {
+        marks.push(mark.lineNumber);
       }
     });
 
@@ -74,7 +83,7 @@ export class File {
           (newMark) => lineNumber === newMark.lineNumber
         );
         if (pos === -1) {
-          newMarks.push(new Mark(this, lineNumber, false));
+          newMarks.push(new Mark(lineNumber, false));
         }
       });
     }
@@ -92,12 +101,8 @@ export class File {
   }
 
   addMark(lineNumber: number): void {
-    this._marks.push(new Mark(this, lineNumber, false));
+    this._marks.push(new Mark(lineNumber, false));
   }
-
-  // addMark(mark: Mark): void {
-  //   this._marks.push(mark);
-  // }
 
   toggleTaskMark(lineNumber: number): void {
     const found = this._marks.findIndex(

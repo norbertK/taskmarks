@@ -30,9 +30,13 @@ export abstract class PathHelper {
   }
 
   static reducePath(filepath: string): string {
+    console.log('PathHelper.reducePath() - filepath: ', filepath);
+    console.log('PathHelper.reducePath() - this.basePath: ', this.basePath);
+
     if (filepath.startsWith(this.basePath)) {
       filepath = filepath.substring(this._basePath.length);
     }
+    console.log('PathHelper.reducePath() - returns filepath: ', filepath);
     return filepath;
   }
 }
