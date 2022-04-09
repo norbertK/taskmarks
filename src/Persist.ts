@@ -3,59 +3,31 @@ import * as vscode from 'vscode';
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
 
-import type { IPersistFile, IPersistTask, IPersistTasks } from './types';
+import type { IPersistFile, IPersistTask, IPersistTaskManager } from './types';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { PathHelper } from './PathHelper';
 
-enum PathType {
-  unixLike,
-  windowsLike,
-}
-
 export class Persist {
   private static _taskManager: TaskManager;
-  private static _taskmarksDataFilePath: string;
-  private static _activePathChar: string;
-  private static _inactivePathChar: string;
 
   static initAndLoad(taskManager: TaskManager): void {
     this._taskManager = taskManager;
-    Persist.taskmarksDataFilePath;
-    if (
-      Persist._taskmarksDataFilePath === null ||
-      Persist._taskmarksDataFilePath === undefined ||
-      !existsSync(Persist._taskmarksDataFilePath)
-    ) {
-      return;
-    }
-    let stringFromFile = readFileSync(
-      Persist._taskmarksDataFilePath
-    ).toString();
-
-    if (stringFromFile.indexOf('marks') > -1) {
-      stringFromFile = stringFromFile.replace('marks', 'lineNumbers');
-
-      while (stringFromFile.indexOf('marks') > -1) {
-        stringFromFile = stringFromFile.replace('marks', 'lineNumbers');
-      }
-    }
-
-    const { tasks, activeTaskName }: IPersistTasks = JSON.parse(stringFromFile);
+    const taskmarksJson = PathHelper.getTaskmarksJson();
+    const { tasks, activeTaskName }: IPersistTaskManager =
+      JSON.parse(taskmarksJson);
     const files: IPersistFile[] = [];
 
     tasks.forEach((task) => {
       if (task.name === activeTaskName) {
         task.files.forEach((file) => {
           file.filepath = file.filepath.replace(
-            Persist._inactivePathChar,
-            Persist._activePathChar
+            PathHelper.inactivePathChar,
+            PathHelper.activePathChar
           );
 
           const fullPath = PathHelper.getFullPath(file.filepath);
-          if (fullPath === undefined) {
-            console.log(file.filepath, 'not found and not used');
-          } else {
+          if (fullPath !== undefined) {
             files.push(file);
           }
         });
@@ -72,7 +44,7 @@ export class Persist {
   }
 
   static saveTasks(): void {
-    const taskmarksFile = Persist.taskmarksDataFilePath;
+    const taskmarksFile = PathHelper.taskmarksDataFilePath;
     if (!taskmarksFile || !existsSync(dirname(taskmarksFile))) {
       mkdirSync(dirname(taskmarksFile));
     }
@@ -87,38 +59,12 @@ export class Persist {
     if (!this._taskManager.activeTask) {
       return;
     }
-    const persistTasks: IPersistTasks = {
+    const persistTasks: IPersistTaskManager = {
       activeTaskName: this._taskManager.activeTask.name,
       tasks: persistTaskArray,
     };
 
     writeFileSync(taskmarksFile, JSON.stringify(persistTasks, null, '\t'));
-  }
-
-  static get taskmarksDataFilePath(): string {
-    // console.log('Persist.taskmarksDataFilePath()');
-    if (!this._taskmarksDataFilePath) {
-      if (!vscode.workspace.workspaceFolders) {
-        throw new Error('Error loading vscode.workspace! Stop!');
-      }
-      this._taskmarksDataFilePath = join(
-        vscode.workspace.workspaceFolders[0].uri.fsPath,
-        '.vscode',
-        'taskmarks.json'
-      );
-
-      if (this._taskmarksDataFilePath.indexOf('/') > -1) {
-        // Persist._pathType = PathType.unixLike;
-        Persist._activePathChar = '/';
-        Persist._inactivePathChar = '\\';
-      } else {
-        // Persist._pathType = PathType.windowsLike;
-        Persist._activePathChar = '\\';
-        Persist._inactivePathChar = '/';
-      }
-    }
-
-    return this._taskmarksDataFilePath;
   }
 
   static copyToClipboard(): void {
@@ -154,7 +100,7 @@ export class Persist {
         this.saveTasks();
       } catch (error) {
         vscode.window.showInformationMessage(
-          'PasteFromClipboar failed with ' + error
+          'PasteFromClipboard failed with ' + error
         );
       }
     });
@@ -170,11 +116,11 @@ export class Persist {
       if (file && file.lineNumbers && file.lineNumbers.length > 0) {
         const fullPath = PathHelper.getFullPath(file.filepath);
         if (fullPath !== undefined && existsSync(fullPath)) {
-          const marks: number[] = file.lineNumbersForPersist;
+          const lineNumbers: number[] = file.lineNumbers;
 
           const persistFile: IPersistFile = {
             filepath: file.filepath,
-            lineNumbers: marks.sort(),
+            lineNumbers: lineNumbers.sort(),
           };
           persistTask.files.push(persistFile);
         }
@@ -182,44 +128,4 @@ export class Persist {
     });
     return persistTask;
   }
-
-  // static dumpIPersistTask(persistedTask: IPersistTask) {
-  //   const indent = 0;
-  //   // console.log('persistedTask.name - ' + persistedTask.name);
-  //   persistedTask.files.forEach((persistedFile) => {
-  //     this.dumpIPersistFile(indent, persistedFile);
-  //   });
-  // }
-
-  // static dumpIPersistFile(indent: number, persistedFile: IPersistFile) {
-  //   indent++;
-  //   // eslint-disable-next-line no-console
-  //   console.log(indent, '------------------------------------------');
-  //   // eslint-disable-next-line no-console
-  //   console.log(indent, '-------------- IPersistFile --------------');
-  //   // eslint-disable-next-line no-console
-  //   console.log(
-  //     indent,
-  //     'persistedTask.name           - ' + persistedFile.filepath
-  //   );
-  //   // eslint-disable-next-line no-console
-  //   console.log(indent + 1, '-------------- Mark --------------');
-  //   persistedFile.marks.forEach((mark) => {
-  //     // eslint-disable-next-line no-console
-  //     console.log(indent + 1, 'mark - ' + mark);
-  //   });
-  //   // eslint-disable-next-line no-console
-  //   console.log(indent, '');
-  // }
-
-  // private static persistedToTask(persistedTask: IPersistTask): Task {
-  //   const task = new Task(persistedTask.name);
-  //   //this.tasks.use(persistedTask.name);
-  //   persistedTask.files.forEach((persistedFile) => {
-  //     const file: File = new File(persistedFile.filepath, -1);
-  //     file.setMarksFromPersist(persistedFile.marks);
-  //     task.files.push(file);
-  //   });
-  //   return task;
-  // }
 }

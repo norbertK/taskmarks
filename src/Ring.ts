@@ -1,4 +1,3 @@
-// import { DebLog } from './DebLog';
 // not a 'real' ring class - only stuff I need
 export class Ring<T> extends Array<T | undefined> {
   private _current = -1;

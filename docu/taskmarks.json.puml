@@ -11,13 +11,13 @@
       "files": [
         {
           "filepath": "/package.json",
-          "marks": [
+          "lineNumbers": [
             4
           ]
         },
         {
           "filepath": "/CHANGELOG.md",
-          "marks": [
+          "lineNumbers": [
             4
           ]
         }
@@ -28,33 +28,33 @@
       "files": [
         {
           "filepath": "/src/Persist.ts",
-          "marks": [
+          "lineNumbers": [
             13
           ]
         },
         {
           "filepath": "/src/Models.ts",
-          "marks": [
+          "lineNumbers": [
             15
           ]
         },
         {
           "filepath": "\\src\\Persist.ts",
-          "marks": [
+          "lineNumbers": [
             19,
             34
           ]
         },
         {
           "filepath": "\\src\\TaskManager.ts",
-          "marks": [
+          "lineNumbers": [
             33,
             52
           ]
         },
         {
-          "filepath": "\\src\\taskmarks.test.txt",
-          "marks": [
+          "filepath": "\\src\\tasklineNumbers.test.txt",
+          "lineNumbers": [
             2,
             8
           ]
@@ -62,7 +62,7 @@
       ]
     },
     {
-      "name": "taskmarks",
+      "name": "taskMarks",
       "files": []
     }
   ]

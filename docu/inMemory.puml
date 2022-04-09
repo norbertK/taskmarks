@@ -2,21 +2,6 @@
 
 @startuml
 
-interface IPersistFile {
-  filepath: string;
-  marks: number[];
-}
-
-interface IPersistTask {
-  name: string;
-  files: IPersistFile[];
-}
-
-interface IPersistTasks {
-  activeTaskName: string;
-  tasks: IPersistTask[];
-}
-
 
 class TaskManager {
     -{static}_instance: TaskManager
@@ -55,6 +40,92 @@ class Task {
  +toggle(path: string, lineNumber: number): boolean
  +use(path: string): File
  +getFile(reducedFilePath: string): File | undefined
+}
+
+class File {
+ -_filepath: string
+ -_marks: Mark[]
+
+ +get filepath
+ +get allMarks
+ +get lineNumbers
+
+ +mergeWith(file: IPersistFile): File
+ +setMarksFromPersist(lineNumbers: number[]): void
+ +addMark(lineNumber: number): void
+ +toggleTaskMark(lineNumber: number): void
+ +unDirtyAll(): void
+ +hasMarks(): boolean
+}
+
+class Mark {
+ -_isDirty: boolean
+ -_label = ''
+ -_lineNumber: number
+
+ +get lineNumber(): number
+ +set lineNumber(lineNumber: number)
+
+ +unDirty(): void
+ +async getQuickPickItem(filepath: string,
+    lineNumber: number | null): Promise<vscode.QuickPickItem>
+}
+
+TaskManager "1" -- "0..*" Task
+Task "1" -- "0..*" File
+File "1" -- "0..*" Mark
+
+
+interface IPersistTaskManager {
+  activeTaskName: string;
+  tasks: IPersistTask[];
+}
+
+interface IPersistTask {
+  name: string;
+  files: IPersistFile[];
+}
+
+interface IPersistFile {
+  filepath: string;
+  lineNumbers: number[];
+}
+interface number {
+}
+
+interface PathMark {
+  fullPath: string;
+  lineNumber: number[];
+}
+
+IPersistTaskManager "1" -- "0..*" IPersistTask
+IPersistTask "1" -- "0..*" IPersistFile
+IPersistFile "1" -- "0..*" number
+
+
+IPersistTaskManager <|.. TaskManager
+IPersistTask <|.. Task
+IPersistFile <|.. File
+number <|.. Mark
+
+class Ring<extends Array<T>> {
+    -_current = -1
+
+    +get current(): T | undefined
+    +get next(): T | undefined
+    +get previous(): T | undefined
+    +get top(): T | undefined
+    +get bottom(): T | undefined
+    
+    -checkPosition(): void
+
+    +insertBefore(item: T): T | undefined
+    +insertAfter(item: T): T | undefined
+    +pushArray(items: T[]): number
+    +push(item: T): number
+    +deleteCurrent(): T | undefined
+
+
 }
 
 abstract class Helper{
@@ -113,62 +184,5 @@ abstract class DecoratorHelper{
     +{static}showLine(line: number): void
     +{static}openAndShow(filepath: string, mark: number): void
 }
-
-class Ring<extends Array<T>> {
-    -_current = -1
-
-    +get current(): T | undefined
-    +get next(): T | undefined
-    +get previous(): T | undefined
-    +get top(): T | undefined
-    +get bottom(): T | undefined
-    
-    -checkPosition(): void
-
-    +insertBefore(item: T): T | undefined
-    +insertAfter(item: T): T | undefined
-    +pushArray(items: T[]): number
-    +push(item: T): number
-    +deleteCurrent(): T | undefined
-
-
-}
-
-class File {
- -_filepath: string
- -_marks: Mark[]
-
- +get filepath
- +get allMarks
- +get lineNumbers
-
- +mergeWith(file: IPersistFile): File
- +setMarksFromPersist(lineNumbers: number[]): void
- +addMark(lineNumber: number): void
- +toggleTaskMark(lineNumber: number): void
- +unDirtyAll(): void
- +hasMarks(): boolean
-}
-
-class Mark {
- -_isDirty: boolean
- -_parent: File
- -_label = ''
- -_lineNumber: number
- -_quickPickItem: vscode.QuickPickItem | undefined
-
- +get quickPickItem(): vscode.QuickPickItem | undefined
- +get lineNumberForPersist(): number | undefined
- +get lineNumber(): number
- +set lineNumber(lineNumber: number)
-
- +unDirty(): void
- +async getQuickPickItem(filepath: string,
-    lineNumber: number | null): Promise<vscode.QuickPickItem>
-}
-
-TaskManager "1" -- "0..*" Task
-Task "1" -- "0..*" File
-File "1" -- "0..*" Mark
 
 @enduml
