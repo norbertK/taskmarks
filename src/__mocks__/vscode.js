@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 const languages = {
   createDiagnosticCollection: jest.fn(),
 };

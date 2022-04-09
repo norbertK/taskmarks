@@ -75,7 +75,7 @@ export class Task {
             newFiles.push(oldFile);
           } else {
             // if double, merge line numbers
-            fileFound.mergeMarksAndLineNumbers(oldFile);
+            fileFound.mergeMarksAndLineNumbers(oldFile.lineNumbers);
           }
         }
       });
@@ -104,7 +104,7 @@ export class Task {
           newFiles.push(newFile);
         } else {
           // if double, merge line numbers
-          fileFound.mergeMarksAndLineNumbers(persistFile);
+          fileFound.mergeMarksAndLineNumbers(persistFile.lineNumbers);
         }
       });
     }
@@ -116,11 +116,7 @@ export class Task {
   }
 
   toggle(path: string, lineNumber: number): boolean {
-    console.log('Task.toggle() - path: ', path);
-
     const reducedPath = PathHelper.reducePath(path);
-    console.log('Task.toggle() - reducedPath: ', reducedPath);
-    console.log('Task.toggle() - this._files: ', this._files);
 
     let file: File | undefined = this._files.find((fm) => {
       if (fm) {

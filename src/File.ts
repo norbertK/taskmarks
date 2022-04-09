@@ -1,4 +1,3 @@
-// import * as _ from 'lodash';
 import type { IPersistFile, PathMark } from './types';
 import { Mark } from './Mark';
 
@@ -11,11 +10,7 @@ export class File {
   }
 
   get allMarks(): PathMark[] {
-    console.log('outside this.filepath: ', this.filepath);
-
     return this._marks.map((mark) => {
-      console.log('inside this.filepath: ', this.filepath);
-
       return {
         fullPath: this.filepath,
         lineNumber: mark.lineNumber,
@@ -26,40 +21,44 @@ export class File {
   get lineNumbers(): number[] {
     const lineNumbers: number[] = [];
     this._marks.forEach((mark) => {
-      if (mark.lineNumber !== undefined) {
-        lineNumbers.push(mark.lineNumber);
-      }
+      lineNumbers.push(mark.lineNumber);
     });
 
     return lineNumbers;
   }
 
-  get lineNumbersForPersist(): number[] {
-    const marks: number[] = [];
-    this._marks.forEach((mark) => {
-      if (mark.lineNumber !== undefined) {
-        marks.push(mark.lineNumber);
-      }
-    });
-
-    return marks;
-  }
-
   constructor(filePath: string, lineNumber = -1) {
     this._filepath = filePath;
-
-    if (!this._marks) {
-      this._marks = [];
-    }
+    this._marks = [];
     if (lineNumber === -1) {
       return;
     }
     this.toggleTaskMark(lineNumber);
   }
 
-  mergeMarksAndLineNumbers(persistFile: IPersistFile): File {
+  isDirty(): boolean {
+    this._marks.forEach((mark) => {
+      if (mark.isDirty()) {
+        return true;
+      }
+    });
+
+    return false;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  mergeMarksAnd_PersistFile_(persistFile: IPersistFile): File {
+    if (persistFile === undefined || persistFile.lineNumbers === undefined) {
+      return this.mergeMarksAndLineNumbers([]);
+    }
+    return this.mergeMarksAndLineNumbers(persistFile.lineNumbers);
+  }
+
+  mergeMarksAndLineNumbers(lineNumbers: number[]): File {
     // start with an empty array
     const newMarks: Mark[] = [];
+
+    // first remove double marks in this._marks
     // copy all old, but check for doubles
     if (this._marks && this._marks.length > 0) {
       this._marks.forEach((mark) => {
@@ -72,13 +71,9 @@ export class File {
       });
     }
 
-    if (persistFile === undefined || persistFile.lineNumbers === undefined) {
-      return this;
-    }
-
-    // now do the same with file.lineNumbers
-    if (persistFile.lineNumbers.length > 0) {
-      persistFile.lineNumbers.forEach((lineNumber) => {
+    // now insert the new lineNumbers
+    if (lineNumbers.length > 0) {
+      lineNumbers.forEach((lineNumber) => {
         const pos = newMarks.findIndex(
           (newMark) => lineNumber === newMark.lineNumber
         );
@@ -87,30 +82,27 @@ export class File {
         }
       });
     }
+    // sort
+    let sortedMarks = newMarks.sort(
+      (first, second) => 0 - (first.lineNumber > second.lineNumber ? -1 : 1)
+    );
 
-    // replace old _marks array with newMarks
-    this._marks = newMarks;
+    // replace old _marks array with sortedMarks
+    this._marks = sortedMarks;
 
     return this;
   }
 
-  setMarksFromPersist(lineNumbers: number[]): void {
-    lineNumbers.forEach(async (lineNumber) => {
-      this.addMark(lineNumber);
-    });
-  }
-
   addMark(lineNumber: number): void {
-    this._marks.push(new Mark(lineNumber, false));
+    this.mergeMarksAndLineNumbers([lineNumber]);
   }
 
   toggleTaskMark(lineNumber: number): void {
-    const found = this._marks.findIndex(
+    const index = this._marks.findIndex(
       (mark) => mark.lineNumber === lineNumber
     );
-
-    if (found > -1) {
-      this._marks.splice(found, 1);
+    if (index > -1) {
+      this._marks.splice(index, 1);
     } else {
       this.addMark(lineNumber);
     }
@@ -123,23 +115,4 @@ export class File {
   hasMarks(): boolean {
     return this._marks.length > 0;
   }
-
-  // dumpToLog(indent: number): void {
-  //   indent++;
-  //   // eslint-disable-next-line no-console
-  //   console.log(indent, '--------------------------');
-  //   // eslint-disable-next-line no-console
-  //   console.log(indent, '---------- File ----------');
-  //   // eslint-disable-next-line no-console
-  //   console.log(indent, '_filepath - ' + this._filepath);
-  //   let marks = '';
-  //   this._marks.forEach((mark) => {
-  //     // mark.dumpToLog(indent);
-  //     marks += mark.lineNumber + ' ';
-  //   });
-  //   // eslint-disable-next-line no-console
-  //   console.log(indent, marks);
-  //   // eslint-disable-next-line no-console
-  //   console.log(indent, '');
-  // }
 }

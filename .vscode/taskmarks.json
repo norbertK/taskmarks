@@ -1,12 +1,12 @@
 {
-	"activeTaskName": "tasklineNumbers",
+	"activeTaskName": "taskMarks",
 	"tasks": [
 		{
 			"name": "default",
 			"files": []
 		},
 		{
-			"name": "tasklineNumbers",
+			"name": "taskMarks",
 			"files": [
 				{
 					"filepath": "\\src\\Mark.ts",
