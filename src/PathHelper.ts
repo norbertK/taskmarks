@@ -10,36 +10,27 @@ export abstract class PathHelper {
   private static _activePathChar: string;
   private static _inactivePathChar: string;
 
+  static get taskmarksDataFilePath(): string {
+    return this._taskmarksDataFilePath;
+  }
+
+  static get activePathChar(): string {
+    return this._activePathChar;
+  }
+
+  static get inactivePathChar(): string {
+    return this._inactivePathChar;
+  }
+
   static get basePath(): string {
     return this._basePath;
   }
 
   static set basePath(basePath: string) {
     this._basePath = basePath;
-
-    PathHelper.taskmarksDataFilePath;
-    if (
-      PathHelper._taskmarksDataFilePath === null ||
-      PathHelper._taskmarksDataFilePath === undefined ||
-      !existsSync(PathHelper._taskmarksDataFilePath)
-    ) {
-      throw new Error('Error loading taskmarks.json! Stop!');
-    }
-    let stringFromFile = readFileSync(
-      PathHelper._taskmarksDataFilePath
-    ).toString();
-
-    // 'upgrade' taskmarks.json
-    if (stringFromFile.indexOf('marks') > -1) {
-      stringFromFile = stringFromFile.replace('marks', 'lineNumbers');
-
-      while (stringFromFile.indexOf('marks') > -1) {
-        stringFromFile = stringFromFile.replace('marks', 'lineNumbers');
-      }
-    }
   }
 
-  static get taskmarksDataFilePath(): string {
+  private static initTaskmarksDataFilePath(): void {
     // console.log('PathHelper.taskmarksDataFilePath()');
     if (!this._taskmarksDataFilePath) {
       if (!vscode.workspace.workspaceFolders) {
@@ -61,8 +52,6 @@ export abstract class PathHelper {
         PathHelper._inactivePathChar = '/';
       }
     }
-
-    return this._taskmarksDataFilePath;
   }
 
   static getFullPath(filepath = ''): string {
@@ -82,5 +71,27 @@ export abstract class PathHelper {
     return filepath;
   }
 
-  static getTaskmarksJson(): string {}
+  static getTaskmarksJson(): string {
+    PathHelper.initTaskmarksDataFilePath;
+    if (
+      PathHelper._taskmarksDataFilePath === null ||
+      PathHelper._taskmarksDataFilePath === undefined ||
+      !existsSync(PathHelper._taskmarksDataFilePath)
+    ) {
+      throw new Error('Error loading taskmarks.json! Stop!');
+    }
+    let taskmarksJson = readFileSync(
+      PathHelper._taskmarksDataFilePath
+    ).toString();
+
+    // 'upgrade' taskmarks.json
+    if (taskmarksJson.indexOf('marks') > -1) {
+      taskmarksJson = taskmarksJson.replace('marks', 'lineNumbers');
+
+      while (taskmarksJson.indexOf('marks') > -1) {
+        taskmarksJson = taskmarksJson.replace('marks', 'lineNumbers');
+      }
+    }
+    return taskmarksJson;
+  }
 }

@@ -1,3 +1,5 @@
+import * as vscode from 'vscode';
+
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
 
@@ -20,8 +22,8 @@ export class Persist {
       if (task.name === activeTaskName) {
         task.files.forEach((file) => {
           file.filepath = file.filepath.replace(
-            Persist._inactivePathChar,
-            Persist._activePathChar
+            PathHelper.inactivePathChar,
+            PathHelper.activePathChar
           );
 
           const fullPath = PathHelper.getFullPath(file.filepath);
@@ -42,7 +44,7 @@ export class Persist {
   }
 
   static saveTasks(): void {
-    const taskmarksFile = Persist.taskmarksDataFilePath;
+    const taskmarksFile = PathHelper.taskmarksDataFilePath;
     if (!taskmarksFile || !existsSync(dirname(taskmarksFile))) {
       mkdirSync(dirname(taskmarksFile));
     }

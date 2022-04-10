@@ -101,7 +101,6 @@
     "pretestJ": "pwsh scripts\\fastDelete.ps1 out",
     "lint": "eslint src --ext ts",
     "test": "jest --runInBand --detectOpenHandles",
-    "test-compile": "tsc -p ./",
     "checkForUpgrade": "ncu",
     "upgrade": "ncu -u && npm install",
     "inst": "npm install",
