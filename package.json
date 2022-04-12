@@ -26,10 +26,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "taskmarks.selectMarkFromList",
-        "title": "Taskmarks: Select Bookmark from List"
-      },
-      {
         "command": "taskmarks.selectTask",
         "title": "Taskmarks: Select Active Task"
       },

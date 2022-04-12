@@ -31,9 +31,12 @@ export abstract class PathHelper {
   }
 
   private static initTaskmarksDataFilePath(): void {
-    // console.log('PathHelper.taskmarksDataFilePath()');
     if (!this._taskmarksDataFilePath) {
-      if (!vscode.workspace.workspaceFolders) {
+      if (
+        vscode.workspace.workspaceFolders === undefined ||
+        vscode.workspace.workspaceFolders === null ||
+        vscode.workspace.workspaceFolders.length === 0
+      ) {
         throw new Error('Error loading vscode.workspace! Stop!');
       }
       this._taskmarksDataFilePath = join(
@@ -72,11 +75,12 @@ export abstract class PathHelper {
   }
 
   static getTaskmarksJson(): string {
-    PathHelper.initTaskmarksDataFilePath;
+    PathHelper.initTaskmarksDataFilePath();
+    const fileFound = existsSync(PathHelper._taskmarksDataFilePath);
     if (
       PathHelper._taskmarksDataFilePath === null ||
       PathHelper._taskmarksDataFilePath === undefined ||
-      !existsSync(PathHelper._taskmarksDataFilePath)
+      !fileFound
     ) {
       throw new Error('Error loading taskmarks.json! Stop!');
     }

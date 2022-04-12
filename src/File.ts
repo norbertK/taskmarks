@@ -36,16 +36,6 @@ export class File {
     this.toggleTaskMark(lineNumber);
   }
 
-  isDirty(): boolean {
-    this._marks.forEach((mark) => {
-      if (mark.isDirty()) {
-        return true;
-      }
-    });
-
-    return false;
-  }
-
   // eslint-disable-next-line @typescript-eslint/naming-convention
   mergeMarksAnd_PersistFile_(persistFile: IPersistFile): File {
     if (persistFile === undefined || persistFile.lineNumbers === undefined) {
@@ -106,10 +96,6 @@ export class File {
     } else {
       this.addMark(lineNumber);
     }
-  }
-
-  unDirtyAll(): void {
-    this._marks.forEach((mark) => mark.unDirty());
   }
 
   hasMarks(): boolean {
