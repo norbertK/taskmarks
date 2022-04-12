@@ -5,6 +5,10 @@ All notable changes to the "taskmarks" extension will be documented in this file
 ## [0.8.19] - 2022-04-05
 
 .try to fix errors
+still loosing tasks
+
+- removed **Taskmarks: Select Bookmark From List** List all bookmarks in the current task
+- (did that ever work?)
 
 ## [0.8.17] - 2022-04-05
 

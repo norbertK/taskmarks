@@ -54,19 +54,16 @@ class File {
  +setMarksFromPersist(lineNumbers: number[]): void
  +addMark(lineNumber: number): void
  +toggleTaskMark(lineNumber: number): void
- +unDirtyAll(): void
  +hasMarks(): boolean
 }
 
 class Mark {
- -_isDirty: boolean
  -_label = ''
  -_lineNumber: number
 
  +get lineNumber(): number
  +set lineNumber(lineNumber: number)
 
- +unDirty(): void
  +async getQuickPickItem(filepath: string,
     lineNumber: number | null): Promise<vscode.QuickPickItem>
 }
@@ -139,7 +136,6 @@ abstract class Helper{
     +{static}changeActiveFile(editor: vscode.TextEditor | undefined): void
     +{static}refresh(): void
     +{static}async toggleMark(): Promise<void>
-    +{static}async selectMarkFromList(): Promise<void>
     +{static}async selectTask(): Promise<void>
     +{static}async createTask(): Promise<void>
     +{static}async nextMark(): Promise<void>

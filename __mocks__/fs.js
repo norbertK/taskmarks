@@ -30,13 +30,13 @@ function __setMockJson(json) {
 function existsSync(path) {
   return true;
 }
-function readFileSync(path) {
-  return mockTaskmarksJson;
-}
+// function readFileSync(path) {
+//   return mockTaskmarksJson;
+// }
 
 fs.__setMockJson = __setMockJson;
 // fs.readdirSync = readdirSync;
 fs.existsSync = existsSync;
-fs.readFileSync = readFileSync;
+// fs.readFileSync = readFileSync;
 
 module.exports = fs;

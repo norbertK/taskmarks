@@ -7,20 +7,7 @@
 		},
 		{
 			"name": "taskMarks",
-			"files": [
-				{
-					"filepath": "\\src\\Mark.ts",
-					"lineNumbers": [
-						-2
-					]
-				},
-				{
-					"filepath": "\\src\\Helper.ts",
-					"lineNumbers": [
-						0
-					]
-				}
-			]
+			"files": []
 		}
 	]
 }
