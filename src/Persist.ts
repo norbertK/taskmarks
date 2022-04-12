@@ -4,8 +4,8 @@ import { TaskManager } from './TaskManager';
 import { Task } from './Task';
 
 import type { IPersistFile, IPersistTask, IPersistTaskManager } from './types';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { dirname } from 'path';
 import { PathHelper } from './PathHelper';
 
 export class Persist {
