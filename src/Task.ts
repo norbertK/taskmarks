@@ -3,6 +3,7 @@ import { Mark } from './Mark';
 import { Ring } from './Ring';
 import { PathHelper } from './PathHelper';
 import type { IPersistFile, IPersistTask, PathMark } from './types';
+import { Helper } from './Helper';
 
 export class Task {
   private _name: string;
@@ -10,6 +11,9 @@ export class Task {
   private _files: Ring<File>;
 
   constructor(name: string) {
+    if (name === undefined || name === null) {
+      throw new Error('Task must always have a name.');
+    }
     this._name = name;
     this._files = new Ring();
   }
@@ -115,19 +119,19 @@ export class Task {
     return this;
   }
 
-  toggle(path: string, lineNumber: number): boolean {
-    const reducedPath = PathHelper.reducePath(path);
+  toggle(filename: string, lineNumber: number): boolean {
+    const reducedFilePath = PathHelper.reducePath(filename);
 
     let file: File | undefined = this._files.find((fm) => {
       if (fm) {
-        return fm.filepath === reducedPath;
+        return fm.filepath === reducedFilePath;
       }
     });
 
     if (file) {
       file.toggleTaskMark(lineNumber);
     } else {
-      file = new File(reducedPath, lineNumber);
+      file = new File(reducedFilePath, lineNumber);
       this._files.push(file);
     }
 

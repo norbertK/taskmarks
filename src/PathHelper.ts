@@ -68,10 +68,36 @@ export abstract class PathHelper {
   }
 
   static reducePath(filepath: string): string {
+    let reducedPath = filepath;
     if (filepath.startsWith(this.basePath)) {
-      filepath = filepath.substring(this._basePath.length);
+      reducedPath = filepath.substring(this._basePath.length);
     }
-    return filepath;
+    return reducedPath;
+  }
+
+  static getTaskmarksJson(): string {
+    PathHelper.initTaskmarksDataFilePath();
+    const fileFound = existsSync(PathHelper._taskmarksDataFilePath);
+    if (
+      PathHelper._taskmarksDataFilePath === null ||
+      PathHelper._taskmarksDataFilePath === undefined ||
+      !fileFound
+    ) {
+      throw new Error('Error loading taskmarks.json! Stop!');
+    }
+    let taskmarksJson = readFileSync(
+      PathHelper._taskmarksDataFilePath
+    ).toString();
+
+    // 'upgrade' taskmarks.json
+    if (taskmarksJson.indexOf('marks') > -1) {
+      taskmarksJson = taskmarksJson.replace('marks', 'lineNumbers');
+
+      while (taskmarksJson.indexOf('marks') > -1) {
+        taskmarksJson = taskmarksJson.replace('marks', 'lineNumbers');
+      }
+    }
+    return taskmarksJson;
   }
 
   static getTaskmarksJson(): string {

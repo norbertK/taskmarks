@@ -1,0 +1,110 @@
+
+    _taskmarksDataFilePath
+    _activePathChar
+    _inactivePathChar
+
+@startuml startup
+
+hide footbox
+
+mainframe **toggle taskmark**
+
+actor VSCode
+participant Helper as help
+participant Task as task
+participant PathHelper as ph
+participant File as file
+participant Persist as p
+
+VSCode -> help: toggleMark
+activate help #FFBBBB
+
+note right of help
+    all actions on
+    _taskManager.
+    activeTask
+end note
+
+
+help -> VSCode: get activeTextEditor
+activate help #DarkSalmon
+activate VSCode #DarkSalmon
+VSCode -> help: with (document.fileName, selection.active.line)
+deactivate VSCode
+deactivate help
+
+
+help -> task: toggle (fileName, activeLine)
+activate task #SkyBlue
+note right of task
+    has
+    _name: string
+    _files: Ring<File>
+    _activeFile: File
+end note
+
+
+
+task -> ph: reducePath(filename)
+activate task #LightGoldenRodYellow
+activate ph #LightGoldenRodYellow
+
+note right of ph
+    PathHelper knows
+    _basePath
+end note
+
+ph -> task: reducedPath
+deactivate ph
+deactivate task
+
+ph -> ph: does file exist
+
+alt file exists
+ph -> file: toggleTaskMark(lineNumber)
+else file not found
+ph -> file: new File(reducedFilePath, lineNumber)
+ph -> ph: add file to files
+end
+
+
+Alice -> Bob: Authentication Request
+
+alt successful case
+
+    Bob -> Alice: Authentication Accepted
+
+else some kind of failure
+
+    Bob -> Alice: Authentication Failure
+    group My own label
+    Alice -> Log : Log attack start
+        loop 1000 times
+            Alice -> Bob: DNS Attack
+        end
+    Alice -> Log : Log attack end
+    end
+
+else Another type of failure
+
+   Bob -> Alice: Please repeat
+
+end
+
+
+
+
+task --> help
+deactivate task
+
+
+
+deactivate help
+
+
+
+@endjson
+
+
+
+

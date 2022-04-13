@@ -1,2 +1,17 @@
 create some taskmarks
 next, previous, select
+
+log an error:
+
+try {
+    ...
+    throw new Error('xyz');
+    ...
+} catch (error) {
+    Helper.reportError({ message: Helper.getErrorMessage(error) });
+}
+
+log and end taskmarks:
+
+throw new Error('xyz');
+
