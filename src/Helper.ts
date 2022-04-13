@@ -11,7 +11,7 @@ export abstract class Helper {
   private static _taskManager: TaskManager;
   private static _outputChannel: vscode.OutputChannel;
 
-  private static reportError = ({ message }: { message: string }) => {
+  static reportError = ({ message }: { message: string }) => {
     // send the error to our logging service...
     Helper.outputChannel.appendLine(message);
     Helper.outputChannel.show(true);
@@ -297,9 +297,7 @@ export abstract class Helper {
 
       this.refresh();
     } catch (error: unknown) {
-      const message = Helper.getErrorMessage(error);
-      Helper.reportError({ message });
-      return;
+      Helper.reportError({ message: Helper.getErrorMessage(error) });
     }
   }
 
@@ -325,7 +323,7 @@ export abstract class Helper {
     }
   }
 
-  static isErrorWithMessage(error: unknown): error is ErrorWithMessage {
+  private static isErrorWithMessage(error: unknown): error is ErrorWithMessage {
     return (
       typeof error === 'object' &&
       error !== null &&
@@ -334,7 +332,7 @@ export abstract class Helper {
     );
   }
 
-  static toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
+  private static toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
     if (Helper.isErrorWithMessage(maybeError)) {
       return maybeError;
     }
