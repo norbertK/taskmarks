@@ -58,14 +58,37 @@ ph -> task: reducedPath
 deactivate ph
 deactivate task
 
-ph -> ph: does file exist
+task -> task: does file exist
 
 alt file exists
-ph -> file: toggleTaskMark(lineNumber)
+    task -> file: toggleTaskMark(lineNumber)
+    file -> file: does lineNumber exist
+    alt lineNumber exists
+        file -> file: remove lineNumber from _marks
+    else lineNumber not found
+        file -> file: addMark(lineNumber)
+        activate file #DarkSalmon
+        file -> file: mergeMarksAndLineNumbers([lineNumber])
+
+        
+        deactivate file
+    end
+
 else file not found
-ph -> file: new File(reducedFilePath, lineNumber)
-ph -> ph: add file to files
+    task -> file: new File(reducedFilePath, lineNumber)
+    task -> task: add file to files
+
 end
+
+
+task -> help: file.hasMarks()
+deactivate task
+
+deactivate help
+
+
+
+
 
 
 Alice -> Bob: Authentication Request
@@ -94,12 +117,8 @@ end
 
 
 
-task --> help
-deactivate task
 
 
-
-deactivate help
 
 
 

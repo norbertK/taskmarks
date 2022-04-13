@@ -99,6 +99,6 @@ export class File {
   }
 
   hasMarks(): boolean {
-    return this._marks.length > 0;
-  }
+  return this._marks.length > 0;
+}
 }
