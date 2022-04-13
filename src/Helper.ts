@@ -9,29 +9,50 @@ export abstract class Helper {
   private static _activeEditorLineCount: number;
   private static _activeEditor: vscode.TextEditor | undefined;
   private static _taskManager: TaskManager;
+  private static _outputChannel: vscode.OutputChannel;
+
+  private static reportError = ({ message }: { message: string }) => {
+    // send the error to our logging service...
+    Helper.outputChannel.appendLine(message);
+    Helper.outputChannel.show(true);
+  };
 
   static get activeEditor(): vscode.TextEditor | undefined {
     return this._activeEditor;
   }
+  static get outputChannel(): vscode.OutputChannel {
+    return this._outputChannel;
+  }
 
-  static init(context: vscode.ExtensionContext): void {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
-      throw new Error('Could not find a workspace');
+  static init(
+    context: vscode.ExtensionContext,
+    outputChannel: vscode.OutputChannel
+  ): void {
+    try {
+      Helper._outputChannel = outputChannel;
+
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders) {
+        throw new Error('Could not find a workspace');
+      }
+
+      const workspaceFolder: vscode.WorkspaceFolder = workspaceFolders[0];
+      const uri: vscode.Uri = workspaceFolder.uri;
+      PathHelper.basePath = uri.fsPath;
+
+      this._taskManager = TaskManager.instance;
+      Persist.initAndLoad(this._taskManager);
+
+      DecoratorHelper.initDecorator(context);
+
+      Helper.handleEditorChange();
+      Helper.handleSave();
+      Helper.handleChange(context);
+    } catch (error: unknown) {
+      const message = Helper.getErrorMessage(error);
+      Helper.reportError({ message });
+      throw error;
     }
-
-    const workspaceFolder: vscode.WorkspaceFolder = workspaceFolders[0];
-    const uri: vscode.Uri = workspaceFolder.uri;
-    PathHelper.basePath = uri.fsPath;
-
-    this._taskManager = TaskManager.instance;
-    Persist.initAndLoad(this._taskManager);
-
-    DecoratorHelper.initDecorator(context);
-
-    Helper.handleEditorChange();
-    Helper.handleSave();
-    Helper.handleChange(context);
   }
 
   private static handleEditorChange(): void {
@@ -256,24 +277,30 @@ export abstract class Helper {
   }
 
   static async toggleMark(): Promise<void> {
-    const activeTextEditor = vscode.window.activeTextEditor;
+    try {
+      const activeTextEditor = vscode.window.activeTextEditor;
 
-    if (!activeTextEditor || !this._taskManager.activeTask) {
+      if (!activeTextEditor || !this._taskManager.activeTask) {
+        return;
+      }
+      const activeLine = activeTextEditor.selection.active.line;
+      // const isDirty = activeTextEditor.document.isDirty;
+
+      this._taskManager.activeTask.toggle(
+        activeTextEditor.document.fileName,
+        activeLine
+      );
+
+      // if (!isDirty) {
+      Persist.saveTasks();
+      // }
+
+      this.refresh();
+    } catch (error: unknown) {
+      const message = Helper.getErrorMessage(error);
+      Helper.reportError({ message });
       return;
     }
-    const activeLine = activeTextEditor.selection.active.line;
-    // const isDirty = activeTextEditor.document.isDirty;
-
-    this._taskManager.activeTask.toggle(
-      activeTextEditor.document.fileName,
-      activeLine
-    );
-
-    // if (!isDirty) {
-    Persist.saveTasks();
-    // }
-
-    this.refresh();
   }
 
   static changeActiveFile(editor: vscode.TextEditor | undefined): void {
@@ -297,4 +324,35 @@ export abstract class Helper {
       }
     }
   }
+
+  static isErrorWithMessage(error: unknown): error is ErrorWithMessage {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error &&
+      typeof (error as Record<string, unknown>).message === 'string'
+    );
+  }
+
+  static toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
+    if (Helper.isErrorWithMessage(maybeError)) {
+      return maybeError;
+    }
+
+    try {
+      return new Error(JSON.stringify(maybeError));
+    } catch {
+      // fallback in case there's an error stringifying the maybeError
+      // like with circular references for example.
+      return new Error(String(maybeError));
+    }
+  }
+
+  static getErrorMessage(error: unknown) {
+    return Helper.toErrorWithMessage(error).message;
+  }
 }
+
+type ErrorWithMessage = {
+  message: string;
+};

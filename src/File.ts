@@ -68,7 +68,7 @@ export class File {
           (newMark) => lineNumber === newMark.lineNumber
         );
         if (pos === -1) {
-          newMarks.push(new Mark(lineNumber, false));
+          newMarks.push(new Mark(lineNumber));
         }
       });
     }

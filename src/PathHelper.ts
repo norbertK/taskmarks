@@ -68,10 +68,11 @@ export abstract class PathHelper {
   }
 
   static reducePath(filepath: string): string {
+    let reducedPath = filepath;
     if (filepath.startsWith(this.basePath)) {
-      filepath = filepath.substring(this._basePath.length);
+      reducedPath = filepath.substring(this._basePath.length);
     }
-    return filepath;
+    return reducedPath;
   }
 
   static getTaskmarksJson(): string {

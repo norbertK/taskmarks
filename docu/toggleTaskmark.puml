@@ -1,0 +1,64 @@
+@startuml startup
+
+hide footbox
+
+mainframe **toggle taskmark**
+
+actor VSCode
+participant Helper as help
+participant Task as task
+participant PathHelper as ph
+participant Persist as p
+
+note right of help
+all actions on
+_taskManager.
+activeTask
+end note
+
+note right of ph
+PathHelper knows
+_basePath
+_taskmarksDataFilePath
+_activePathChar
+_inactivePathChar
+end note
+
+VSCode -> help: toggleMark
+activate help #FFBBBB
+
+help -> VSCode: get activeTextEditor
+activate help #DarkSalmon
+activate VSCode #DarkSalmon
+VSCode -> help: with (document.fileName, selection.active.line)
+deactivate VSCode
+deactivate help
+
+
+help -> task: toggle (fileName, activeLine)
+activate task #SkyBlue
+
+
+
+task -> ph: reducePath(filename)
+activate task #LightGoldenRodYellow
+activate ph #LightGoldenRodYellow
+ph -> task: reducedPath
+deactivate ph
+deactivate task
+
+
+task --> help
+deactivate task
+
+
+
+deactivate help
+
+
+
+@endjson
+
+
+
+

@@ -13,6 +13,7 @@ participant Persist as p
 participant TaskManager as tm
 
 VSCode -> ext: activate(context)
+ext -> ext: register commands
 ext -> help: init(context)
 activate help #FFBBBB
 help -> VSCode: get workspaceFolders
