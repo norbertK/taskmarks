@@ -6,6 +6,7 @@ All notable changes to the "taskmarks" extension will be documented in this file
 
 .try to fix errors
 still loosing tasks
+taskmarks.createTask - default ok - second ok - third deletes entries in default
 
 - removed **Taskmarks: Select Bookmark From List** List all bookmarks in the current task
 - (did that ever work?)
