@@ -221,12 +221,18 @@ export abstract class Helper {
   }
 
   static async createTask(): Promise<void> {
-    vscode.window.showInputBox().then((result) => {
-      if (result) {
-        this._taskManager.useActiveTask(result);
-        Helper.persistActiveFile();
-      }
-    });
+    try {
+      vscode.window.showInputBox().then((newTaskName) => {
+        if (newTaskName) {
+          this._taskManager.useActiveTask(newTaskName);
+          Helper.persistActiveFile();
+        }
+      });
+    } catch (error: unknown) {
+      const message = Helper.getErrorMessage(error);
+      Helper.reportError({ message });
+      throw error;
+    }
   }
 
   static deleteTask(): void {
