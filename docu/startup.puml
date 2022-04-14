@@ -9,7 +9,6 @@ participant extensions.ts as ext
 participant Helper as help
 participant PathHelper as ph
 participant Persist as p
-
 participant TaskManager as tm
 
 VSCode -> ext: activate(context)

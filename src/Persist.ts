@@ -44,27 +44,32 @@ export class Persist {
   }
 
   static saveTasks(): void {
-    const taskmarksFile = PathHelper.taskmarksDataFilePath;
-    if (!taskmarksFile || !existsSync(dirname(taskmarksFile))) {
-      mkdirSync(dirname(taskmarksFile));
+    const taskmarksDataFilePath = PathHelper.taskmarksDataFilePath;
+    if (!taskmarksDataFilePath) {
+      throw new Error('missing location of Taskmarks.json');
+    }
+    if (!existsSync(dirname(taskmarksDataFilePath))) {
+      mkdirSync(dirname(taskmarksDataFilePath));
     }
 
-    const persistTaskArray: IPersistTask[] = [];
+    const persistTaskManager: IPersistTaskManager = {
+      activeTaskName: this._taskManager.activeTask.name,
+      tasks: [],
+    };
 
     this._taskManager.allTasks.forEach((task) => {
       const persistTask: IPersistTask = this.copyTaskToPersistTask(task);
-      persistTaskArray.push(persistTask);
+      persistTaskManager.tasks.push(persistTask);
     });
 
     if (!this._taskManager.activeTask) {
       return;
     }
-    const persistTasks: IPersistTaskManager = {
-      activeTaskName: this._taskManager.activeTask.name,
-      tasks: persistTaskArray,
-    };
 
-    writeFileSync(taskmarksFile, JSON.stringify(persistTasks, null, '\t'));
+    writeFileSync(
+      taskmarksDataFilePath,
+      JSON.stringify(persistTaskManager, null, '\t')
+    );
   }
 
   static copyToClipboard(): void {
@@ -115,7 +120,7 @@ export class Persist {
     task.files.forEach((file) => {
       if (file && file.lineNumbers && file.lineNumbers.length > 0) {
         const fullPath = PathHelper.getFullPath(file.filepath);
-        if (fullPath !== undefined && existsSync(fullPath)) {
+        if (fullPath && existsSync(fullPath)) {
           const lineNumbers: number[] = file.lineNumbers;
 
           const persistFile: IPersistFile = {

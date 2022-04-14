@@ -284,14 +284,15 @@ export abstract class Helper {
         return;
       }
       const activeLine = activeTextEditor.selection.active.line;
-      // const isDirty = activeTextEditor.document.isDirty;
+      // const documentIsDirty = activeTextEditor.document.isDirty;
 
       this._taskManager.activeTask.toggle(
         activeTextEditor.document.fileName,
         activeLine
       );
 
-      // if (!isDirty) {
+      // // idea here was to not save, if file was not saved - removed - ? for now ?
+      // if (!documentIsDirty) {
       Persist.saveTasks();
       // }
 

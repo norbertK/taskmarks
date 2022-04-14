@@ -1,8 +1,4 @@
 
-    _taskmarksDataFilePath
-    _activePathChar
-    _inactivePathChar
-
 @startuml startup
 
 hide footbox
@@ -15,6 +11,7 @@ participant Task as task
 participant PathHelper as ph
 participant File as file
 participant Persist as p
+participant TaskManager as tm
 
 VSCode -> help: toggleMark
 activate help #FFBBBB
@@ -24,7 +21,6 @@ note right of help
     _taskManager.
     activeTask
 end note
-
 
 help -> VSCode: get activeTextEditor
 activate help #DarkSalmon
@@ -42,8 +38,6 @@ note right of task
     _files: Ring<File>
     _activeFile: File
 end note
-
-
 
 task -> ph: reducePath(filename)
 activate task #LightGoldenRodYellow
@@ -67,63 +61,71 @@ alt file exists
         file -> file: remove lineNumber from _marks
     else lineNumber not found
         file -> file: addMark(lineNumber)
-        activate file #DarkSalmon
-        file -> file: mergeMarksAndLineNumbers([lineNumber])
-
-        
-        deactivate file
     end
 
 else file not found
     task -> file: new File(reducedFilePath, lineNumber)
+    file -> file: addMark(lineNumber)
+    file --> task
     task -> task: add file to files
 
 end
 
-
 task -> help: file.hasMarks()
 deactivate task
+
+help -> p: saveTasks()
+activate help #DarkSalmon
+activate p #DarkSalmon
+p -> ph: taskmarksDataFilePath
+activate p #LightGoldenRodYellow
+activate ph #LightGoldenRodYellow
+ph -> p
+deactivate ph
+deactivate p
+
+p -> tm: allTasks
+activate p #LightGoldenRodYellow
+activate tm #LightGoldenRodYellow
+tm -> p
+deactivate tm
+deactivate p
+
+note right of p
+    persistTaskManager: IPersistTaskManager = {
+        activeTaskName: _taskManager.activeTask.name,
+        tasks:  [],
+    };
+end note
+loop allTasks
+    p -> p
+    note right of p
+        persistTask: IPersistTask = {
+            name: task.name,
+            files: [],
+        };
+    end note
+    loop files
+        p -> p
+        note right of p
+            persistTask.files.push(persistFile)
+        end note
+    end
+    note right of p
+        persistTaskManager.tasks.push(persistTask)
+    end note
+end
+
+
+p --> help
+deactivate p
+deactivate help
+
+help -> help: refresh()
+
 
 deactivate help
 
 
-
-
-
-
-Alice -> Bob: Authentication Request
-
-alt successful case
-
-    Bob -> Alice: Authentication Accepted
-
-else some kind of failure
-
-    Bob -> Alice: Authentication Failure
-    group My own label
-    Alice -> Log : Log attack start
-        loop 1000 times
-            Alice -> Bob: DNS Attack
-        end
-    Alice -> Log : Log attack end
-    end
-
-else Another type of failure
-
-   Bob -> Alice: Please repeat
-
-end
-
-
-
-
-
-
-
-
-
 @endjson
-
-
-
 
