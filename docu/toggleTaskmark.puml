@@ -116,6 +116,7 @@ loop allTasks
     end note
 end
 
+p -> p: write persistTaskManager to Taskmarks.json
 
 p --> help
 deactivate p

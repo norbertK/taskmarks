@@ -52,6 +52,9 @@ export class Persist {
       mkdirSync(dirname(taskmarksDataFilePath));
     }
 
+    if (!this._taskManager.activeTask) {
+      throw new Error('no active task');
+    }
     const persistTaskManager: IPersistTaskManager = {
       activeTaskName: this._taskManager.activeTask.name,
       tasks: [],
@@ -62,13 +65,9 @@ export class Persist {
       persistTaskManager.tasks.push(persistTask);
     });
 
-    if (!this._taskManager.activeTask) {
-      return;
-    }
-
     writeFileSync(
       taskmarksDataFilePath,
-      JSON.stringify(persistTaskManager, null, '\t')
+      JSON.stringify(persistTaskManager, null, '  ')
     );
   }
 
