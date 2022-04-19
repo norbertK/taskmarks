@@ -8,7 +8,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
 import { PathHelper } from './PathHelper';
 
-export class Persist {
+export abstract class Persist {
   private static _taskManager: TaskManager;
 
   static initAndLoad(taskManager: TaskManager): void {

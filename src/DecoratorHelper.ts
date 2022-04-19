@@ -19,11 +19,13 @@ export abstract class DecoratorHelper {
       });
   }
 
-  static refresh(activeEditor: vscode.TextEditor, marks: number[]): void {
-    if (activeEditor === null) {return;}
+  static refresh(activeEditor: vscode.TextEditor, lineNumbers: number[]): void {
+    if (activeEditor === null) {
+      return;
+    }
 
-    const ranges = marks.map((mark) => {
-      return new vscode.Range(mark, 0, mark, 0);
+    const ranges = lineNumbers.map((lineNumber) => {
+      return new vscode.Range(lineNumber, 0, lineNumber, 0);
     });
 
     activeEditor.setDecorations(this._vscTextEditorDecorationType, ranges);
@@ -31,7 +33,9 @@ export abstract class DecoratorHelper {
 
   static showLine(line: number): void {
     const activeTextEditor = vscode.window.activeTextEditor;
-    if (activeTextEditor === null || activeTextEditor === undefined) {return;}
+    if (activeTextEditor === null || activeTextEditor === undefined) {
+      return;
+    }
 
     let textEditorRevealType: vscode.TextEditorRevealType =
       vscode.TextEditorRevealType.InCenter;
