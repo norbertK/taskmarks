@@ -1,13 +1,84 @@
 {
-	"activeTaskName": "taskMarks",
-	"tasks": [
-		{
-			"name": "default",
-			"files": []
-		},
-		{
-			"name": "taskMarks",
-			"files": []
-		}
-	]
+  "activeTaskName": "copyOfDefault",
+  "tasks": [
+    {
+      "name": "default",
+      "files": [
+        {
+          "filepath": "\\package.json",
+          "lineNumbers": [
+            87
+          ]
+        },
+        {
+          "filepath": "\\src\\Mark.ts",
+          "lineNumbers": [
+            13,
+            17,
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "name": "taskMarks",
+      "files": [
+        {
+          "filepath": "\\package.json",
+          "lineNumbers": [
+            87,
+            98
+          ]
+        },
+        {
+          "filepath": "\\src\\Mark.ts",
+          "lineNumbers": [
+            13,
+            17,
+            9
+          ]
+        },
+        {
+          "filepath": "\\src\\types.ts",
+          "lineNumbers": [
+            0
+          ]
+        },
+        {
+          "filepath": "\\src\\Ring.ts",
+          "lineNumbers": [
+            1,
+            33,
+            54
+          ]
+        }
+      ]
+    },
+    {
+      "name": "copyOfDefault",
+      "files": [
+        {
+          "filepath": "\\package.json",
+          "lineNumbers": [
+            106,
+            87
+          ]
+        },
+        {
+          "filepath": "\\src\\Mark.ts",
+          "lineNumbers": [
+            13,
+            17,
+            9
+          ]
+        },
+        {
+          "filepath": "\\src\\Helper.ts",
+          "lineNumbers": [
+            310
+          ]
+        }
+      ]
+    }
+  ]
 }
