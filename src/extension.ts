@@ -3,15 +3,17 @@ import { Helper } from './Helper';
 import { Persist } from './Persist';
 
 export function activate(context: vscode.ExtensionContext) {
-  Helper.init(context);
+  const outputChannel = vscode.window.createOutputChannel('Taskmarks Errors');
 
-  let selectMarkFromListDisposable = vscode.commands.registerCommand(
-    'taskmarks.selectMarkFromList',
-    () => {
-      Helper.selectMarkFromList();
-    }
-  );
-  context.subscriptions.push(selectMarkFromListDisposable);
+  Helper.init(context, outputChannel);
+
+  // let selectMarkFromListDisposable = vscode.commands.registerCommand(
+  //   'taskmarks.selectMarkFromList',
+  //   () => {
+  //     Helper.selectMarkFromList();
+  //   }
+  // );
+  // context.subscriptions.push(selectMarkFromListDisposable);
 
   let selectTaskDisposable = vscode.commands.registerCommand(
     'taskmarks.selectTask',

@@ -1,0 +1,132 @@
+
+@startuml startup
+
+hide footbox
+
+mainframe **toggle taskmark**
+
+actor VSCode
+participant Helper as help
+participant Task as task
+participant PathHelper as ph
+participant File as file
+participant Persist as p
+participant TaskManager as tm
+
+VSCode -> help: toggleMark
+activate help #FFBBBB
+
+note right of help
+    all actions on
+    _taskManager.
+    activeTask
+end note
+
+help -> VSCode: get activeTextEditor
+activate help #DarkSalmon
+activate VSCode #DarkSalmon
+VSCode -> help: with (document.fileName, selection.active.line)
+deactivate VSCode
+deactivate help
+
+
+help -> task: toggle (fileName, activeLine)
+activate task #SkyBlue
+note right of task
+    has
+    _name: string
+    _files: Ring<File>
+    _activeFile: File
+end note
+
+task -> ph: reducePath(filename)
+activate task #LightGoldenRodYellow
+activate ph #LightGoldenRodYellow
+
+note right of ph
+    PathHelper knows
+    _basePath
+end note
+
+ph -> task: reducedPath
+deactivate ph
+deactivate task
+
+task -> task: does file exist
+
+alt file exists
+    task -> file: toggleTaskMark(lineNumber)
+    file -> file: does lineNumber exist
+    alt lineNumber exists
+        file -> file: remove lineNumber from _marks
+    else lineNumber not found
+        file -> file: addMark(lineNumber)
+    end
+
+else file not found
+    task -> file: new File(reducedFilePath, lineNumber)
+    file -> file: addMark(lineNumber)
+    file --> task
+    task -> task: add file to files
+
+end
+
+task -> help: file.hasMarks()
+deactivate task
+
+help -> p: saveTasks()
+activate help #DarkSalmon
+activate p #DarkSalmon
+p -> ph: taskmarksDataFilePath
+activate p #LightGoldenRodYellow
+activate ph #LightGoldenRodYellow
+ph -> p
+deactivate ph
+deactivate p
+
+p -> tm: allTasks
+activate p #LightGoldenRodYellow
+activate tm #LightGoldenRodYellow
+tm -> p
+deactivate tm
+deactivate p
+
+note right of p
+    persistTaskManager: IPersistTaskManager = {
+        activeTaskName: _taskManager.activeTask.name,
+        tasks:  [],
+    };
+end note
+loop allTasks
+    p -> p
+    note right of p
+        persistTask: IPersistTask = {
+            name: task.name,
+            files: [],
+        };
+    end note
+    loop files
+        p -> p
+        note right of p
+            persistTask.files.push(persistFile)
+        end note
+    end
+    note right of p
+        persistTaskManager.tasks.push(persistTask)
+    end note
+end
+
+p -> p: write persistTaskManager to Taskmarks.json
+
+p --> help
+deactivate p
+deactivate help
+
+help -> help: refresh()
+
+
+deactivate help
+
+
+@endjson
+

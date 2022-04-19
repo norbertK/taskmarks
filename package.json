@@ -2,7 +2,7 @@
   "name": "taskmarks",
   "displayName": "Taskmarks",
   "description": "Little helper for teams to navigate through files. Persists bookmarks for different tasks.",
-  "version": "0.8.17",
+  "version": "0.8.19",
   "publisher": "NorbertKlein",
   "contributors": [
     "Klein Norbert",
@@ -25,10 +25,6 @@
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "taskmarks.selectMarkFromList",
-        "title": "Taskmarks: Select Bookmark from List"
-      },
       {
         "command": "taskmarks.selectTask",
         "title": "Taskmarks: Select Active Task"
@@ -101,7 +97,6 @@
     "pretestJ": "pwsh scripts\\fastDelete.ps1 out",
     "lint": "eslint src --ext ts",
     "test": "jest --runInBand --detectOpenHandles",
-    "test-compile": "tsc -p ./",
     "checkForUpgrade": "ncu",
     "upgrade": "ncu -u && npm install",
     "inst": "npm install",

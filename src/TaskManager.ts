@@ -41,32 +41,21 @@ export class TaskManager {
 
     let task = this._allTasks.find((task) => task.name === taskname);
     if (!task) {
+      this._statusBarItem.hide();
       task = new Task(taskname);
       this._allTasks.push(task);
-    }
-    this.setActiveTask(taskname);
 
-    // this.dumpToLog();
-    return task;
-  }
-
-  setActiveTask(taskname: string): void {
-    // console.log('TaskManager.setActiveTask(', taskname, ') start');
-    const task = this._allTasks.find((task) => task.name === taskname);
-    if (task) {
       this._activeTask = task;
       this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
       this._statusBarItem.show();
-    } else {
-      this._statusBarItem.hide();
-      this.useActiveTask(taskname);
     }
-    // console.log('TaskManager.setActiveTask(', taskname, ') end');
+
+    return task;
   }
 
-  addTask(task: IPersistTask): void {
-    const current = this.useActiveTask(task.name);
-    current.mergeFilesWithPersistFiles(task);
+  addTask(iPersistTask: IPersistTask): void {
+    const current = this.useActiveTask(iPersistTask.name);
+    current.mergeFilesWithPersistFiles(iPersistTask);
   }
 
   delete(taskname: string): Task {
@@ -79,7 +68,7 @@ export class TaskManager {
     return this.useActiveTask();
   }
 
-  nextMark(activeFile: string, currentline: number): void {
+  nextMark(currentline: number): void {
     const activeTask = this.activeTask;
     if (
       activeTask === null ||
@@ -93,9 +82,9 @@ export class TaskManager {
       return;
     }
 
-    for (let mark of activeTask.activeFile.lineNumbers) {
-      if (mark > currentline) {
-        DecoratorHelper.showLine(mark);
+    for (let lineNumber of activeTask.activeFile.lineNumbers) {
+      if (lineNumber > currentline) {
+        DecoratorHelper.showLine(lineNumber);
         return;
       }
     }
@@ -103,9 +92,7 @@ export class TaskManager {
     this.nextDocument();
   }
 
-  previousMark(activeFile: string, currentline: number): void {
-    // console.log('TaskManager.previousMark()');
-
+  previousMark(currentline: number): void {
     const activeTask = this.activeTask;
     if (!activeTask || !activeTask.files || activeTask.files.length === 0) {
       return;
@@ -177,26 +164,4 @@ export class TaskManager {
       );
     }
   }
-
-  // dumpToLog(): void {
-  //   const indent = 0;
-  // console.log(indent, '');
-  // console.log(
-  //   indent,
-  //   '---------------------------------------------------------------------------------'
-  // );
-  // console.log(
-  //   indent,
-  //   '------------------------------------- Tasks -------------------------------------'
-  // );
-  // console.log(indent, '_activeTask.name - ' + this._activeTask.name);
-  // this.allTasks.forEach((task) => {
-  //   task.dumpToLog(indent);
-  // });
-  // console.log(
-  //   indent,
-  //   '---------------------------------------------------------------------------------'
-  // );
-  // console.log(indent, '');
-  // }
 }

@@ -1,37 +1,108 @@
 {
-	"activeTaskName": "where I use Persist",
-	"tasks": [
-		{
-			"name": "default",
-			"files": []
-		},
-		{
-			"name": "where I use Persist",
-			"files": [
-				{
-					"filepath": "\\src\\Persist.ts",
-					"lineNumbers": [
-						15,
-						19,
-						34
-					]
-				},
-				{
-					"filepath": "\\src\\TaskManager.ts",
-					"lineNumbers": [
-						33,
-						52
-					]
-				},
-				{
-					"filepath": "\\package.json",
-					"lineNumbers": [
-						100,
-						101,
-						95
-					]
-				}
-			]
-		}
-	]
+  "activeTaskName": "copyOfDefault",
+  "persistTasks": [
+    {
+      "name": "default",
+      "persistFiles": [
+        {
+          "filepath": "\\package.json",
+          "lineNumbers": [
+            87
+          ]
+        },
+        {
+          "filepath": "\\src\\Mark.ts",
+          "lineNumbers": [
+            9,
+            13,
+            17
+          ]
+        }
+      ]
+    },
+    {
+      "name": "taskMarks",
+      "persistFiles": [
+        {
+          "filepath": "\\package.json",
+          "lineNumbers": [
+            87,
+            98
+          ]
+        },
+        {
+          "filepath": "\\src\\Mark.ts",
+          "lineNumbers": [
+            9,
+            13,
+            17
+          ]
+        },
+        {
+          "filepath": "\\src\\types.ts",
+          "lineNumbers": [
+            0
+          ]
+        },
+        {
+          "filepath": "\\src\\Ring.ts",
+          "lineNumbers": [
+            1,
+            33,
+            54
+          ]
+        }
+      ]
+    },
+    {
+      "name": "copyOfDefault",
+      "persistFiles": [
+        {
+          "filepath": "\\package.json",
+          "lineNumbers": [
+            87,
+            98,
+            106
+          ]
+        },
+        {
+          "filepath": "\\src\\Mark.ts",
+          "lineNumbers": [
+            9,
+            13,
+            17
+          ]
+        },
+        {
+          "filepath": "\\src\\types.ts",
+          "lineNumbers": [
+            0,
+            5
+          ]
+        },
+        {
+          "filepath": "\\src\\Ring.ts",
+          "lineNumbers": [
+            1,
+            17,
+            33,
+            54
+          ]
+        },
+        {
+          "filepath": "\\src\\Helper.ts",
+          "lineNumbers": [
+            310
+          ]
+        },
+        {
+          "filepath": "\\src\\PathHelper.ts",
+          "lineNumbers": [
+            92,
+            100
+          ]
+        }
+      ]
+    }
+  ]
 }

@@ -1,8 +1,7 @@
 import { File } from './File';
-import { Mark } from './Mark';
 import { Ring } from './Ring';
 import { PathHelper } from './PathHelper';
-import type { IPersistFile, IPersistTask } from './types';
+import type { IPersistFile, IPersistTask, PathMark } from './types';
 
 export class Task {
   private _name: string;
@@ -10,6 +9,9 @@ export class Task {
   private _files: Ring<File>;
 
   constructor(name: string) {
+    if (name === undefined || name === null) {
+      throw new Error('Task must always have a name.');
+    }
     this._name = name;
     this._files = new Ring();
   }
@@ -37,21 +39,21 @@ export class Task {
     return this._files;
   }
 
-  get allMarks(): Mark[] {
-    return this._files.reduce<Mark[]>((a, file) => {
+  get allMarks(): PathMark[] {
+    return this._files.reduce<PathMark[]>((pathMarks, file) => {
       if (file !== null && file !== undefined) {
-        const fileMarks = file.allMarks;
-        a.push(...fileMarks);
+        const fileMarks: PathMark[] = [];
+        file.allMarks.forEach((mark) => {
+          fileMarks.push({
+            fullPath: file.filepath,
+            lineNumber: mark.lineNumber,
+          });
+        });
+        pathMarks.push(...fileMarks);
       }
-      return a;
+      return pathMarks;
     }, []);
   }
-
-  // private _files: Ring<File>;
-
-  // constructor(name: string) {
-  //   this._name = name;
-  //   this._files = new Ring();
 
   mergeFilesWithPersistFiles(persistTaskToMerge: IPersistTask): Task {
     // start with an empty Ring
@@ -69,7 +71,7 @@ export class Task {
             newFiles.push(oldFile);
           } else {
             // if double, merge line numbers
-            fileFound.mergeMarksAndLineNumbers(oldFile);
+            fileFound.mergeMarksAndLineNumbers(oldFile.lineNumbers);
           }
         }
       });
@@ -77,13 +79,13 @@ export class Task {
 
     if (
       persistTaskToMerge === undefined ||
-      persistTaskToMerge.files === undefined
+      persistTaskToMerge.persistFiles === undefined
     ) {
       return this;
     }
     // now do the same with persistTaskToMerge.files
-    if (persistTaskToMerge.files.length > 0) {
-      persistTaskToMerge.files.forEach((persistFile) => {
+    if (persistTaskToMerge.persistFiles.length > 0) {
+      persistTaskToMerge.persistFiles.forEach((persistFile) => {
         const fileFound: File | undefined = newFiles.find(
           (newFile) => persistFile.filepath === newFile?.filepath
         );
@@ -98,7 +100,7 @@ export class Task {
           newFiles.push(newFile);
         } else {
           // if double, merge line numbers
-          fileFound.mergeMarksAndLineNumbers(persistFile);
+          fileFound.mergeMarksAndLineNumbers(persistFile.lineNumbers);
         }
       });
     }
@@ -109,19 +111,19 @@ export class Task {
     return this;
   }
 
-  toggle(path: string, lineNumber: number): boolean {
-    const reducedPath = PathHelper.reducePath(path);
+  toggle(filename: string, lineNumber: number): boolean {
+    const reducedFilePath = PathHelper.reducePath(filename);
 
     let file: File | undefined = this._files.find((fm) => {
       if (fm) {
-        return fm.filepath === reducedPath;
+        return fm.filepath === reducedFilePath;
       }
     });
 
     if (file) {
       file.toggleTaskMark(lineNumber);
     } else {
-      file = new File(reducedPath, lineNumber);
+      file = new File(reducedFilePath, lineNumber);
       this._files.push(file);
     }
 
@@ -152,17 +154,4 @@ export class Task {
 
     return fileMark;
   }
-
-  // dumpToLog(indent: number): void {
-  //   indent++;
-  //   // console.log(indent, '--------------------------');
-  //   // console.log(indent, '---------- Task ----------');
-  //   // console.log(indent, '_name - ' + this._name);
-  //   this._files.forEach((file) => {
-  //     if (file) {
-  //       file.dumpToLog(indent);
-  //     }
-  //   });
-  //   // console.log(indent, '');
-  // }
 }

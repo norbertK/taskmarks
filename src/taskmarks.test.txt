@@ -1,11 +1,17 @@
-1
-2
-3 test
-4
+create some taskmarks
+next, previous, select
 
+log an error:
 
+try {
+    ...
+    throw new Error('xyz');
+    ...
+} catch (error) {
+    Helper.reportError({ message: Helper.getErrorMessage(error) });
+}
 
+log and end taskmarks:
 
-9 test
-
+throw new Error('xyz');
 

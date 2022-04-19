@@ -16,7 +16,6 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 - **Taskmarks: Create new Task** Create new Task (enter new Taskname)
 - **Taskmarks: Delete Task** Delete Task (from Tasklist)
-- **Taskmarks: Select Bookmark From List** List all bookmarks in the current task
 - **Taskmarks: Copy Active Task to Clipboard** Copy Active Task to Clipboard
 - **Taskmarks: Paste Clipboard to Task** Paste Clipboard to Task with same name
 - **Taskmarks: Select Active Task** Select Active Task (from List)
