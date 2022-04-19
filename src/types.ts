@@ -14,6 +14,6 @@ export interface IPersistFile {
 }
 
 export interface PathMark {
-  fullPath: string;
+  filepath: string;
   lineNumber: number;
 }

@@ -45,7 +45,7 @@ export class Task {
         const fileMarks: PathMark[] = [];
         file.allMarks.forEach((mark) => {
           fileMarks.push({
-            fullPath: file.filepath,
+            filepath: file.filepath,
             lineNumber: mark.lineNumber,
           });
         });

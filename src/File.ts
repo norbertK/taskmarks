@@ -12,7 +12,7 @@ export class File {
   get allMarks(): PathMark[] {
     return this._marks.map((mark) => {
       return {
-        fullPath: this.filepath,
+        filepath: this.filepath,
         lineNumber: mark.lineNumber,
       };
     });
@@ -99,6 +99,6 @@ export class File {
   }
 
   hasMarks(): boolean {
-  return this._marks.length > 0;
-}
+    return this._marks.length > 0;
+  }
 }

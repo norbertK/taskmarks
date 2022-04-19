@@ -24,8 +24,7 @@ export abstract class Persist {
           PathHelper.activePathChar
         );
 
-        const fullPath = PathHelper.getFullPath(persistFile.filepath);
-        if (fullPath !== undefined) {
+        if (PathHelper.fileExists(persistFile.filepath)) {
           iPersistFiles.push(persistFile);
         }
       });
@@ -104,9 +103,13 @@ export abstract class Persist {
     };
 
     task.files.forEach((file) => {
-      if (file && file.lineNumbers && file.lineNumbers.length > 0) {
-        const fullPath = PathHelper.getFullPath(file.filepath);
-        if (fullPath && PathHelper.fileExists(fullPath)) {
+      if (
+        file &&
+        file.filepath &&
+        file.lineNumbers &&
+        file.lineNumbers.length > 0
+      ) {
+        if (PathHelper.fileExists(file.filepath)) {
           const lineNumbers: number[] = file.lineNumbers;
 
           const persistFile: IPersistFile = {

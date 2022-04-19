@@ -91,7 +91,7 @@ interface number {
 }
 
 interface PathMark {
-  fullPath: string;
+  filepath: string;
   lineNumber: number[];
 }
 

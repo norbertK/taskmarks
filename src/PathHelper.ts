@@ -67,8 +67,8 @@ export abstract class PathHelper {
     }
   }
 
-  static fileExists(fullPath: string) {
-    return existsSync(fullPath);
+  static fileExists(filepath: string) {
+    return existsSync(PathHelper.getFullPath(filepath));
   }
 
   static saveTaskmarks(persistTaskManager: IPersistTaskManager) {
@@ -79,14 +79,9 @@ export abstract class PathHelper {
     );
   }
 
-  static getFullPath(filepath = ''): string {
+  static getFullPath(filepath: string): string {
     const pathWithBasePath = PathHelper.basePath + filepath;
-    const pathWithBasePathExists = existsSync(pathWithBasePath);
-    if (pathWithBasePathExists) {
-      return pathWithBasePath;
-    }
-
-    throw new Error('invalid path');
+    return pathWithBasePath;
   }
 
   static reducePath(filepath: string): string {

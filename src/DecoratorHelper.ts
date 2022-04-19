@@ -50,21 +50,15 @@ export abstract class DecoratorHelper {
     activeTextEditor.revealRange(selection, textEditorRevealType);
   }
 
-  static openAndShow(filepath: string, mark: number): void {
-    const fullPath = PathHelper.getFullPath(filepath);
-    if (!fullPath) {
-      return;
-    }
-
-    vscode.workspace.openTextDocument(fullPath).then((textDocument) => {
-      if (textDocument) {
-        vscode.window.showTextDocument(textDocument).then(() => {
-          if (!mark) {
-            return;
-          }
-          this.showLine(mark);
-        });
-      }
-    });
+  static openAndShow(filepath: string, lineNumber: number): void {
+    vscode.workspace
+      .openTextDocument(PathHelper.getFullPath(filepath))
+      .then((textDocument) => {
+        if (textDocument) {
+          vscode.window.showTextDocument(textDocument).then(() => {
+            this.showLine(lineNumber);
+          });
+        }
+      });
   }
 }
