@@ -40,5 +40,14 @@ export const taskmarksJson = `
 
 export const andAnotherTask: IPersistTask = {
   name: 'and another task',
-  persistFiles: [],
+  persistFiles: [
+    {
+      filepath: '\\\\DUMMY.MD',
+      lineNumbers: [115, 134],
+    },
+    {
+      filepath: '\\\\DUMMY',
+      lineNumbers: [111],
+    },
+  ],
 };

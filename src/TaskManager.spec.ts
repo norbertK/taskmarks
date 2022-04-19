@@ -7,7 +7,7 @@ describe('TaskManager Tests', () => {
   const taskManager = TaskManager.instance;
   const defaultTask = new Task('default');
   const anotherTask = new Task('another task');
-
+  const yetAnotherTask = new Task('yet another task');
   const defaultTaskList: Task[] = [defaultTask];
 
   it('the active Task should be default', () => {
@@ -20,7 +20,6 @@ describe('TaskManager Tests', () => {
 
   it('the active Task should switch to -another task-', () => {
     taskManager.useActiveTask('another task');
-
     expect(taskManager.activeTask).toEqual(anotherTask);
   });
 
@@ -33,27 +32,28 @@ describe('TaskManager Tests', () => {
       persistFile.lineNumbers.forEach((lineNumber) => {
         file.addMark(lineNumber);
       });
-
       task.files.push(file);
     });
 
     expect(taskManager.activeTask).toEqual(task);
   });
 
+  it('should remove -another task-', () => {
+    taskManager.delete('another task');
+    expect(taskManager.allTasks).not.toContain(anotherTask);
+  });
+
+  it('should remove -yet another task- and switch to -default-', () => {
+    taskManager.useActiveTask('yet another task');
+    expect(taskManager.activeTask).toEqual(yetAnotherTask);
+
+    taskManager.delete('yet another task');
+    expect(taskManager.allTasks).not.toContain(yetAnotherTask);
+    expect(taskManager.activeTask).toEqual(defaultTask);
+  });
+
   // it('', () => {
-  //   taskManager.useActiveTask('another Task');
-
-  //   expect(taskManager.activeTask).toEqual(anotherTask);
-  // });
-
-  // it('', () => {
-  //   taskManager.useActiveTask('another Task');
-
-  //   expect(taskManager.activeTask).toEqual(anotherTask);
-  // });
-
-  // it('', () => {
-  //   taskManager.useActiveTask('another Task');
+  //   taskManager.useActiveTask('another task');
 
   //   expect(taskManager.activeTask).toEqual(anotherTask);
   // });

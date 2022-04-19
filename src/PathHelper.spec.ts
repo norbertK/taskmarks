@@ -4,20 +4,12 @@ import { taskmarksJson } from './JestHelpers';
 
 jest.mock('fs');
 
-// fs.readFileSync = jest.fn();
-
 const basePath = 'c:\\temp';
 const markPath = '\\src\\Mark.ts';
 const fullMarkPath = 'c:\\temp\\src\\Mark.ts';
 
 describe('PathHelper Tests', () => {
   PathHelper.basePath = basePath;
-
-  // require('fs').__setMockJson(taskmarksjson);
-  // beforeEach(() => {
-  //   // Set up some mocked out file info before each test
-  //   require('fs').__setMockFiles(MOCK_FILE_INFO);
-  // });
 
   jest.spyOn(fs, 'readFileSync').mockReturnValue(taskmarksJson);
 

@@ -210,13 +210,12 @@ export abstract class Helper {
         taskNames.push(tn);
       }
     });
-    vscode.window.showQuickPick(taskNames, options).then((result) => {
-      if (result) {
-        this._taskManager.useActiveTask(result);
-      } else if (!this._taskManager.activeTask) {
-        this._taskManager.useActiveTask('default');
+    vscode.window.showQuickPick(taskNames, options).then((taskName) => {
+      if (taskName) {
+        this._taskManager.useActiveTask(taskName);
       }
-      Helper.persistActiveFile();
+
+      this.refresh();
     });
   }
 
@@ -225,7 +224,7 @@ export abstract class Helper {
       vscode.window.showInputBox().then((newTaskName) => {
         if (newTaskName) {
           this._taskManager.useActiveTask(newTaskName);
-          Helper.persistActiveFile();
+          this.refresh();
         }
       });
     } catch (error: unknown) {
@@ -240,25 +239,13 @@ export abstract class Helper {
       .showQuickPick(this._taskManager.taskNames, {
         placeHolder: 'delete Task ',
       })
-      .then((result) => {
-        if (result) {
-          this._taskManager.useActiveTask(result);
-          this._taskManager.delete(result);
-        } else {
-          if (!this._taskManager.activeTask) {
-            this._taskManager.useActiveTask('default');
-          }
+      .then((taskName) => {
+        if (taskName) {
+          this._taskManager.delete(taskName);
         }
-        Helper.persistActiveFile();
-      });
-  }
 
-  private static persistActiveFile(): void {
-    if (Helper.activeEditor && this._taskManager.activeTask) {
-      this._taskManager.activeTask.use(Helper.activeEditor.document.fileName);
-    }
-    Persist.saveTasks();
-    this.refresh();
+        this.refresh();
+      });
   }
 
   static async nextMark(): Promise<void> {
