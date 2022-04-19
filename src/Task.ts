@@ -9,7 +9,7 @@ export class Task {
   private _files: Ring<File>;
 
   constructor(name: string) {
-    if (name === undefined || name === null) {
+    if (name === undefined) {
       throw new Error('Task must always have a name.');
     }
     this._name = name;
@@ -41,7 +41,7 @@ export class Task {
 
   get allMarks(): PathMark[] {
     return this._files.reduce<PathMark[]>((pathMarks, file) => {
-      if (file !== null && file !== undefined) {
+      if (file !== undefined) {
         const fileMarks: PathMark[] = [];
         file.allMarks.forEach((mark) => {
           fileMarks.push({

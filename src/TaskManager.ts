@@ -74,12 +74,9 @@ export class TaskManager {
 
   nextMark(currentline: number): void {
     if (
-      this.activeTask === null ||
       this.activeTask === undefined ||
-      this.activeTask.files === null ||
       this.activeTask.files === undefined ||
       this.activeTask.files.length === 0 ||
-      this.activeTask.activeFile === null ||
       this.activeTask.activeFile === undefined
     ) {
       return;

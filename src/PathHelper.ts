@@ -35,7 +35,6 @@ export abstract class PathHelper {
     if (!this._taskmarksDataFilePath) {
       if (
         vscode.workspace.workspaceFolders === undefined ||
-        vscode.workspace.workspaceFolders === null ||
         vscode.workspace.workspaceFolders.length === 0
       ) {
         throw new Error('Error loading vscode.workspace! Stop!');
@@ -101,11 +100,7 @@ export abstract class PathHelper {
   static getTaskmarksJson(): string {
     PathHelper.initTaskmarksDataFilePath();
     const fileFound = existsSync(PathHelper._taskmarksDataFilePath);
-    if (
-      PathHelper._taskmarksDataFilePath === null ||
-      PathHelper._taskmarksDataFilePath === undefined ||
-      !fileFound
-    ) {
+    if (PathHelper._taskmarksDataFilePath === undefined || !fileFound) {
       return '{"activeTaskName": "default", "persistTasks": [{"name": "default", "persistFiles": []}]}';
     }
     let taskmarksJson = readFileSync(
