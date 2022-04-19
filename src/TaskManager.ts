@@ -125,11 +125,7 @@ export class TaskManager {
     let currentFile = this.activeTask.activeFile;
     let nextFile = this.activeTask.files.next;
     while (currentFile !== nextFile) {
-      if (
-        nextFile &&
-        nextFile.lineNumbers &&
-        nextFile.lineNumbers.length >= 0
-      ) {
+      if (nextFile && nextFile.lineNumbers && nextFile.lineNumbers.length > 0) {
         currentFile = nextFile;
       } else {
         nextFile = this.activeTask.files.next;
