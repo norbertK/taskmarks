@@ -7,13 +7,13 @@ export function activate(context: vscode.ExtensionContext) {
 
   Helper.init(context, outputChannel);
 
-  // let selectMarkFromListDisposable = vscode.commands.registerCommand(
-  //   'taskmarks.selectMarkFromList',
-  //   () => {
-  //     Helper.selectMarkFromList();
-  //   }
-  // );
-  // context.subscriptions.push(selectMarkFromListDisposable);
+  let selectMarkFromListDisposable = vscode.commands.registerCommand(
+    'taskmarks.selectMarkFromList',
+    () => {
+      Helper.selectMarkFromList();
+    }
+  );
+  context.subscriptions.push(selectMarkFromListDisposable);
 
   let selectTaskDisposable = vscode.commands.registerCommand(
     'taskmarks.selectTask',

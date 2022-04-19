@@ -128,76 +128,87 @@ export abstract class Helper {
 
   //SELECT FROM LIST
 
-  // static async selectMarkFromList(): Promise<void> {
-  //   if (!this._taskManager.activeTask) {
-  //     return;
-  //   }
+  static async selectMarkFromList(): Promise<void> {
+    if (!this._taskManager.activeTask) {
+      return;
+    }
+    try {
+      let qpi: vscode.QuickPickItem[] = [];
 
-  //   this._taskManager.activeTask.allMarks.reduce<vscode.QuickPickItem[]>(
-  //     (quickPickItems, mark) => {
-  //       if (mark !== null) {
-  //         this.getQuickPickItem(mark.fullPath, mark.lineNumber).then(
-  //           (quickPickItem) => {
-  //             quickPickItems.push(quickPickItem);
-  //           }
-  //         );
-  //       }
+      let xxx = this._taskManager.activeTask.allMarks.map((pathMark) => {
+        if (pathMark.lineNumber) {
+          const fullPath = PathHelper.getFullPath(pathMark.filepath);
+          this.getQuickPickItem(fullPath, pathMark.lineNumber).then(
+            (quickPickItem) => {
+              // return(quickPickItem);
+              qpi.push(quickPickItem);
+            }
+          );
+        }
+      });
 
-  //       const options: vscode.QuickPickOptions = {
-  //         placeHolder: 'select Bookmark',
-  //       };
+      const options: vscode.QuickPickOptions = {
+        placeHolder: 'select Bookmark',
+      };
 
-  //       vscode.window.showQuickPick(quickPickItems, options).then((result) => {
-  //         if (result && result.detail) {
-  //           const mark = Number.parseInt(result.label);
+      vscode.window.showQuickPick(qpi, options).then(
+        (result) => {
+          if (result && result.detail) {
+            const mark = Number.parseInt(result.label);
 
-  //           DecoratorHelper.openAndShow(result.detail, mark);
-  //         }
-  //       });
-  //       return quickPickItems;
-  //     },
-  //     []
-  //   );
-  // }
+            DecoratorHelper.openAndShow(result.detail, mark);
+          }
+          return qpi;
+        }
+        // ,
+        // []
+      );
+      Persist.saveTasks();
+    } catch (error: unknown) {
+      const message = Helper.getErrorMessage(error);
+      Helper.reportError({ message });
+      throw error;
+    }
+  }
 
-  // static async getQuickPickItem(
-  //   filepath: string,
-  //   lineNumber: number,
-  //   label = ''
-  // ): Promise<vscode.QuickPickItem> {
-  //   if (lineNumber === null) {
-  //     throw new Error(
-  //       `Mark.getQuickPickItem() - lineNumber not set! - ${filepath}`
-  //     );
-  //   }
+  static async getQuickPickItem(
+    filepath: string,
+    lineNumber: number,
+    label = ''
+  ): Promise<vscode.QuickPickItem> {
+    if (lineNumber === null) {
+      throw new Error(
+        `Mark.getQuickPickItem() - lineNumber not set! - ${filepath}`
+      );
+    }
 
-  //   return new Promise<vscode.QuickPickItem>((res) => {
-  //     const fullPath = PathHelper.getFullPath(filepath);
-  //     if (fullPath === null || fullPath === undefined) {
-  //       throw new Error(
-  //         `Mark.getQuickPickItem() - File not found! - ${filepath}`
-  //       );
-  //     }
-  //     const uri = vscode.Uri.file(fullPath);
+    return new Promise<vscode.QuickPickItem>((res) => {
+      const fullPath = PathHelper.getFullPath(filepath);
+      if (fullPath === null || fullPath === undefined) {
+        throw new Error(
+          `Mark.getQuickPickItem() - File not found! - ${filepath}`
+        );
+      }
+      const uri = vscode.Uri.file(fullPath);
 
-  //     vscode.workspace.openTextDocument(uri).then((doc) => {
-  //       if (doc === undefined) {
-  //         throw new Error(
-  //           `Mark.getQuickPickItem() - vscode.workspace.openTextDocument(${uri}) should not be undefined`
-  //         );
-  //       }
-  //       if (lineNumber <= doc.lineCount) {
-  //         const lineText = doc.lineAt(lineNumber).text;
-  //         const quickPickItem: vscode.QuickPickItem = {
-  //           label: lineNumber.toString(),
-  //           description: label ? label : lineText,
-  //           detail: fullPath,
-  //         };
-  //         res(quickPickItem);
-  //       }
-  //     });
-  //   });
-  // }
+      vscode.workspace.openTextDocument(uri).then((doc) => {
+        if (doc === undefined) {
+          throw new Error(
+            `Mark.getQuickPickItem() - vscode.workspace.openTextDocument(${uri}) should not be undefined`
+          );
+        }
+        if (lineNumber <= doc.lineCount) {
+          const lineText = doc.lineAt(lineNumber).text;
+          const quickPickItem: vscode.QuickPickItem = {
+            label: lineNumber.toString(),
+            description: label ? label : lineText,
+            detail: fullPath,
+          };
+          res(quickPickItem);
+        }
+      });
+    });
+  }
 
   static async selectTask(): Promise<void> {
     const options: vscode.QuickPickOptions = {
