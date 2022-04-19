@@ -1,5 +1,6 @@
 import { PathHelper } from './PathHelper';
 import * as fs from 'fs';
+import { taskmarksJson } from './JestHelpers';
 
 jest.mock('fs');
 
@@ -8,9 +9,6 @@ jest.mock('fs');
 const basePath = 'c:\\temp';
 const markPath = '\\src\\Mark.ts';
 const fullMarkPath = 'c:\\temp\\src\\Mark.ts';
-
-const taskmarksjson =
-  '{"activeTaskName": "test paste","tasks": [{"name": "default","files": []},{"name": "test paste","files": [{"filepath": "\\\\README.MD","lineNumbers": [13,15,19,34]},{"filepath": "\\\\LICENSE","lineNumbers": [11]}]}]}';
 
 describe('PathHelper Tests', () => {
   PathHelper.basePath = basePath;
@@ -21,7 +19,7 @@ describe('PathHelper Tests', () => {
   //   require('fs').__setMockFiles(MOCK_FILE_INFO);
   // });
 
-  jest.spyOn(fs, 'readFileSync').mockReturnValue(taskmarksjson);
+  jest.spyOn(fs, 'readFileSync').mockReturnValue(taskmarksJson);
 
   it('an empty path', () => {
     expect(PathHelper.getFullPath('')).toBe(basePath);

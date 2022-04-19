@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
+import { IPersistTaskManager } from './types';
 
 export abstract class PathHelper {
   private static _basePath = '';
@@ -30,7 +31,7 @@ export abstract class PathHelper {
     this._basePath = basePath;
   }
 
-  private static initTaskmarksDataFilePath(): void {
+  static initTaskmarksDataFilePath(): void {
     if (!this._taskmarksDataFilePath) {
       if (
         vscode.workspace.workspaceFolders === undefined ||
@@ -55,6 +56,28 @@ export abstract class PathHelper {
         PathHelper._inactivePathChar = '/';
       }
     }
+  }
+
+  static checkTaskmarksDataFilePath(): void {
+    const taskmarksDataFilePath = PathHelper.taskmarksDataFilePath;
+    if (!taskmarksDataFilePath) {
+      throw new Error('missing location of Taskmarks.json');
+    }
+    if (!existsSync(dirname(taskmarksDataFilePath))) {
+      mkdirSync(dirname(taskmarksDataFilePath));
+    }
+  }
+
+  static fileExists(fullPath: string) {
+    return existsSync(fullPath);
+  }
+
+  static saveTaskmarks(persistTaskManager: IPersistTaskManager) {
+    const taskmarksDataFilePath = PathHelper.taskmarksDataFilePath;
+    writeFileSync(
+      taskmarksDataFilePath,
+      JSON.stringify(persistTaskManager, null, '  ')
+    );
   }
 
   static getFullPath(filepath = ''): string {

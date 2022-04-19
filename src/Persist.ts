@@ -4,8 +4,6 @@ import { TaskManager } from './TaskManager';
 import { Task } from './Task';
 
 import type { IPersistFile, IPersistTask, IPersistTaskManager } from './types';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { dirname } from 'path';
 import { PathHelper } from './PathHelper';
 
 export abstract class Persist {
@@ -19,24 +17,24 @@ export abstract class Persist {
     const files: IPersistFile[] = [];
 
     tasks.forEach((task) => {
-      if (task.name === activeTaskName) {
-        task.files.forEach((file) => {
-          file.filepath = file.filepath.replace(
-            PathHelper.inactivePathChar,
-            PathHelper.activePathChar
-          );
+      // if (task.name === activeTaskName) {
+      task.files.forEach((file) => {
+        file.filepath = file.filepath.replace(
+          PathHelper.inactivePathChar,
+          PathHelper.activePathChar
+        );
 
-          const fullPath = PathHelper.getFullPath(file.filepath);
-          if (fullPath !== undefined) {
-            files.push(file);
-          }
-        });
-
-        if (files && files.length > 0) {
-          task.files = files;
-          taskManager.addTask(task);
+        const fullPath = PathHelper.getFullPath(file.filepath);
+        if (fullPath !== undefined) {
+          files.push(file);
         }
+      });
+
+      if (files && files.length > 0) {
+        task.files = files;
+        taskManager.addTask(task);
       }
+      // }
     });
     if (taskManager.activeTask.name !== activeTaskName) {
       taskManager.useActiveTask(activeTaskName);
@@ -44,13 +42,7 @@ export abstract class Persist {
   }
 
   static saveTasks(): void {
-    const taskmarksDataFilePath = PathHelper.taskmarksDataFilePath;
-    if (!taskmarksDataFilePath) {
-      throw new Error('missing location of Taskmarks.json');
-    }
-    if (!existsSync(dirname(taskmarksDataFilePath))) {
-      mkdirSync(dirname(taskmarksDataFilePath));
-    }
+    PathHelper.checkTaskmarksDataFilePath();
 
     if (!this._taskManager.activeTask) {
       throw new Error('no active task');
@@ -65,15 +57,12 @@ export abstract class Persist {
       persistTaskManager.tasks.push(persistTask);
     });
 
-    writeFileSync(
-      taskmarksDataFilePath,
-      JSON.stringify(persistTaskManager, null, '  ')
-    );
+    PathHelper.saveTaskmarks(persistTaskManager);
   }
 
   static copyToClipboard(): void {
     if (!this._taskManager.activeTask) {
-      return;
+      throw new Error('no active task');
     }
     const persistTaskVersionOfActiveTask = this.copyTaskToPersistTask(
       this._taskManager.activeTask
@@ -97,7 +86,6 @@ export abstract class Persist {
 
       try {
         const persistedTask = <IPersistTask>JSON.parse(activeTaskString);
-        // this.dumpIPersistTask(persistedTask);
 
         this._taskManager.addTask(persistedTask);
 
@@ -119,7 +107,7 @@ export abstract class Persist {
     task.files.forEach((file) => {
       if (file && file.lineNumbers && file.lineNumbers.length > 0) {
         const fullPath = PathHelper.getFullPath(file.filepath);
-        if (fullPath && existsSync(fullPath)) {
+        if (fullPath && PathHelper.fileExists(fullPath)) {
           const lineNumbers: number[] = file.lineNumbers;
 
           const persistFile: IPersistFile = {
