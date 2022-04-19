@@ -1,9 +1,9 @@
 {
   "activeTaskName": "copyOfDefault",
-  "tasks": [
+  "persistTasks": [
     {
       "name": "default",
-      "files": [
+      "persistFiles": [
         {
           "filepath": "\\package.json",
           "lineNumbers": [
@@ -22,7 +22,7 @@
     },
     {
       "name": "taskMarks",
-      "files": [
+      "persistFiles": [
         {
           "filepath": "\\package.json",
           "lineNumbers": [
@@ -56,7 +56,7 @@
     },
     {
       "name": "copyOfDefault",
-      "files": [
+      "persistFiles": [
         {
           "filepath": "\\package.json",
           "lineNumbers": [
