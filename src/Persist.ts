@@ -12,29 +12,28 @@ export abstract class Persist {
   static initAndLoad(taskManager: TaskManager): void {
     this._taskManager = taskManager;
     const taskmarksJson = PathHelper.getTaskmarksJson();
-    const { tasks, activeTaskName }: IPersistTaskManager =
+    const { persistTasks, activeTaskName }: IPersistTaskManager =
       JSON.parse(taskmarksJson);
-    const files: IPersistFile[] = [];
 
-    tasks.forEach((task) => {
-      // if (task.name === activeTaskName) {
-      task.files.forEach((file) => {
-        file.filepath = file.filepath.replace(
+    persistTasks.forEach((persistTask) => {
+      const iPersistFiles: IPersistFile[] = [];
+
+      persistTask.persistFiles.forEach((persistFile) => {
+        persistFile.filepath = persistFile.filepath.replace(
           PathHelper.inactivePathChar,
           PathHelper.activePathChar
         );
 
-        const fullPath = PathHelper.getFullPath(file.filepath);
+        const fullPath = PathHelper.getFullPath(persistFile.filepath);
         if (fullPath !== undefined) {
-          files.push(file);
+          iPersistFiles.push(persistFile);
         }
       });
 
-      if (files && files.length > 0) {
-        task.files = files;
-        taskManager.addTask(task);
+      if (iPersistFiles && iPersistFiles.length > 0) {
+        persistTask.persistFiles = iPersistFiles;
+        taskManager.addTask(persistTask);
       }
-      // }
     });
     if (taskManager.activeTask.name !== activeTaskName) {
       taskManager.useActiveTask(activeTaskName);
@@ -49,12 +48,12 @@ export abstract class Persist {
     }
     const persistTaskManager: IPersistTaskManager = {
       activeTaskName: this._taskManager.activeTask.name,
-      tasks: [],
+      persistTasks: [],
     };
 
     this._taskManager.allTasks.forEach((task) => {
       const persistTask: IPersistTask = this.copyTaskToPersistTask(task);
-      persistTaskManager.tasks.push(persistTask);
+      persistTaskManager.persistTasks.push(persistTask);
     });
 
     PathHelper.saveTaskmarks(persistTaskManager);
@@ -101,7 +100,7 @@ export abstract class Persist {
   private static copyTaskToPersistTask(task: Task): IPersistTask {
     const persistTask: IPersistTask = {
       name: task.name,
-      files: [],
+      persistFiles: [],
     };
 
     task.files.forEach((file) => {
@@ -114,7 +113,7 @@ export abstract class Persist {
             filepath: file.filepath,
             lineNumbers: lineNumbers.sort((a, b) => a - b),
           };
-          persistTask.files.push(persistFile);
+          persistTask.persistFiles.push(persistFile);
         }
       }
     });

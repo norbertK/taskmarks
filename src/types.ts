@@ -1,11 +1,11 @@
 export interface IPersistTaskManager {
   activeTaskName: string;
-  tasks: IPersistTask[];
+  persistTasks: IPersistTask[];
 }
 
 export interface IPersistTask {
   name: string;
-  files: IPersistFile[];
+  persistFiles: IPersistFile[];
 }
 
 export interface IPersistFile {

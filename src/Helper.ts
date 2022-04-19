@@ -267,19 +267,16 @@ export abstract class Helper {
       return;
     }
     const line = activeTextEditor.selection.active.line;
-    this._taskManager.nextMark(activeTextEditor.document.fileName, line);
+    this._taskManager.nextMark(line);
   }
 
   static async previousMark(): Promise<void> {
-    // console.log('Helper.previousMark()');
-
     const activeTextEditor = vscode.window.activeTextEditor;
     if (!activeTextEditor) {
       return;
     }
     const line = activeTextEditor.selection.active.line;
-    // console.log('Helper.previousMark() line ==', line);
-    this._taskManager.previousMark(activeTextEditor.document.fileName, line);
+    this._taskManager.previousMark(line);
   }
 
   static async toggleMark(): Promise<void> {
@@ -290,7 +287,6 @@ export abstract class Helper {
         return;
       }
       const activeLine = activeTextEditor.selection.active.line;
-      // const documentIsDirty = activeTextEditor.document.isDirty;
 
       this._taskManager.activeTask.toggle(
         activeTextEditor.document.fileName,

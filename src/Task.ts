@@ -1,9 +1,7 @@
 import { File } from './File';
-import { Mark } from './Mark';
 import { Ring } from './Ring';
 import { PathHelper } from './PathHelper';
 import type { IPersistFile, IPersistTask, PathMark } from './types';
-import { Helper } from './Helper';
 
 export class Task {
   private _name: string;
@@ -57,12 +55,6 @@ export class Task {
     }, []);
   }
 
-  // private _files: Ring<File>;
-
-  // constructor(name: string) {
-  //   this._name = name;
-  //   this._files = new Ring();
-
   mergeFilesWithPersistFiles(persistTaskToMerge: IPersistTask): Task {
     // start with an empty Ring
     const newFiles: Ring<File> = new Ring();
@@ -87,13 +79,13 @@ export class Task {
 
     if (
       persistTaskToMerge === undefined ||
-      persistTaskToMerge.files === undefined
+      persistTaskToMerge.persistFiles === undefined
     ) {
       return this;
     }
     // now do the same with persistTaskToMerge.files
-    if (persistTaskToMerge.files.length > 0) {
-      persistTaskToMerge.files.forEach((persistFile) => {
+    if (persistTaskToMerge.persistFiles.length > 0) {
+      persistTaskToMerge.persistFiles.forEach((persistFile) => {
         const fileFound: File | undefined = newFiles.find(
           (newFile) => persistFile.filepath === newFile?.filepath
         );
@@ -162,17 +154,4 @@ export class Task {
 
     return fileMark;
   }
-
-  // dumpToLog(indent: number): void {
-  //   indent++;
-  //   // console.log(indent, '--------------------------');
-  //   // console.log(indent, '---------- Task ----------');
-  //   // console.log(indent, '_name - ' + this._name);
-  //   this._files.forEach((file) => {
-  //     if (file) {
-  //       file.dumpToLog(indent);
-  //     }
-  //   });
-  //   // console.log(indent, '');
-  // }
 }

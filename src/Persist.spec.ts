@@ -13,7 +13,7 @@ jest.mock('./PathHelper');
 
 const taskManager = TaskManager.instance;
 
-const { tasks, activeTaskName }: IPersistTaskManager =
+const { persistTasks, activeTaskName }: IPersistTaskManager =
   JSON.parse(taskmarksJson);
 
 describe('Persist Tests', () => {
@@ -44,12 +44,12 @@ describe('Persist Tests', () => {
 
     const persistTaskManager: IPersistTaskManager = {
       activeTaskName: taskManager.activeTask.name,
-      tasks: [],
+      persistTasks: [],
     };
 
     taskManager.allTasks.forEach((task) => {
       const persistTask: IPersistTask = copyTaskToPersistTask(task);
-      persistTaskManager.tasks.push(persistTask);
+      persistTaskManager.persistTasks.push(persistTask);
     });
 
     expect(mockSaveTaskmarks).toBeCalledWith(persistTaskManager);
@@ -72,7 +72,7 @@ describe('Persist Tests', () => {
 function copyTaskToPersistTask(task: Task): IPersistTask {
   const persistTask: IPersistTask = {
     name: task.name,
-    files: [],
+    persistFiles: [],
   };
 
   task.files.forEach((file) => {
@@ -83,7 +83,7 @@ function copyTaskToPersistTask(task: Task): IPersistTask {
         filepath: file.filepath,
         lineNumbers: lineNumbers.sort(),
       };
-      persistTask.files.push(persistFile);
+      persistTask.persistFiles.push(persistFile);
     }
   });
   return persistTask;

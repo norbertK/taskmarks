@@ -106,19 +106,38 @@ export abstract class PathHelper {
       PathHelper._taskmarksDataFilePath === undefined ||
       !fileFound
     ) {
-      return '{"activeTaskName": "default", "tasks": [{"name": "default", "files": []}]}';
+      return '{"activeTaskName": "default", "persistTasks": [{"name": "default", "persistFiles": []}]}';
     }
     let taskmarksJson = readFileSync(
       PathHelper._taskmarksDataFilePath
     ).toString();
 
     // 'upgrade' taskmarks.json
-    if (taskmarksJson.indexOf('marks') > -1) {
-      taskmarksJson = taskmarksJson.replace('marks', 'lineNumbers');
+    taskmarksJson = PathHelper.replaceOldNames(
+      taskmarksJson,
+      '"marks"',
+      '"lineNumbers"'
+    );
+    taskmarksJson = PathHelper.replaceOldNames(
+      taskmarksJson,
+      '"tasks"',
+      '"persistTasks"'
+    );
+    taskmarksJson = PathHelper.replaceOldNames(
+      taskmarksJson,
+      '"files"',
+      '"persistFiles"'
+    );
+    return taskmarksJson;
+  }
 
-      while (taskmarksJson.indexOf('marks') > -1) {
-        taskmarksJson = taskmarksJson.replace('marks', 'lineNumbers');
-      }
+  private static replaceOldNames(
+    taskmarksJson: string,
+    oldName: string,
+    newName: string
+  ) {
+    while (taskmarksJson.indexOf(oldName) > -1) {
+      taskmarksJson = taskmarksJson.replace(oldName, newName);
     }
     return taskmarksJson;
   }

@@ -13,9 +13,9 @@
         {
           "filepath": "\\src\\Mark.ts",
           "lineNumbers": [
+            9,
             13,
-            17,
-            9
+            17
           ]
         }
       ]
@@ -33,9 +33,9 @@
         {
           "filepath": "\\src\\Mark.ts",
           "lineNumbers": [
+            9,
             13,
-            17,
-            9
+            17
           ]
         },
         {
@@ -60,17 +60,17 @@
         {
           "filepath": "\\package.json",
           "lineNumbers": [
-            106,
             87,
-            98
+            98,
+            106
           ]
         },
         {
           "filepath": "\\src\\Mark.ts",
           "lineNumbers": [
+            9,
             13,
-            17,
-            9
+            17
           ]
         },
         {
@@ -84,6 +84,7 @@
           "filepath": "\\src\\Ring.ts",
           "lineNumbers": [
             1,
+            17,
             33,
             54
           ]
@@ -97,8 +98,8 @@
         {
           "filepath": "\\src\\PathHelper.ts",
           "lineNumbers": [
-            100,
-            92
+            92,
+            100
           ]
         }
       ]

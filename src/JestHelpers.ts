@@ -1,3 +1,5 @@
+import { IPersistTask } from './types';
+
 export function mockFunction<T extends (...args: any[]) => any>(
   fn: T
 ): jest.MockedFunction<T> {
@@ -7,10 +9,10 @@ export function mockFunction<T extends (...args: any[]) => any>(
 export const taskmarksJson = `
   {
     "activeTaskName": "testActive",
-      "tasks": [
+      "persistTasks": [
         {
           "name": "default",
-          "files": [
+          "persistFiles": [
             {
               "filepath": "\\\\DUMMY.MD",
               "lineNumbers": [115,134]
@@ -22,7 +24,7 @@ export const taskmarksJson = `
         },
         {
           "name": "testActive",
-          "files": [
+          "persistFiles": [
             {
               "filepath": "\\\\README.MD",
               "lineNumbers": [13,15,19,34]
@@ -35,3 +37,8 @@ export const taskmarksJson = `
       ]
     }
   `;
+
+export const andAnotherTask: IPersistTask = {
+  name: 'and another task',
+  persistFiles: [],
+};
