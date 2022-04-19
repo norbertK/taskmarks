@@ -106,7 +106,7 @@ export abstract class PathHelper {
       PathHelper._taskmarksDataFilePath === undefined ||
       !fileFound
     ) {
-      throw new Error('Error loading taskmarks.json! Stop!');
+      return '{"activeTaskName": "default", "tasks": [{"name": "default", "files": []}]}';
     }
     let taskmarksJson = readFileSync(
       PathHelper._taskmarksDataFilePath

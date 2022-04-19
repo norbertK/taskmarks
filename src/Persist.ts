@@ -112,7 +112,7 @@ export abstract class Persist {
 
           const persistFile: IPersistFile = {
             filepath: file.filepath,
-            lineNumbers: lineNumbers.sort(),
+            lineNumbers: lineNumbers.sort((a, b) => a - b),
           };
           persistTask.files.push(persistFile);
         }
