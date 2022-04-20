@@ -18,11 +18,12 @@ export class Mark implements PathMark {
     this.getQuickPickItem(filepath, lineNumber, label);
   }
 
-  private async getQuickPickItem(
+  // private
+  async getQuickPickItem(
     filepath: string,
     lineNumber: number,
     label: string
-  ) {
+  ): Promise<void> {
     try {
       const fullPath = PathHelper.getFullPath(this._filepath);
       const uri = vscode.Uri.file(fullPath);

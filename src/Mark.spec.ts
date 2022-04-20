@@ -1,5 +1,17 @@
 import { Mark } from './Mark';
 
+beforeAll(() => {
+  jest
+    .spyOn(Mark.prototype, 'getQuickPickItem')
+    .mockImplementation((filepath: string, lineNumber: number, label: string) =>
+      Promise.resolve()
+    );
+});
+
+afterAll(() => {
+  jest.restoreAllMocks();
+});
+
 describe('Mark Tests', () => {
   it('a new mark ', () => {
     const firstMark = new Mark('a path', 10);

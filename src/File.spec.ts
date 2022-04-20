@@ -1,4 +1,17 @@
 import { File } from './File';
+import { Mark } from './Mark';
+
+beforeAll(() => {
+  jest
+    .spyOn(Mark.prototype, 'getQuickPickItem')
+    .mockImplementation((filepath: string, lineNumber: number, label: string) =>
+      Promise.resolve()
+    );
+});
+
+afterAll(() => {
+  jest.restoreAllMocks();
+});
 
 let firstFile: File;
 describe('File Tests', () => {

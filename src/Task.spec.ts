@@ -3,7 +3,19 @@ import { PathHelper } from './PathHelper';
 import { Ring } from './Ring';
 import { Task } from './Task';
 
-// jest.mock('./PathHelper');
+import { Mark } from './Mark';
+
+beforeAll(() => {
+  jest
+    .spyOn(Mark.prototype, 'getQuickPickItem')
+    .mockImplementation((filepath: string, lineNumber: number, label: string) =>
+      Promise.resolve()
+    );
+});
+
+afterAll(() => {
+  jest.restoreAllMocks();
+});
 
 describe('Task Tests', () => {
   const testTask = new Task('fancy');

@@ -2,6 +2,19 @@ import { File } from './File';
 import { andAnotherTask } from './JestHelpers';
 import { Task } from './Task';
 import { TaskManager } from './TaskManager';
+import { Mark } from './Mark';
+
+beforeAll(() => {
+  jest
+    .spyOn(Mark.prototype, 'getQuickPickItem')
+    .mockImplementation((filepath: string, lineNumber: number, label: string) =>
+      Promise.resolve()
+    );
+});
+
+afterAll(() => {
+  jest.restoreAllMocks();
+});
 
 describe('TaskManager Tests', () => {
   const taskManager = TaskManager.instance;
