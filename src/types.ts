@@ -13,7 +13,7 @@ export interface IPersistFile {
   lineNumbers: number[];
 }
 
-export interface PathMark {
+export interface PathMarkX {
   filepath: string;
   lineNumber: number;
 }

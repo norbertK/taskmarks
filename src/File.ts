@@ -1,4 +1,5 @@
-import type { IPersistFile, PathMark } from './types';
+import * as vscode from 'vscode';
+import type { IPersistFile, PathMarkX } from './types';
 import { Mark } from './Mark';
 
 export class File {
@@ -9,13 +10,23 @@ export class File {
     return this._filepath;
   }
 
-  get allMarks(): PathMark[] {
+  get allMarks(): PathMarkX[] {
     return this._marks.map((mark) => {
       return {
-        filepath: this.filepath,
+        filepath: mark.filepath,
         lineNumber: mark.lineNumber,
       };
     });
+  }
+
+  get quickPickItems(): vscode.QuickPickItem[] {
+    const quickPickItems: vscode.QuickPickItem[] = [];
+    this._marks.forEach((mark) => {
+      if (mark.quickPickItem !== undefined) {
+        quickPickItems.push(mark.quickPickItem);
+      }
+    });
+    return quickPickItems;
   }
 
   get lineNumbers(): number[] {
@@ -68,7 +79,7 @@ export class File {
           (newMark) => lineNumber === newMark.lineNumber
         );
         if (pos === -1) {
-          newMarks.push(new Mark(lineNumber));
+          newMarks.push(new Mark(this._filepath, lineNumber));
         }
       });
     }

@@ -1,16 +1,17 @@
 import { Mark } from './Mark';
 
 describe('Mark Tests', () => {
-  const firstMark = new Mark(10);
-
   it('a new mark ', () => {
+    const firstMark = new Mark('a path', 10);
+    expect(firstMark.filepath).toBe('a path');
     expect(firstMark.lineNumber).toBe(10);
     expect(firstMark.label).toBe('');
   });
 
-  const secondMark = new Mark(20, 'aLabel');
   it('defaults can be ignored', () => {
+    const secondMark = new Mark('a path', 20, 'a label');
+    expect(secondMark.filepath).toBe('a path');
     expect(secondMark.lineNumber).toBe(20);
-    expect(secondMark.label).toBe('aLabel');
+    expect(secondMark.label).toBe('a label');
   });
 });

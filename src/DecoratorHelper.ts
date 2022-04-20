@@ -51,14 +51,13 @@ export abstract class DecoratorHelper {
   }
 
   static openAndShow(filepath: string, lineNumber: number): void {
-    vscode.workspace
-      .openTextDocument(PathHelper.getFullPath(filepath))
-      .then((textDocument) => {
-        if (textDocument) {
-          vscode.window.showTextDocument(textDocument).then(() => {
-            this.showLine(lineNumber);
-          });
-        }
-      });
+    const fullPath = PathHelper.getFullPath(filepath);
+    vscode.workspace.openTextDocument(fullPath).then((textDocument) => {
+      if (textDocument) {
+        vscode.window.showTextDocument(textDocument).then(() => {
+          this.showLine(lineNumber);
+        });
+      }
+    });
   }
 }

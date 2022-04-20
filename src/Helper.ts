@@ -126,44 +126,23 @@ export abstract class Helper {
     );
   }
 
-  //SELECT FROM LIST
-
   static async selectMarkFromList(): Promise<void> {
     if (!this._taskManager.activeTask) {
       return;
     }
     try {
-      let qpi: vscode.QuickPickItem[] = [];
-
-      let xxx = this._taskManager.activeTask.allMarks.map((pathMark) => {
-        if (pathMark.lineNumber) {
-          const fullPath = PathHelper.getFullPath(pathMark.filepath);
-          this.getQuickPickItem(fullPath, pathMark.lineNumber).then(
-            (quickPickItem) => {
-              // return(quickPickItem);
-              qpi.push(quickPickItem);
-            }
-          );
-        }
-      });
-
       const options: vscode.QuickPickOptions = {
         placeHolder: 'select Bookmark',
       };
 
-      vscode.window.showQuickPick(qpi, options).then(
-        (result) => {
+      vscode.window
+        .showQuickPick(this._taskManager.activeTask.quickPickItems, options)
+        .then((result) => {
           if (result && result.detail) {
-            const mark = Number.parseInt(result.label);
-
-            DecoratorHelper.openAndShow(result.detail, mark);
+            const lineNumber = Number.parseInt(result.label);
+            DecoratorHelper.openAndShow(result.detail, lineNumber);
           }
-          return qpi;
-        }
-        // ,
-        // []
-      );
-      Persist.saveTasks();
+        });
     } catch (error: unknown) {
       const message = Helper.getErrorMessage(error);
       Helper.reportError({ message });
@@ -171,44 +150,38 @@ export abstract class Helper {
     }
   }
 
-  static async getQuickPickItem(
-    filepath: string,
-    lineNumber: number,
-    label = ''
-  ): Promise<vscode.QuickPickItem> {
-    if (lineNumber === null) {
-      throw new Error(
-        `Mark.getQuickPickItem() - lineNumber not set! - ${filepath}`
-      );
-    }
+  // static async getQuickPickItem(
+  //   filepath: string,
+  //   lineNumber: number,
+  //   label = ''
+  // ): Promise<vscode.QuickPickItem> {
+  //   return new Promise<vscode.QuickPickItem>((res) => {
+  //     // const fullPath = PathHelper.getFullPath(filepath);
+  //     // if (fullPath === null || fullPath === undefined) {
+  //     //   throw new Error(
+  //     //     `Mark.getQuickPickItem() - File not found! - ${filepath}`
+  //     //   );
+  //     // }
+  //     const uri = vscode.Uri.file(filepath);
 
-    return new Promise<vscode.QuickPickItem>((res) => {
-      const fullPath = PathHelper.getFullPath(filepath);
-      if (fullPath === null || fullPath === undefined) {
-        throw new Error(
-          `Mark.getQuickPickItem() - File not found! - ${filepath}`
-        );
-      }
-      const uri = vscode.Uri.file(fullPath);
-
-      vscode.workspace.openTextDocument(uri).then((doc) => {
-        if (doc === undefined) {
-          throw new Error(
-            `Mark.getQuickPickItem() - vscode.workspace.openTextDocument(${uri}) should not be undefined`
-          );
-        }
-        if (lineNumber <= doc.lineCount) {
-          const lineText = doc.lineAt(lineNumber).text;
-          const quickPickItem: vscode.QuickPickItem = {
-            label: lineNumber.toString(),
-            description: label ? label : lineText,
-            detail: fullPath,
-          };
-          res(quickPickItem);
-        }
-      });
-    });
-  }
+  //     vscode.workspace.openTextDocument(uri).then((doc) => {
+  //       if (doc === undefined) {
+  //         throw new Error(
+  //           `Mark.getQuickPickItem() - vscode.workspace.openTextDocument(${uri}) should not be undefined`
+  //         );
+  //       }
+  //       if (lineNumber <= doc.lineCount) {
+  //         const lineText = doc.lineAt(lineNumber).text;
+  //         const quickPickItem: vscode.QuickPickItem = {
+  //           label: lineNumber.toString(),
+  //           description: label ? label : lineText,
+  //           detail: filepath,
+  //         };
+  //         res(quickPickItem);
+  //       }
+  //     });
+  //   });
+  // }
 
   static async selectTask(): Promise<void> {
     const options: vscode.QuickPickOptions = {

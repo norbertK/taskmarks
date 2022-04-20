@@ -1,7 +1,8 @@
+import * as vscode from 'vscode';
 import { File } from './File';
 import { Ring } from './Ring';
 import { PathHelper } from './PathHelper';
-import type { IPersistFile, IPersistTask, PathMark } from './types';
+import type { IPersistFile, IPersistTask, PathMarkX } from './types';
 
 export class Task {
   private _name: string;
@@ -39,20 +40,25 @@ export class Task {
     return this._files;
   }
 
-  get allMarks(): PathMark[] {
-    return this._files.reduce<PathMark[]>((pathMarks, file) => {
-      if (file !== undefined) {
-        const fileMarks: PathMark[] = [];
-        file.allMarks.forEach((mark) => {
-          fileMarks.push({
-            filepath: file.filepath,
-            lineNumber: mark.lineNumber,
-          });
-        });
-        pathMarks.push(...fileMarks);
+  get allMarks(): PathMarkX[] {
+    const allMarks: PathMarkX[] = [];
+    this._files.forEach((file) => {
+      if (file) {
+        allMarks.push(...file.allMarks);
       }
-      return pathMarks;
-    }, []);
+    });
+    return allMarks;
+  }
+
+  get quickPickItems(): vscode.QuickPickItem[] {
+    const quickPickItems: vscode.QuickPickItem[] = [];
+    this._files.forEach((file) => {
+      if (file) {
+        quickPickItems.push(...file.quickPickItems);
+      }
+    });
+
+    return quickPickItems;
   }
 
   mergeFilesWithPersistFiles(persistTaskToMerge: IPersistTask): Task {
