@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { IPersistFile, PathMarkX } from './types';
+import type { IPersistFile, PathMark } from './types';
 import { Mark } from './Mark';
 
 export class File {
@@ -10,7 +10,7 @@ export class File {
     return this._filepath;
   }
 
-  get allMarks(): PathMarkX[] {
+  get allMarks(): PathMark[] {
     return this._marks.map((mark) => {
       return {
         filepath: mark.filepath,
@@ -109,7 +109,7 @@ export class File {
     }
   }
 
-  hasMarks(): boolean {
+  get hasMarks(): boolean {
     return this._marks.length > 0;
   }
 }

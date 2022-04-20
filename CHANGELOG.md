@@ -2,9 +2,20 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
-## [0.8.21] - 2022-04-16
+## [0.8.21] - 2022-04-20
 
-## [0.8.19] - 2022-04-05
+- **Taskmarks: Select Bookmark From List** working again
+- **Taskmarks: Copy Active Task to Clipboard** working again
+- **Taskmarks: Paste Clipboard to Task** working again
+- fixed errors
+- added more tests
+- clipboard working again
+- always sort line numbers
+- rename Tasks:
+- **Taskmarks: Rename Task**
+- new output channel Taskmarks Errors
+
+## [0.8.19] - 2022-04-16
 
 .try to fix errors
 still loosing tasks

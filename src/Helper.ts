@@ -12,9 +12,13 @@ export abstract class Helper {
   private static _outputChannel: vscode.OutputChannel;
 
   static reportError = ({ message }: { message: string }) => {
-    // send the error to our logging service...
-    Helper.outputChannel.appendLine(message);
-    Helper.outputChannel.show(true);
+    if (Helper.outputChannel) {
+      // send the error to our logging service...
+      Helper.outputChannel.appendLine(message);
+      Helper.outputChannel.show(true);
+    } else {
+      console.log(message);
+    }
   };
 
   static get activeEditor(): vscode.TextEditor | undefined {
@@ -55,6 +59,14 @@ export abstract class Helper {
     }
   }
 
+  private static triggerChangeActiveFile(): void {
+    this._activeEditor = undefined;
+    const activeTextEditor = vscode.window.activeTextEditor;
+    if (activeTextEditor) {
+      this.changeActiveFile(activeTextEditor);
+    }
+  }
+
   private static handleEditorChange(): void {
     const activeTextEditor = vscode.window.activeTextEditor;
     if (activeTextEditor) {
@@ -75,7 +87,7 @@ export abstract class Helper {
         PathHelper.reducePath(textDocument.fileName)
       );
 
-      Persist.saveTasks();
+      Persist.saveTaskmarksJson();
     });
   }
 
@@ -118,7 +130,9 @@ export abstract class Helper {
             }
           });
           lastLineCount += diffLine;
-          this.refresh();
+
+          Helper.triggerChangeActiveFile();
+          Persist.saveTaskmarksJson();
         }
       },
       null,
@@ -150,57 +164,62 @@ export abstract class Helper {
     }
   }
 
-  // static async getQuickPickItem(
-  //   filepath: string,
-  //   lineNumber: number,
-  //   label = ''
-  // ): Promise<vscode.QuickPickItem> {
-  //   return new Promise<vscode.QuickPickItem>((res) => {
-  //     // const fullPath = PathHelper.getFullPath(filepath);
-  //     // if (fullPath === null || fullPath === undefined) {
-  //     //   throw new Error(
-  //     //     `Mark.getQuickPickItem() - File not found! - ${filepath}`
-  //     //   );
-  //     // }
-  //     const uri = vscode.Uri.file(filepath);
-
-  //     vscode.workspace.openTextDocument(uri).then((doc) => {
-  //       if (doc === undefined) {
-  //         throw new Error(
-  //           `Mark.getQuickPickItem() - vscode.workspace.openTextDocument(${uri}) should not be undefined`
-  //         );
-  //       }
-  //       if (lineNumber <= doc.lineCount) {
-  //         const lineText = doc.lineAt(lineNumber).text;
-  //         const quickPickItem: vscode.QuickPickItem = {
-  //           label: lineNumber.toString(),
-  //           description: label ? label : lineText,
-  //           detail: filepath,
-  //         };
-  //         res(quickPickItem);
-  //       }
-  //     });
-  //   });
-  // }
-
   static async selectTask(): Promise<void> {
-    const options: vscode.QuickPickOptions = {
-      placeHolder: 'select Task ',
-    };
-    const taskNames: string[] = [];
-    taskNames.push(this._taskManager.activeTask.name);
-    this._taskManager.taskNames.forEach((tn) => {
-      if (tn !== this._taskManager.activeTask.name) {
-        taskNames.push(tn);
-      }
-    });
-    vscode.window.showQuickPick(taskNames, options).then((taskName) => {
-      if (taskName) {
-        this._taskManager.useActiveTask(taskName);
-      }
+    try {
+      const options: vscode.QuickPickOptions = {
+        placeHolder: 'select Task ',
+      };
+      const taskNames: string[] = [];
+      taskNames.push(this._taskManager.activeTask.name);
+      this._taskManager.taskNames.forEach((tn) => {
+        if (tn !== this._taskManager.activeTask.name) {
+          taskNames.push(tn);
+        }
+      });
+      vscode.window.showQuickPick(taskNames, options).then((taskName) => {
+        if (taskName) {
+          this._taskManager.useActiveTask(taskName);
+        }
 
-      this.refresh();
-    });
+        Helper.triggerChangeActiveFile();
+        Persist.saveTaskmarksJson();
+      });
+    } catch (error: unknown) {
+      const message = Helper.getErrorMessage(error);
+      Helper.reportError({ message });
+      throw error;
+    }
+  }
+
+  static async renameTask(): Promise<void> {
+    try {
+      const options: vscode.QuickPickOptions = {
+        placeHolder: 'rename Task ',
+      };
+      const taskNames: string[] = [];
+      taskNames.push(this._taskManager.activeTask.name);
+      this._taskManager.taskNames.forEach((tn) => {
+        if (tn !== this._taskManager.activeTask.name) {
+          taskNames.push(tn);
+        }
+      });
+      vscode.window.showQuickPick(taskNames, options).then((oldTaskName) => {
+        if (oldTaskName) {
+          vscode.window.showInputBox().then((newTaskName) => {
+            if (newTaskName) {
+              this._taskManager.renameTask(oldTaskName, newTaskName);
+            }
+          });
+        }
+
+        Helper.triggerChangeActiveFile();
+        Persist.saveTaskmarksJson();
+      });
+    } catch (error: unknown) {
+      const message = Helper.getErrorMessage(error);
+      Helper.reportError({ message });
+      throw error;
+    }
   }
 
   static async createTask(): Promise<void> {
@@ -208,7 +227,9 @@ export abstract class Helper {
       vscode.window.showInputBox().then((newTaskName) => {
         if (newTaskName) {
           this._taskManager.useActiveTask(newTaskName);
-          this.refresh();
+
+          Helper.triggerChangeActiveFile();
+          Persist.saveTaskmarksJson();
         }
       });
     } catch (error: unknown) {
@@ -219,17 +240,24 @@ export abstract class Helper {
   }
 
   static deleteTask(): void {
-    vscode.window
-      .showQuickPick(this._taskManager.taskNames, {
-        placeHolder: 'delete Task ',
-      })
-      .then((taskName) => {
-        if (taskName) {
-          this._taskManager.delete(taskName);
-        }
+    try {
+      vscode.window
+        .showQuickPick(this._taskManager.taskNames, {
+          placeHolder: 'delete Task ',
+        })
+        .then((taskName) => {
+          if (taskName) {
+            this._taskManager.delete(taskName);
+          }
 
-        this.refresh();
-      });
+          Helper.triggerChangeActiveFile();
+          Persist.saveTaskmarksJson();
+        });
+    } catch (error: unknown) {
+      const message = Helper.getErrorMessage(error);
+      Helper.reportError({ message });
+      throw error;
+    }
   }
 
   static async nextMark(): Promise<void> {
@@ -266,10 +294,10 @@ export abstract class Helper {
 
       // // idea here was to not save, if file was not saved - removed - ? for now ?
       // if (!documentIsDirty) {
-      Persist.saveTasks();
+      Persist.saveTaskmarksJson();
       // }
 
-      this.refresh();
+      Helper.triggerChangeActiveFile();
     } catch (error: unknown) {
       Helper.reportError({ message: Helper.getErrorMessage(error) });
     }

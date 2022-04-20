@@ -1,5 +1,5 @@
 // not a 'real' ring class - only stuff I need
-export class Ring<T> extends Array<T | undefined> {
+export class Ring<T> extends Array<T> {
   private _current = -1;
 
   get current(): T | undefined {
@@ -7,6 +7,10 @@ export class Ring<T> extends Array<T | undefined> {
       return undefined;
     }
     return this[this._current];
+  }
+
+  get empty(): boolean {
+    return this._current === -1;
   }
 
   get next(): T | undefined {

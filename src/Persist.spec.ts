@@ -40,7 +40,7 @@ describe('Persist Tests', () => {
 
   it('saveTasks', () => {
     mockFileExists.mockReturnValue(true);
-    Persist.saveTasks();
+    Persist.saveTaskmarksJson();
 
     const persistTaskManager: IPersistTaskManager = {
       activeTaskName: taskManager.activeTask.name,
@@ -57,15 +57,6 @@ describe('Persist Tests', () => {
 
   // it('a longer path', () => {
   //   expect(PathHelper.getFullPath(markPath)).toBe(fullMarkPath);
-  // });
-
-  // it('reducePath', () => {
-  //   expect(PathHelper.reducePath(fullMarkPath)).toBe(markPath);
-  // });
-
-  // todo still no idea how to mock vscode returns - same problem testing persist
-  // it('blaaaah', () => {
-  //   expect(PathHelper.getTaskmarksJson()).toBe(taskmarksjson);
   // });
 });
 

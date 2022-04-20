@@ -10,9 +10,9 @@ describe('Task Tests', () => {
   const testRing = new Ring<File>();
   const firstFile = new File('firstFile');
 
-  it('a new task should have a name, no activeFile, an empty file-Ring and no Marks', () => {
+  it('a new task should have a name, no Files, an empty file-Ring and no Marks', () => {
     expect(testTask.name).toBe('fancy');
-    expect(testTask.activeFile).toBe(undefined);
+    expect(testTask.hasEntries).toBe(false);
     expect(testTask.files).toEqual(testRing);
     expect(testTask.allMarks).toEqual([]);
   });
@@ -22,7 +22,8 @@ describe('Task Tests', () => {
     firstFile.addMark(123);
     testRing.push(firstFile);
 
-    expect(testTask.activeFile).toEqual(undefined);
+    expect(testTask.hasEntries).toBe(true);
+    // expect(testTask.activeFile).toEqual(File.defaultFile);
     // expect(testTask.files).toEqual(testRing);
     expect(testTask.allMarks).toEqual(firstFile.allMarks);
   });

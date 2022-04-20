@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { File } from './File';
 import { Ring } from './Ring';
 import { PathHelper } from './PathHelper';
-import type { IPersistFile, IPersistTask, PathMarkX } from './types';
+import type { IPersistTask, PathMark } from './types';
 
 export class Task {
   private _name: string;
@@ -21,6 +21,10 @@ export class Task {
     return this._name;
   }
 
+  set name(name: string) {
+    this._name = name;
+  }
+
   get activeFileFilePath(): string | undefined {
     if (this._activeFile) {
       return this._activeFile.filepath;
@@ -32,20 +36,18 @@ export class Task {
     return this._activeFile;
   }
 
-  set activeFile(file: File | undefined) {
-    this._activeFile = file;
-  }
+  // set activeFile(file: File) {
+  //   this._activeFile = file;
+  // }
 
   get files(): Ring<File> {
     return this._files;
   }
 
-  get allMarks(): PathMarkX[] {
-    const allMarks: PathMarkX[] = [];
+  get allMarks(): PathMark[] {
+    const allMarks: PathMark[] = [];
     this._files.forEach((file) => {
-      if (file) {
-        allMarks.push(...file.allMarks);
-      }
+      allMarks.push(...file.allMarks);
     });
     return allMarks;
   }
@@ -53,9 +55,7 @@ export class Task {
   get quickPickItems(): vscode.QuickPickItem[] {
     const quickPickItems: vscode.QuickPickItem[] = [];
     this._files.forEach((file) => {
-      if (file) {
-        quickPickItems.push(...file.quickPickItems);
-      }
+      quickPickItems.push(...file.quickPickItems);
     });
 
     return quickPickItems;
@@ -120,10 +120,8 @@ export class Task {
   toggle(filename: string, lineNumber: number): boolean {
     const reducedFilePath = PathHelper.reducePath(filename);
 
-    let file: File | undefined = this._files.find((fm) => {
-      if (fm) {
-        return fm.filepath === reducedFilePath;
-      }
+    let file: File | undefined = this._files.find((aFile) => {
+      return aFile.filepath === reducedFilePath;
     });
 
     if (file) {
@@ -133,31 +131,35 @@ export class Task {
       this._files.push(file);
     }
 
-    return file.hasMarks();
+    return file.hasMarks;
   }
 
   use(path: string): File {
     const filePath = PathHelper.reducePath(path);
-
-    let file: File | undefined = this.getFile(filePath);
+    let file: File | undefined = undefined;
+    if (this.hasEntries) {
+      file = this.getFile(filePath);
+    }
 
     if (!file) {
       file = new File(filePath, -1);
-      this._files.push(file);
+      // this._files.push(file);
     }
 
-    this.activeFile = file;
+    this._activeFile = file;
 
     return file;
   }
 
   getFile(reducedFilePath: string): File | undefined {
-    const fileMark: File | undefined = this._files.find((fm) => {
-      if (fm) {
-        return fm.filepath === reducedFilePath;
-      }
+    const fileMark: File | undefined = this._files.find((file) => {
+      return file.filepath === reducedFilePath;
     });
 
     return fileMark;
+  }
+
+  get hasEntries(): boolean {
+    return this._files.length > 0;
   }
 }

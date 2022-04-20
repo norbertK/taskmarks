@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
+import { Helper } from './Helper';
 import { PathHelper } from './PathHelper';
-import { PathMarkX } from './types';
+import { PathMark } from './types';
 
-export class Mark implements PathMarkX {
+export class Mark implements PathMark {
   private _label = '';
   private _lineNumber = -1;
   private _filepath: string;
@@ -14,33 +15,38 @@ export class Mark implements PathMarkX {
     this._lineNumber = lineNumber;
     this._filepath = filepath;
 
-    this.getQuickPickI(filepath, lineNumber, label);
+    this.getQuickPickItem(filepath, lineNumber, label);
   }
 
-  private async getQuickPickI(
+  private async getQuickPickItem(
     filepath: string,
     lineNumber: number,
     label: string
   ) {
-    const fullPath = PathHelper.getFullPath(this._filepath);
-
-    const uri = vscode.Uri.file(fullPath);
-    vscode.workspace.openTextDocument(uri).then((doc) => {
-      if (doc === undefined) {
-        throw new Error(
-          `Mark.getQuickPickItem() - vscode.workspace.openTextDocument(${uri}) should not be undefined`
-        );
-      }
-      if (lineNumber <= doc.lineCount) {
-        const lineText = doc.lineAt(lineNumber).text;
-        const quickPickItem: vscode.QuickPickItem = {
-          label: lineNumber.toString(),
-          description: label ? label : lineText,
-          detail: filepath,
-        };
-        this._quickPickItem = quickPickItem;
-      }
-    });
+    try {
+      const fullPath = PathHelper.getFullPath(this._filepath);
+      const uri = vscode.Uri.file(fullPath);
+      vscode.workspace.openTextDocument(uri).then((doc) => {
+        if (doc === undefined) {
+          throw new Error(
+            `Mark.getQuickPickItem() - vscode.workspace.openTextDocument(${uri}) should not be undefined`
+          );
+        }
+        if (lineNumber <= doc.lineCount) {
+          const lineText = doc.lineAt(lineNumber).text;
+          const quickPickItem: vscode.QuickPickItem = {
+            label: lineNumber.toString(),
+            description: label ? label : lineText,
+            detail: filepath,
+          };
+          this._quickPickItem = quickPickItem;
+        }
+      });
+    } catch (error: unknown) {
+      const message = Helper.getErrorMessage(error);
+      Helper.reportError({ message });
+      throw error;
+    }
   }
 
   public get quickPickItem(): vscode.QuickPickItem | undefined {

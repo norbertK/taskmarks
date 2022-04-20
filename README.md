@@ -16,6 +16,7 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 - **Taskmarks: Create new Task** Create new Task (enter new Taskname)
 - **Taskmarks: Delete Task** Delete Task (from Tasklist)
+- **Taskmarks: Rename Task** Rename Task (from Tasklist)
 - **Taskmarks: Copy Active Task to Clipboard** Copy Active Task to Clipboard
 - **Taskmarks: Paste Clipboard to Task** Paste Clipboard to Task with same name
 - **Taskmarks: Select Active Task** Select Active Task (from List)
@@ -25,27 +26,21 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 ## Features / Command / Keyboard / ToDos / Ideas
 
+- remove all vscode references from tests (or better mock them) (UnhandledPromiseRejectionWarning: Unhandled promise rejection. in tests)
 - new command : remove unused (empty) Tasks
-- rename Tasks
 - Tests
 - perhaps? move all vscode stuff to helpers? should make testing easier
 - disable taskbar display (and perhaps other things) in settings
-- sort marks
-- always sort line numbers
 - make little demo, how to work with taskmarks
 - find better shortcuts and make them work outside the edit mode (eg 'goto next' or 'Select Active Task' should work always)
 - add debug points to task (toggle, switch all on or off)
 - perhaps? be able to leave comments on tasks - for starters, just keep them in taskmarks.json
-- enable Logfile in settings - problems? - enable log and send it to me!
 
 ## Requirements
 
 ## Extension Settings
 
 ## Known Issues
-
-- loosing tasks
-- insert from clipboard (only first task inserted)
 
 ## Release Notes
 

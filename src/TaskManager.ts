@@ -34,18 +34,26 @@ export class TaskManager {
     this._activeTask = this.useActiveTask();
   }
 
+  renameTask(oldTaskName: string, newTaskName: string): void {
+    let task = this._allTasks.find((task) => task.name === oldTaskName);
+    if (!task) {
+      throw new Error('should not happen - picked from list');
+    }
+
+    task.name = newTaskName;
+
+    this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
+    this._statusBarItem.show();
+  }
+
   useActiveTask(taskname = 'default'): Task {
     if (this.activeTask && this.activeTask.name === taskname) {
       return this.activeTask;
     }
 
-    let task = this._allTasks.find((task) => task.name === taskname);
-    if (!task) {
-      this._statusBarItem.hide();
-      task = new Task(taskname);
-      this._allTasks.push(task);
-    }
+    let task = this.addTaskByNameIfMissing(taskname);
 
+    this._statusBarItem.hide();
     this._activeTask = task;
     this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
     this._statusBarItem.show();
@@ -53,19 +61,30 @@ export class TaskManager {
     return task;
   }
 
-  addTask(iPersistTask: IPersistTask): void {
-    const current = this.useActiveTask(iPersistTask.name);
-    current.mergeFilesWithPersistFiles(iPersistTask);
+  private addTaskByNameIfMissing(taskname: string) {
+    let task = this._allTasks.find((task) => task.name === taskname);
+    if (!task) {
+      task = new Task(taskname);
+      this._allTasks.push(task);
+    }
+    return task;
   }
 
-  delete(taskname: string): Task {
-    const found = this._allTasks.findIndex((task) => task.name === taskname);
+  addTask(iPersistTask: IPersistTask): void {
+    const task = this.addTaskByNameIfMissing(iPersistTask.name);
+    task.mergeFilesWithPersistFiles(iPersistTask);
+  }
+
+  delete(nameOfTaskToDelete: string): Task {
+    const found = this._allTasks.findIndex(
+      (taskToDelete) => taskToDelete.name === nameOfTaskToDelete
+    );
 
     if (found > -1) {
       this._allTasks.splice(found, 1);
     }
 
-    if (this._activeTask.name === taskname) {
+    if (this._activeTask.name === nameOfTaskToDelete) {
       return this.useActiveTask();
     }
 

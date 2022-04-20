@@ -23,11 +23,9 @@ export abstract class DecoratorHelper {
     if (activeEditor === null) {
       return;
     }
-
     const ranges = lineNumbers.map((lineNumber) => {
       return new vscode.Range(lineNumber, 0, lineNumber, 0);
     });
-
     activeEditor.setDecorations(this._vscTextEditorDecorationType, ranges);
   }
 
@@ -36,15 +34,12 @@ export abstract class DecoratorHelper {
     if (activeTextEditor === null || activeTextEditor === undefined) {
       return;
     }
-
     let textEditorRevealType: vscode.TextEditorRevealType =
       vscode.TextEditorRevealType.InCenter;
-
     if (line === activeTextEditor.selection.active.line) {
       textEditorRevealType =
         vscode.TextEditorRevealType.InCenterIfOutsideViewport;
     }
-
     const selection = new vscode.Selection(line, 0, line, 0);
     activeTextEditor.selection = selection;
     activeTextEditor.revealRange(selection, textEditorRevealType);

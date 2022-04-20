@@ -10,11 +10,15 @@ describe('TaskManager Tests', () => {
   const yetAnotherTask = new Task('yet another task');
   const defaultTaskList: Task[] = [defaultTask];
 
+  beforeEach(() => {});
+
   it('the active Task should be default', () => {
+    taskManager.useActiveTask();
     expect(taskManager.activeTask).toEqual(defaultTask);
   });
 
   it('the Tasklist should be empty', () => {
+    taskManager.useActiveTask();
     expect(taskManager.allTasks).toStrictEqual(defaultTaskList);
   });
 
@@ -23,7 +27,10 @@ describe('TaskManager Tests', () => {
     expect(taskManager.activeTask).toEqual(anotherTask);
   });
 
-  it('the active Task should switch to -and another task-', () => {
+  it('adding a Task should not switch activeTask', () => {
+    taskManager.useActiveTask('another task');
+    expect(taskManager.activeTask).toEqual(anotherTask);
+
     taskManager.addTask(andAnotherTask);
 
     const task = new Task(andAnotherTask.name);
@@ -35,12 +42,17 @@ describe('TaskManager Tests', () => {
       task.files.push(file);
     });
 
-    expect(taskManager.activeTask).toEqual(task);
+    expect(taskManager.activeTask).toEqual(anotherTask);
   });
 
-  it('should remove -another task-', () => {
-    taskManager.delete('another task');
-    expect(taskManager.allTasks).not.toContain(anotherTask);
+  it('should remove -and another task-', () => {
+    taskManager.addTask(andAnotherTask);
+    taskManager.useActiveTask('and another task');
+    const activeTask = taskManager.activeTask;
+    taskManager.delete('and another task');
+    taskManager.useActiveTask('another task');
+    expect(taskManager.allTasks).not.toContain(activeTask);
+    expect(taskManager.activeTask).toEqual(anotherTask);
   });
 
   it('should remove -yet another task- and switch to -default-', () => {
@@ -57,4 +69,6 @@ describe('TaskManager Tests', () => {
 
   //   expect(taskManager.activeTask).toEqual(anotherTask);
   // });
+
+  // ToDo NK - add tests for nextMark, previousMark, nextDocument and previousDocument
 });

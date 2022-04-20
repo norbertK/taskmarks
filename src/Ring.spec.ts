@@ -4,10 +4,8 @@ import { Ring } from './Ring';
 describe('Ring Tests', () => {
   const testRing = new Ring<string>();
 
-  let current = testRing.current;
-
-  it('current should be undefined', () => {
-    expect(current).toBeUndefined();
+  it('Ring should be empty', () => {
+    expect(testRing.empty).toBe(true);
   });
 
   it('push should return the number of inserted elements', () => {

@@ -33,14 +33,12 @@ export abstract class PathHelper {
 
   static initTaskmarksDataFilePath(): void {
     if (!this._taskmarksDataFilePath) {
-      if (
-        vscode.workspace.workspaceFolders === undefined ||
-        vscode.workspace.workspaceFolders.length === 0
-      ) {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (workspaceFolders === undefined || workspaceFolders.length === 0) {
         throw new Error('Error loading vscode.workspace! Stop!');
       }
       this._taskmarksDataFilePath = join(
-        vscode.workspace.workspaceFolders[0].uri.fsPath,
+        workspaceFolders[0].uri.fsPath,
         '.vscode',
         'taskmarks.json'
       );

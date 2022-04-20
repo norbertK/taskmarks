@@ -23,6 +23,14 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(selectTaskDisposable);
 
+  let renameTaskDisposable = vscode.commands.registerCommand(
+    'taskmarks.renameTask',
+    () => {
+      Helper.renameTask();
+    }
+  );
+  context.subscriptions.push(selectTaskDisposable);
+
   let createTaskDisposable = vscode.commands.registerCommand(
     'taskmarks.createTask',
     () => {

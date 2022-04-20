@@ -39,7 +39,7 @@ export abstract class Persist {
     }
   }
 
-  static saveTasks(): void {
+  static saveTaskmarksJson(): void {
     PathHelper.checkTaskmarksDataFilePath();
 
     if (!this._taskManager.activeTask) {
@@ -87,7 +87,7 @@ export abstract class Persist {
 
         this._taskManager.addTask(persistedTask);
 
-        this.saveTasks();
+        this.saveTaskmarksJson();
       } catch (error) {
         vscode.window.showInformationMessage(
           'PasteFromClipboard failed with ' + error

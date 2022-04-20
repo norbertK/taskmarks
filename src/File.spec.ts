@@ -1,7 +1,10 @@
 import { File } from './File';
 
+let firstFile: File;
 describe('File Tests', () => {
-  const firstFile = new File('firstFile');
+  beforeEach(() => {
+    firstFile = new File('firstFile');
+  });
 
   it('a new file should have a filepath and an empty number array', () => {
     expect(firstFile.filepath).toBe('firstFile');
@@ -14,14 +17,24 @@ describe('File Tests', () => {
   });
 
   it('after adding a second array of lineNumbers (numbers), lineNumbers should return the combined numbers', () => {
+    firstFile.mergeMarksAndLineNumbers([20, 30, 10, 20, 30]);
     firstFile.mergeMarksAndLineNumbers([20, 50, 40, 50]);
     expect(firstFile.lineNumbers).toEqual([10, 20, 30, 40, 50]);
   });
 
-  it('after adding one new lineNumber, lineNumbers should return these numbers (ordered, no doubles)', () => {
+  it('after adding an existing lineNumber, nothing should change (ordered, no doubles)', () => {
+    firstFile.mergeMarksAndLineNumbers([20, 30, 10, 20, 30]);
+    firstFile.mergeMarksAndLineNumbers([20, 50, 40, 50]);
     firstFile.addMark(30);
     expect(firstFile.lineNumbers).toEqual([10, 20, 30, 40, 50]);
+  });
+
+  it('after adding one new lineNumber, lineNumbers should return these numbers (ordered, no doubles)', () => {
+    firstFile.mergeMarksAndLineNumbers([20, 30, 10, 20, 30]);
+    firstFile.mergeMarksAndLineNumbers([20, 50, 40, 50]);
     firstFile.addMark(25);
     expect(firstFile.lineNumbers).toEqual([10, 20, 25, 30, 40, 50]);
   });
+
+  // ToDo NK - add tests for toggleTaskMark and hasMarks
 });

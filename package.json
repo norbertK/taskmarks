@@ -34,6 +34,10 @@
         "title": "Taskmarks: Select Active Task"
       },
       {
+        "command": "taskmarks.renameTask",
+        "title": "Taskmarks: Rename Task"
+      },
+      {
         "command": "taskmarks.createTask",
         "title": "Taskmarks: Create new Task"
       },
@@ -61,32 +65,6 @@
         "command": "taskmarks.pasteFromClipboard",
         "title": "Taskmarks: paste Task from clipboard"
       }
-    ],
-    "keybindings": [
-      {
-        "command": "taskmarks.previousMark",
-        "key": "ctrl+shift+r",
-        "mac": "cmd+shift+r",
-        "when": "editorTextFocus"
-      },
-      {
-        "command": "taskmarks.selectTask",
-        "key": "ctrl+shift+i",
-        "mac": "cmd+shift+i",
-        "when": "editorTextFocus"
-      },
-      {
-        "command": "taskmarks.toggleMark",
-        "key": "ctrl+shift+t",
-        "mac": "cmd+shift+t",
-        "when": "editorTextFocus"
-      },
-      {
-        "command": "taskmarks.nextMark",
-        "key": "ctrl+shift+z",
-        "mac": "cmd+shift+z",
-        "when": "editorTextFocus"
-      }
     ]
   },
   "scripts": {
@@ -96,7 +74,7 @@
     "watch": "webpack --watch",
     "package": "webpack --mode production --devtool hidden-source-map",
     "lint": "eslint src --ext ts",
-    "test": "jest --runInBand --detectOpenHandles",
+    "test": "jest",
     "checkForUpgrade": "ncu",
     "upgrade": "ncu -u && npm install",
     "inst": "npm install",

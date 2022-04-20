@@ -1,3 +1,5 @@
+// module.exports = require('jest-mock-vscode');
+
 /* eslint-disable @typescript-eslint/naming-convention */
 
 const languages = {
@@ -32,10 +34,10 @@ const OverviewRulerLane = {
   Left: null,
 };
 
-const Uri = {
-  file: (f) => f,
-  parse: jest.fn(),
-};
+// const Uri = {
+//   file: (f) => f,
+//   parse: jest.fn(),
+// };
 const Range = jest.fn();
 const Diagnostic = jest.fn();
 const DiagnosticSeverity = { Error: 0, Warning: 1, Information: 2, Hint: 3 };
@@ -55,7 +57,7 @@ const vscode = {
   window,
   workspace,
   OverviewRulerLane,
-  Uri,
+  // Uri,
   Range,
   Diagnostic,
   DiagnosticSeverity,
