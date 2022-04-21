@@ -21,6 +21,16 @@ export abstract class Helper {
     }
   };
 
+  // static log = (message: string) => {
+  //   if (Helper.outputChannel) {
+  //     // log...
+  //     Helper.outputChannel.appendLine(message);
+  //     Helper.outputChannel.show(true);
+  //   } else {
+  //     console.log(message);
+  //   }
+  // };
+
   static get activeEditor(): vscode.TextEditor | undefined {
     return this._activeEditor;
   }
@@ -113,7 +123,7 @@ export abstract class Helper {
           return;
         }
         const activeFile = this._taskManager.activeTask.activeFile;
-        const allMarks = this._taskManager.activeTask.activeFile.allMarks;
+        const allMarks = this._taskManager.activeTask.activeFile.allPathMarks;
         if (allMarks.length === 0) {
           return;
         }
@@ -278,7 +288,7 @@ export abstract class Helper {
     this._taskManager.previousMark(line);
   }
 
-  static async toggleMark(): Promise<void> {
+  static async toggleMark(enableLabel: boolean): Promise<void> {
     try {
       const activeTextEditor = vscode.window.activeTextEditor;
 
@@ -287,17 +297,27 @@ export abstract class Helper {
       }
       const activeLine = activeTextEditor.selection.active.line;
 
-      this._taskManager.activeTask.toggle(
-        activeTextEditor.document.fileName,
-        activeLine
-      );
-
-      // // idea here was to not save, if file was not saved - removed - ? for now ?
-      // if (!documentIsDirty) {
-      Persist.saveTaskmarksJson();
-      // }
-
-      Helper.triggerChangeActiveFile();
+      const fullName = activeTextEditor.document.fileName;
+      if (
+        enableLabel &&
+        !this._taskManager.activeTask.lineHasMark(fullName, activeLine)
+      ) {
+        vscode.window.showInputBox().then((newLabel) => {
+          if (newLabel) {
+            this._taskManager.activeTask.toggle(fullName, activeLine, newLabel);
+          }
+          Persist.saveTaskmarksJson();
+          Helper.triggerChangeActiveFile();
+        });
+      } else {
+        this._taskManager.activeTask.toggle(
+          activeTextEditor.document.fileName,
+          activeLine,
+          ''
+        );
+        Persist.saveTaskmarksJson();
+        Helper.triggerChangeActiveFile();
+      }
     } catch (error: unknown) {
       Helper.reportError({ message: Helper.getErrorMessage(error) });
     }

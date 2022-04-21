@@ -3,8 +3,16 @@ import * as vscode from 'vscode';
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
 
-import type { IPersistFile, IPersistTask, IPersistTaskManager } from './types';
+import type {
+  IPersistFile,
+  IPersistMark,
+  IPersistTask,
+  IPersistTaskManager,
+  PathMark,
+} from './types';
 import { PathHelper } from './PathHelper';
+import { Mark } from './Mark';
+import { Helper } from './Helper';
 
 export abstract class Persist {
   private static _taskManager: TaskManager;
@@ -12,30 +20,31 @@ export abstract class Persist {
   static initAndLoad(taskManager: TaskManager): void {
     this._taskManager = taskManager;
     const taskmarksJson = PathHelper.getTaskmarksJson();
-    const { persistTasks, activeTaskName }: IPersistTaskManager =
-      JSON.parse(taskmarksJson);
+    const persistTaskManager: IPersistTaskManager = JSON.parse(taskmarksJson);
 
-    persistTasks.forEach((persistTask) => {
-      const iPersistFiles: IPersistFile[] = [];
+    persistTaskManager.persistTasks.forEach((persistTask) => {
+      // const iPersistFiles: IPersistFile[] = [];
 
       persistTask.persistFiles.forEach((persistFile) => {
-        persistFile.filepath = persistFile.filepath.replace(
+        persistFile.filepath = PathHelper.replaceAll(
+          persistFile.filepath,
           PathHelper.inactivePathChar,
           PathHelper.activePathChar
         );
 
-        if (PathHelper.fileExists(persistFile.filepath)) {
-          iPersistFiles.push(persistFile);
-        }
-      });
+        // if (PathHelper.fileExists(persistFile.filepath)) {
+        //   const iPersistMarks: IPersistMark[] = [];
+        //   persistFile.persistMarks.forEach((persistMark) => {});
 
-      if (iPersistFiles && iPersistFiles.length > 0) {
-        persistTask.persistFiles = iPersistFiles;
+        //   iPersistFiles.push(persistFile);
+        // }
+
+        // Helper.log(persistTask.name);
         taskManager.addTask(persistTask);
-      }
+      });
     });
-    if (taskManager.activeTask.name !== activeTaskName) {
-      taskManager.useActiveTask(activeTaskName);
+    if (taskManager.activeTask.name !== persistTaskManager.activeTaskName) {
+      taskManager.useActiveTask(persistTaskManager.activeTaskName);
     }
   }
 
@@ -96,7 +105,7 @@ export abstract class Persist {
     });
   }
 
-  private static copyTaskToPersistTask(task: Task): IPersistTask {
+  static copyTaskToPersistTask(task: Task): IPersistTask {
     const persistTask: IPersistTask = {
       name: task.name,
       persistFiles: [],
@@ -110,11 +119,11 @@ export abstract class Persist {
         file.lineNumbers.length > 0
       ) {
         if (PathHelper.fileExists(file.filepath)) {
-          const lineNumbers: number[] = file.lineNumbers;
+          const marks: IPersistMark[] = file.allPersistMarks;
 
           const persistFile: IPersistFile = {
             filepath: file.filepath,
-            lineNumbers: lineNumbers.sort((a, b) => a - b),
+            persistMarks: marks.sort((a, b) => a.lineNumber - b.lineNumber),
           };
           persistTask.persistFiles.push(persistFile);
         }

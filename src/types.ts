@@ -10,10 +10,16 @@ export interface IPersistTask {
 
 export interface IPersistFile {
   filepath: string;
-  lineNumbers: number[];
+  persistMarks: IPersistMark[];
+}
+
+export interface IPersistMark {
+  lineNumber: number;
+  label: string;
 }
 
 export interface PathMark {
   filepath: string;
   lineNumber: number;
+  label: string;
 }

@@ -15,10 +15,10 @@ export const taskmarksJson = `
           "persistFiles": [
             {
               "filepath": "\\\\DUMMY.MD",
-              "lineNumbers": [115,134]
+              "marks": [{"lineNumber":115, "label": ""}, {"lineNumber":134, "label": ""}]
             },{
               "filepath": "\\\\DUMMY",
-              "lineNumbers": [111]
+              "marks": [{"lineNumber":111, "label": ""}]
             }
           ]
         },
@@ -27,10 +27,10 @@ export const taskmarksJson = `
           "persistFiles": [
             {
               "filepath": "\\\\README.MD",
-              "lineNumbers": [13,15,19,34]
+              "marks": [{"lineNumber":13, "label": ""},{"lineNumber":15, "label": ""},{"lineNumber":19, "label": ""},{"lineNumber":34, "label": ""}]
             },{
               "filepath": "\\\\LICENSE",
-              "lineNumbers": [11]
+              "marks": [{"lineNumber":11, "label": ""}]
             }
           ]
         }
@@ -43,11 +43,14 @@ export const andAnotherTask: IPersistTask = {
   persistFiles: [
     {
       filepath: '\\\\DUMMY.MD',
-      lineNumbers: [115, 134],
+      persistMarks: [
+        { lineNumber: 115, label: '' },
+        { lineNumber: 134, label: '' },
+      ],
     },
     {
       filepath: '\\\\DUMMY',
-      lineNumbers: [111],
+      persistMarks: [{ lineNumber: 111, label: '' }],
     },
   ],
 };

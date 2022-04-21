@@ -30,13 +30,13 @@ describe('Task Tests', () => {
   });
 
   it('first toggle should add File and Mark - activeFile should not change', () => {
-    testTask.toggle('firstFile', 123);
-    firstFile.addMark(123);
+    testTask.toggle('firstFile', 123, '');
+    firstFile.addMark({ lineNumber: 123, label: '' });
     testRing.push(firstFile);
 
     expect(testTask.hasEntries).toBe(true);
     // expect(testTask.activeFile).toEqual(File.defaultFile);
     // expect(testTask.files).toEqual(testRing);
-    expect(testTask.allMarks).toEqual(firstFile.allMarks);
+    expect(testTask.allMarks).toEqual(firstFile.allPathMarks);
   });
 });

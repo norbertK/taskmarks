@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { IPersistFile, PathMark } from './types';
+import type { IPersistFile, IPersistMark, PathMark } from './types';
 import { Mark } from './Mark';
 
 export class File {
@@ -10,11 +10,25 @@ export class File {
     return this._filepath;
   }
 
-  get allMarks(): PathMark[] {
+  get marks(): Mark[] {
+    return this._marks;
+  }
+
+  get allPersistMarks(): IPersistMark[] {
+    return this._marks.map((mark) => {
+      return {
+        lineNumber: mark.lineNumber,
+        label: mark.label,
+      };
+    });
+  }
+
+  get allPathMarks(): PathMark[] {
     return this._marks.map((mark) => {
       return {
         filepath: mark.filepath,
         lineNumber: mark.lineNumber,
+        label: mark.label,
       };
     });
   }
@@ -38,24 +52,24 @@ export class File {
     return lineNumbers;
   }
 
-  constructor(filePath: string, lineNumber = -1) {
+  constructor(filePath: string, lineNumber = -1, label = '') {
     this._filepath = filePath;
     this._marks = [];
     if (lineNumber === -1) {
       return;
     }
-    this.toggleTaskMark(lineNumber);
+    this.toggleTaskMark({ lineNumber, label });
   }
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
   mergeMarksAnd_PersistFile_(persistFile: IPersistFile): File {
-    if (persistFile === undefined || persistFile.lineNumbers === undefined) {
+    if (persistFile === undefined || persistFile.persistMarks === undefined) {
       return this.mergeMarksAndLineNumbers([]);
     }
-    return this.mergeMarksAndLineNumbers(persistFile.lineNumbers);
+    return this.mergeMarksAndLineNumbers(persistFile.persistMarks);
   }
 
-  mergeMarksAndLineNumbers(lineNumbers: number[]): File {
+  mergeMarksAndLineNumbers(persistMarks: IPersistMark[]): File {
     // start with an empty array
     const newMarks: Mark[] = [];
 
@@ -73,13 +87,19 @@ export class File {
     }
 
     // now insert the new lineNumbers
-    if (lineNumbers.length > 0) {
-      lineNumbers.forEach((lineNumber) => {
+    if (persistMarks.length > 0) {
+      persistMarks.forEach((lineNumbersAndLabel) => {
         const pos = newMarks.findIndex(
-          (newMark) => lineNumber === newMark.lineNumber
+          (newMark) => lineNumbersAndLabel.lineNumber === newMark.lineNumber
         );
         if (pos === -1) {
-          newMarks.push(new Mark(this._filepath, lineNumber));
+          newMarks.push(
+            new Mark(
+              this._filepath,
+              lineNumbersAndLabel.lineNumber,
+              lineNumbersAndLabel.label
+            )
+          );
         }
       });
     }
@@ -94,18 +114,28 @@ export class File {
     return this;
   }
 
-  addMark(lineNumber: number): void {
-    this.mergeMarksAndLineNumbers([lineNumber]);
+  addMark(lineNumbersAndLabel: { lineNumber: number; label: string }): void {
+    this.mergeMarksAndLineNumbers([lineNumbersAndLabel]);
   }
 
-  toggleTaskMark(lineNumber: number): void {
+  hasMark(lineNumber: number): boolean {
     const index = this._marks.findIndex(
       (mark) => mark.lineNumber === lineNumber
     );
     if (index > -1) {
+      return true;
+    }
+    return false;
+  }
+
+  toggleTaskMark(persistMark: IPersistMark): void {
+    const index = this._marks.findIndex(
+      (mark) => mark.lineNumber === persistMark.lineNumber
+    );
+    if (index > -1) {
       this._marks.splice(index, 1);
     } else {
-      this.addMark(lineNumber);
+      this.addMark(persistMark);
     }
   }
 

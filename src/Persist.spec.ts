@@ -1,6 +1,11 @@
 import { TaskManager } from './TaskManager';
 import { Persist } from './Persist';
-import { IPersistFile, IPersistTask, IPersistTaskManager } from './types';
+import {
+  IPersistFile,
+  IPersistMark,
+  IPersistTask,
+  IPersistTaskManager,
+} from './types';
 import { PathHelper } from './PathHelper';
 import { taskmarksJson } from './JestHelpers';
 import { Task } from './Task';
@@ -67,12 +72,10 @@ function copyTaskToPersistTask(task: Task): IPersistTask {
   };
 
   task.files.forEach((file) => {
-    if (file && file.lineNumbers && file.lineNumbers.length > 0) {
-      const lineNumbers: number[] = file.lineNumbers;
-
+    if (file && file.marks && file.marks.length > 0) {
       const persistFile: IPersistFile = {
         filepath: file.filepath,
-        lineNumbers: lineNumbers.sort(),
+        persistMarks: file.allPersistMarks,
       };
       persistTask.persistFiles.push(persistFile);
     }

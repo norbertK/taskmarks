@@ -25,27 +25,70 @@ describe('File Tests', () => {
   });
 
   it('after adding an array of lineNumbers (numbers), lineNumbers should return these numbers (ordered, no doubles)', () => {
-    firstFile.mergeMarksAndLineNumbers([20, 30, 10, 20, 30]);
-    expect(firstFile.lineNumbers).toEqual([10, 20, 30]);
+    firstFile.mergeMarksAndLineNumbers([
+      { lineNumber: 20, label: '' },
+      { lineNumber: 30, label: '' },
+      { lineNumber: 10, label: '' },
+      { lineNumber: 20, label: '' },
+      { lineNumber: 30, label: '' },
+    ]);
+    expect(firstFile.allPathMarks).toEqual([
+      { filepath: 'firstFile', lineNumber: 10, label: '' },
+      { filepath: 'firstFile', lineNumber: 20, label: '' },
+      { filepath: 'firstFile', lineNumber: 30, label: '' },
+    ]);
   });
 
   it('after adding a second array of lineNumbers (numbers), lineNumbers should return the combined numbers', () => {
-    firstFile.mergeMarksAndLineNumbers([20, 30, 10, 20, 30]);
-    firstFile.mergeMarksAndLineNumbers([20, 50, 40, 50]);
+    firstFile.mergeMarksAndLineNumbers([
+      { lineNumber: 20, label: '' },
+      { lineNumber: 30, label: '' },
+      { lineNumber: 10, label: '' },
+      { lineNumber: 20, label: '' },
+      { lineNumber: 30, label: '' },
+    ]);
+    firstFile.mergeMarksAndLineNumbers([
+      { lineNumber: 20, label: '' },
+      { lineNumber: 50, label: '' },
+      { lineNumber: 40, label: '' },
+      { lineNumber: 50, label: '' },
+    ]);
     expect(firstFile.lineNumbers).toEqual([10, 20, 30, 40, 50]);
   });
 
   it('after adding an existing lineNumber, nothing should change (ordered, no doubles)', () => {
-    firstFile.mergeMarksAndLineNumbers([20, 30, 10, 20, 30]);
-    firstFile.mergeMarksAndLineNumbers([20, 50, 40, 50]);
-    firstFile.addMark(30);
+    firstFile.mergeMarksAndLineNumbers([
+      { lineNumber: 20, label: '' },
+      { lineNumber: 30, label: '' },
+      { lineNumber: 10, label: '' },
+      { lineNumber: 20, label: '' },
+      { lineNumber: 30, label: '' },
+    ]);
+    firstFile.mergeMarksAndLineNumbers([
+      { lineNumber: 20, label: '' },
+      { lineNumber: 50, label: '' },
+      { lineNumber: 40, label: '' },
+      { lineNumber: 50, label: '' },
+    ]);
+    firstFile.addMark({ lineNumber: 30, label: '' });
     expect(firstFile.lineNumbers).toEqual([10, 20, 30, 40, 50]);
   });
 
   it('after adding one new lineNumber, lineNumbers should return these numbers (ordered, no doubles)', () => {
-    firstFile.mergeMarksAndLineNumbers([20, 30, 10, 20, 30]);
-    firstFile.mergeMarksAndLineNumbers([20, 50, 40, 50]);
-    firstFile.addMark(25);
+    firstFile.mergeMarksAndLineNumbers([
+      { lineNumber: 20, label: '' },
+      { lineNumber: 30, label: '' },
+      { lineNumber: 10, label: '' },
+      { lineNumber: 20, label: '' },
+      { lineNumber: 30, label: '' },
+    ]);
+    firstFile.mergeMarksAndLineNumbers([
+      { lineNumber: 20, label: '' },
+      { lineNumber: 50, label: '' },
+      { lineNumber: 40, label: '' },
+      { lineNumber: 50, label: '' },
+    ]);
+    firstFile.addMark({ lineNumber: 25, label: '' });
     expect(firstFile.lineNumbers).toEqual([10, 20, 25, 30, 40, 50]);
   });
 

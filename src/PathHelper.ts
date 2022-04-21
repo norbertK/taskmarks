@@ -100,33 +100,29 @@ export abstract class PathHelper {
       PathHelper._taskmarksDataFilePath
     ).toString();
 
-    // 'upgrade' taskmarks.json
-    taskmarksJson = PathHelper.replaceOldNames(
-      taskmarksJson,
-      '"marks"',
-      '"lineNumbers"'
-    );
-    taskmarksJson = PathHelper.replaceOldNames(
-      taskmarksJson,
-      '"tasks"',
-      '"persistTasks"'
-    );
-    taskmarksJson = PathHelper.replaceOldNames(
-      taskmarksJson,
-      '"files"',
-      '"persistFiles"'
-    );
+    // // 'upgrade' taskmarks.json
+    // taskmarksJson = PathHelper.replaceAll(
+    //   taskmarksJson,
+    //   '"marks"',
+    //   '"lineNumbers"'
+    // );
+    // taskmarksJson = PathHelper.replaceAll(
+    //   taskmarksJson,
+    //   '"tasks"',
+    //   '"persistTasks"'
+    // );
+    // taskmarksJson = PathHelper.replaceAll(
+    //   taskmarksJson,
+    //   '"files"',
+    //   '"persistFiles"'
+    // );
     return taskmarksJson;
   }
 
-  private static replaceOldNames(
-    taskmarksJson: string,
-    oldName: string,
-    newName: string
-  ) {
-    while (taskmarksJson.indexOf(oldName) > -1) {
-      taskmarksJson = taskmarksJson.replace(oldName, newName);
+  static replaceAll(theString: string, old: string, newString: string) {
+    while (theString.indexOf(old) > -1) {
+      theString = theString.replace(old, newString);
     }
-    return taskmarksJson;
+    return theString;
   }
 }

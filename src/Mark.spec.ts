@@ -14,7 +14,7 @@ afterAll(() => {
 
 describe('Mark Tests', () => {
   it('a new mark ', () => {
-    const firstMark = new Mark('a path', 10);
+    const firstMark = new Mark('a path', 10, '');
     expect(firstMark.filepath).toBe('a path');
     expect(firstMark.lineNumber).toBe(10);
     expect(firstMark.label).toBe('');

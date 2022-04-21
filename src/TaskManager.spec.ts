@@ -49,8 +49,8 @@ describe('TaskManager Tests', () => {
     const task = new Task(andAnotherTask.name);
     andAnotherTask.persistFiles.forEach((persistFile) => {
       const file = new File(persistFile.filepath);
-      persistFile.lineNumbers.forEach((lineNumber) => {
-        file.addMark(lineNumber);
+      persistFile.persistMarks.forEach((mark) => {
+        file.addMark(mark);
       });
       task.files.push(file);
     });

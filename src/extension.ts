@@ -4,6 +4,9 @@ import { Persist } from './Persist';
 
 export function activate(context: vscode.ExtensionContext) {
   const outputChannel = vscode.window.createOutputChannel('Taskmarks Errors');
+  let enableLabel = vscode.workspace
+    .getConfiguration()
+    .get<boolean>('taskmarks.enableLabel');
 
   Helper.init(context, outputChannel);
 
@@ -50,7 +53,8 @@ export function activate(context: vscode.ExtensionContext) {
   let toggleMarkDisposable = vscode.commands.registerCommand(
     'taskmarks.toggleMark',
     () => {
-      Helper.toggleMark();
+      enableLabel = enableLabel ? true : false;
+      Helper.toggleMark(enableLabel);
     }
   );
   context.subscriptions.push(toggleMarkDisposable);

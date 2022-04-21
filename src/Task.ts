@@ -47,7 +47,7 @@ export class Task {
   get allMarks(): PathMark[] {
     const allMarks: PathMark[] = [];
     this._files.forEach((file) => {
-      allMarks.push(...file.allMarks);
+      allMarks.push(...file.allPathMarks);
     });
     return allMarks;
   }
@@ -77,7 +77,7 @@ export class Task {
             newFiles.push(oldFile);
           } else {
             // if double, merge line numbers
-            fileFound.mergeMarksAndLineNumbers(oldFile.lineNumbers);
+            fileFound.mergeMarksAndLineNumbers(oldFile.allPathMarks);
           }
         }
       });
@@ -98,15 +98,15 @@ export class Task {
 
         if (fileFound === undefined) {
           const newFile = new File(persistFile.filepath, -1);
-          if (persistFile.lineNumbers && persistFile.lineNumbers.length > 0) {
-            persistFile.lineNumbers.forEach((lineNumber) => {
+          if (persistFile.persistMarks && persistFile.persistMarks.length > 0) {
+            persistFile.persistMarks.forEach((lineNumber) => {
               newFile.addMark(lineNumber);
             });
           }
           newFiles.push(newFile);
         } else {
           // if double, merge line numbers
-          fileFound.mergeMarksAndLineNumbers(persistFile.lineNumbers);
+          fileFound.mergeMarksAndLineNumbers(persistFile.persistMarks);
         }
       });
     }
@@ -117,7 +117,21 @@ export class Task {
     return this;
   }
 
-  toggle(filename: string, lineNumber: number): boolean {
+  lineHasMark(filename: string, lineNumber: number): boolean {
+    const reducedFilePath = PathHelper.reducePath(filename);
+
+    let file: File | undefined = this._files.find((aFile) => {
+      return aFile.filepath === reducedFilePath;
+    });
+
+    if (file && file.hasMark(lineNumber)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  toggle(filename: string, lineNumber: number, label: string): boolean {
     const reducedFilePath = PathHelper.reducePath(filename);
 
     let file: File | undefined = this._files.find((aFile) => {
@@ -125,9 +139,9 @@ export class Task {
     });
 
     if (file) {
-      file.toggleTaskMark(lineNumber);
+      file.toggleTaskMark({ lineNumber, label });
     } else {
-      file = new File(reducedFilePath, lineNumber);
+      file = new File(reducedFilePath, lineNumber, label);
       this._files.push(file);
     }
 

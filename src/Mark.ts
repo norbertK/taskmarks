@@ -10,7 +10,7 @@ export class Mark implements PathMark {
 
   private _quickPickItem: vscode.QuickPickItem | undefined;
 
-  constructor(filepath: string, lineNumber: number, label = '') {
+  constructor(filepath: string, lineNumber: number, label: string) {
     this._label = label;
     this._lineNumber = lineNumber;
     this._filepath = filepath;
