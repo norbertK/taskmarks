@@ -19,30 +19,35 @@ export abstract class Persist {
 
   static initAndLoad(taskManager: TaskManager): void {
     this._taskManager = taskManager;
-    const taskmarksJson = PathHelper.getTaskmarksJson();
-    const persistTaskManager: IPersistTaskManager = JSON.parse(taskmarksJson);
+    let taskmarksJson = PathHelper.getTaskmarksJson();
+    let persistTaskManager = JSON.parse(taskmarksJson);
 
-    persistTaskManager.persistTasks.forEach((persistTask) => {
-      // const iPersistFiles: IPersistFile[] = [];
+    if (
+      persistTaskManager.persistTasks === undefined ||
+      taskmarksJson.indexOf('"lineNumbers": [') > -1
+    ) {
+      // old version of taskmarks.json - discard
+      const taskName = persistTaskManager.activeTaskName
+        ? persistTaskManager.activeTaskName
+        : 'default';
+      taskManager.useActiveTask(taskName);
+      Persist.saveTaskmarksJson();
+      return;
+    }
 
-      persistTask.persistFiles.forEach((persistFile) => {
-        persistFile.filepath = PathHelper.replaceAll(
-          persistFile.filepath,
-          PathHelper.inactivePathChar,
-          PathHelper.activePathChar
-        );
+    (<IPersistTaskManager>persistTaskManager).persistTasks.forEach(
+      (persistTask) => {
+        persistTask.persistFiles.forEach((persistFile) => {
+          persistFile.filepath = PathHelper.replaceAll(
+            persistFile.filepath,
+            PathHelper.inactivePathChar,
+            PathHelper.activePathChar
+          );
 
-        // if (PathHelper.fileExists(persistFile.filepath)) {
-        //   const iPersistMarks: IPersistMark[] = [];
-        //   persistFile.persistMarks.forEach((persistMark) => {});
-
-        //   iPersistFiles.push(persistFile);
-        // }
-
-        // Helper.log(persistTask.name);
-        taskManager.addTask(persistTask);
-      });
-    });
+          taskManager.addTask(persistTask);
+        });
+      }
+    );
     if (taskManager.activeTask.name !== persistTaskManager.activeTaskName) {
       taskManager.useActiveTask(persistTaskManager.activeTaskName);
     }

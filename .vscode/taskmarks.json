@@ -1,108 +1,31 @@
 {
-  "activeTaskName": "taskMarks",
+  "activeTaskName": "toggle",
   "persistTasks": [
     {
       "name": "default",
-      "persistFiles": [
-        {
-          "filepath": "\\package.json",
-          "lineNumbers": [
-            87
-          ]
-        },
-        {
-          "filepath": "\\src\\Mark.ts",
-          "lineNumbers": [
-            9,
-            13,
-            17
-          ]
-        }
-      ]
+      "persistFiles": []
     },
     {
       "name": "taskMarks",
       "persistFiles": [
         {
           "filepath": "\\package.json",
-          "lineNumbers": [
-            87,
-            98
-          ]
-        },
-        {
-          "filepath": "\\src\\Mark.ts",
-          "lineNumbers": [
-            9,
-            13,
-            17
-          ]
-        },
-        {
-          "filepath": "\\src\\types.ts",
-          "lineNumbers": [
-            0
-          ]
-        },
-        {
-          "filepath": "\\src\\Ring.ts",
-          "lineNumbers": [
-            1,
-            33,
-            54
+          "persistMarks": [
+            {
+              "lineNumber": 86,
+              "label": ""
+            }
           ]
         }
       ]
     },
     {
       "name": "copyOfDefault",
-      "persistFiles": [
-        {
-          "filepath": "\\package.json",
-          "lineNumbers": [
-            87,
-            98,
-            106
-          ]
-        },
-        {
-          "filepath": "\\src\\Mark.ts",
-          "lineNumbers": [
-            9,
-            13,
-            17
-          ]
-        },
-        {
-          "filepath": "\\src\\types.ts",
-          "lineNumbers": [
-            0,
-            5
-          ]
-        },
-        {
-          "filepath": "\\src\\Ring.ts",
-          "lineNumbers": [
-            1,
-            17,
-            33,
-            54
-          ]
-        },
-        {
-          "filepath": "\\src\\Helper.ts",
-          "lineNumbers": [
-            310
-          ]
-        },
-        {
-          "filepath": "\\src\\PathHelper.ts",
-          "lineNumbers": [
-            92,
-            100
-          ]
-        }
-      ]
+      "persistFiles": []
+    },
+    {
+      "name": "toggle",
+      "persistFiles": []
     }
   ]
 }

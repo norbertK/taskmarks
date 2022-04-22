@@ -11,10 +11,19 @@ export abstract class Helper {
   private static _taskManager: TaskManager;
   private static _outputChannel: vscode.OutputChannel;
 
-  static reportError = ({ message }: { message: string }) => {
+  static reportError = ({
+    message,
+    stack,
+  }: {
+    message: string;
+    stack?: string;
+  }) => {
     if (Helper.outputChannel) {
       // send the error to our logging service...
       Helper.outputChannel.appendLine(message);
+      if (stack) {
+        Helper.outputChannel.appendLine(stack);
+      }
       Helper.outputChannel.show(true);
     } else {
       console.log(message);
@@ -64,7 +73,8 @@ export abstract class Helper {
       Helper.handleChange(context);
     } catch (error: unknown) {
       const message = Helper.getErrorMessage(error);
-      Helper.reportError({ message });
+      const stack = Helper.getErrorStack(error);
+      Helper.reportError({ message, stack });
       throw error;
     }
   }
@@ -288,9 +298,13 @@ export abstract class Helper {
     this._taskManager.previousMark(line);
   }
 
-  static async toggleMark(enableLabel: boolean): Promise<void> {
+  static async toggleMark(): Promise<void> {
     try {
       const activeTextEditor = vscode.window.activeTextEditor;
+      let enableLabel = vscode.workspace
+        .getConfiguration()
+        .get<boolean>('taskmarks.enableLabel');
+      enableLabel = enableLabel ? true : false;
 
       if (!activeTextEditor || !this._taskManager.activeTask) {
         return;
@@ -354,7 +368,9 @@ export abstract class Helper {
     );
   }
 
-  private static toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
+  private static toErrorWithMessageAndStack(
+    maybeError: unknown
+  ): ErrorWithMessage {
     if (Helper.isErrorWithMessage(maybeError)) {
       return maybeError;
     }
@@ -369,10 +385,15 @@ export abstract class Helper {
   }
 
   static getErrorMessage(error: unknown) {
-    return Helper.toErrorWithMessage(error).message;
+    return Helper.toErrorWithMessageAndStack(error).message;
+  }
+
+  static getErrorStack(error: unknown) {
+    return Helper.toErrorWithMessageAndStack(error).stack;
   }
 }
 
 type ErrorWithMessage = {
   message: string;
+  stack?: string | undefined;
 };
