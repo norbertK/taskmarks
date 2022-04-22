@@ -87,7 +87,7 @@ export class File {
     }
 
     // now insert the new lineNumbers
-    if (persistMarks.length > 0) {
+    if (persistMarks && persistMarks.length > 0) {
       persistMarks.forEach((lineNumbersAndLabel) => {
         const pos = newMarks.findIndex(
           (newMark) => lineNumbersAndLabel.lineNumber === newMark.lineNumber

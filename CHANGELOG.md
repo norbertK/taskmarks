@@ -2,6 +2,10 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
+## [0.8.25] - 2022-04-22
+
+fixed error `Cannot read properties of undefined (reading 'length')`
+
 ## [0.8.23] - 2022-04-21
 
 setting taskmarks.enableLabel added - enter your own text for a mark
