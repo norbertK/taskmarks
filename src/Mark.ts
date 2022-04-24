@@ -30,7 +30,7 @@ export class Mark implements PathMark {
       vscode.workspace.openTextDocument(uri).then((doc) => {
         if (doc === undefined) {
           throw new Error(
-            `Mark.getQuickPickItem() - vscode.workspace.openTextDocument(${uri}) should not be undefined`
+            `Mark.setQuickPickItem() - vscode.workspace.openTextDocument(${uri}) should not be undefined`
           );
         }
         if (lineNumber <= doc.lineCount) {

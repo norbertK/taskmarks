@@ -64,7 +64,7 @@ class Mark {
  +get lineNumber(): number
  +set lineNumber(lineNumber: number)
 
- +async getQuickPickItem(filepath: string,
+ +async setQuickPickItem(filepath: string,
     lineNumber: number | null): Promise<vscode.QuickPickItem>
 }
 

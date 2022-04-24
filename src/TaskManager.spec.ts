@@ -6,7 +6,7 @@ import { Mark } from './Mark';
 
 beforeAll(() => {
   jest
-    .spyOn(Mark.prototype, 'getQuickPickItem')
+    .spyOn(Mark.prototype, 'setQuickPickItem')
     .mockImplementation((filepath: string, lineNumber: number, label: string) =>
       Promise.resolve()
     );
