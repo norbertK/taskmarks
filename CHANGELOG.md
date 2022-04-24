@@ -2,6 +2,10 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
+## [0.8.29] - 2022-04-24
+
+label as label (searchable)
+
 ## [0.8.27] - 2022-04-22
 
 detect and remove invalid taskmarks.json

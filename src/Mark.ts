@@ -15,11 +15,11 @@ export class Mark implements PathMark {
     this._lineNumber = lineNumber;
     this._filepath = filepath;
 
-    this.getQuickPickItem(filepath, lineNumber, label);
+    this.setQuickPickItem(filepath, lineNumber, label);
   }
 
   // private
-  async getQuickPickItem(
+  async setQuickPickItem(
     filepath: string,
     lineNumber: number,
     label: string
@@ -36,8 +36,8 @@ export class Mark implements PathMark {
         if (lineNumber <= doc.lineCount) {
           const lineText = doc.lineAt(lineNumber).text;
           const quickPickItem: vscode.QuickPickItem = {
-            label: lineNumber.toString(),
-            description: label ? label : lineText,
+            label: label ? label : lineNumber.toString(),
+            description: lineText,
             detail: filepath,
           };
           this._quickPickItem = quickPickItem;
