@@ -128,10 +128,10 @@ export class TaskManager {
       index > -1;
       index--
     ) {
-      const mark = this.activeTask.activeFile.lineNumbers[index];
+      const lineNumber = this.activeTask.activeFile.lineNumbers[index];
 
-      if (mark < currentline) {
-        DecoratorHelper.showLine(mark);
+      if (lineNumber < currentline) {
+        DecoratorHelper.showLine(lineNumber);
         return;
       }
     }

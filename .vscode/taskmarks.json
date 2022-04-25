@@ -1,5 +1,5 @@
 {
-  "activeTaskName": "QuickPick",
+  "activeTaskName": "toggle",
   "persistTasks": [
     {
       "name": "default",
@@ -21,66 +21,7 @@
     },
     {
       "name": "toggle",
-      "persistFiles": [
-        {
-          "filepath": "\\package.json",
-          "persistMarks": [
-            {
-              "lineNumber": 94,
-              "label": "aaaaa"
-            },
-            {
-              "lineNumber": 115,
-              "label": "bbbbb"
-            }
-          ]
-        },
-        {
-          "filepath": "\\src\\extension.ts",
-          "persistMarks": [
-            {
-              "lineNumber": 52,
-              "label": "toggle"
-            },
-            {
-              "lineNumber": 77,
-              "label": "next"
-            }
-          ]
-        },
-        {
-          "filepath": "\\src\\Persist.ts",
-          "persistMarks": [
-            {
-              "lineNumber": 55,
-              "label": "save"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "QuickPick",
-      "persistFiles": [
-        {
-          "filepath": "\\src\\Helper.ts",
-          "persistMarks": [
-            {
-              "lineNumber": 162,
-              "label": "Helper.selectMarkFromList()"
-            }
-          ]
-        },
-        {
-          "filepath": "\\src\\File.ts",
-          "persistMarks": [
-            {
-              "lineNumber": 35,
-              "label": "File.quickPickItems()"
-            }
-          ]
-        }
-      ]
+      "persistFiles": []
     }
   ]
 }

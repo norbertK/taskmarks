@@ -29,18 +29,18 @@ export abstract class DecoratorHelper {
     activeEditor.setDecorations(this._vscTextEditorDecorationType, ranges);
   }
 
-  static showLine(line: number): void {
+  static showLine(lineNumber: number): void {
     const activeTextEditor = vscode.window.activeTextEditor;
-    if (activeTextEditor === null || activeTextEditor === undefined) {
+    if (activeTextEditor === null || activeTextEditor === undefined || lineNumber === NaN) {
       return;
     }
     let textEditorRevealType: vscode.TextEditorRevealType =
       vscode.TextEditorRevealType.InCenter;
-    if (line === activeTextEditor.selection.active.line) {
+    if (lineNumber === activeTextEditor.selection.active.line) {
       textEditorRevealType =
         vscode.TextEditorRevealType.InCenterIfOutsideViewport;
     }
-    const selection = new vscode.Selection(line, 0, line, 0);
+    const selection = new vscode.Selection(lineNumber, 0, lineNumber, 0);
     activeTextEditor.selection = selection;
     activeTextEditor.revealRange(selection, textEditorRevealType);
   }
