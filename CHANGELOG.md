@@ -2,6 +2,10 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
+## [0.8.31] - 2022-04-25 
+fixed DecoratorHelper showLine(lineNumber) when lineNumber is NaN
+https://github.com/norbertK/taskmarks/issues/20#issuecomment-1108790922
+
 ## [0.8.29] - 2022-04-24
 
 label as label (searchable)
