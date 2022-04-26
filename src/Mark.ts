@@ -36,8 +36,8 @@ export class Mark implements PathMark {
         if (lineNumber <= doc.lineCount) {
           const lineText = doc.lineAt(lineNumber).text;
           const quickPickItem: vscode.QuickPickItem = {
-            label: label ? label : lineNumber.toString(),
-            description: lineText,
+            label: label ? label : lineText,
+            description: lineNumber.toString(),
             detail: filepath,
           };
           this._quickPickItem = quickPickItem;

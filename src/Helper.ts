@@ -172,8 +172,8 @@ export abstract class Helper {
       vscode.window
         .showQuickPick(this._taskManager.activeTask.quickPickItems, options)
         .then((result) => {
-          if (result && result.detail) {
-            const lineNumber = Number.parseInt(result.label);
+          if (result && result.detail && result.description) {
+            const lineNumber = Number.parseInt(result.description);
             DecoratorHelper.openAndShow(result.detail, lineNumber);
           }
         });
