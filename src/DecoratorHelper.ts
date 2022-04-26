@@ -38,7 +38,7 @@ export abstract class DecoratorHelper {
       return;
     }
     let textEditorRevealType: vscode.TextEditorRevealType =
-      vscode.TextEditorRevealType.InCenter;
+      vscode.TextEditorRevealType.InCenterIfOutsideViewport;
     if (lineNumber === activeTextEditor.selection.active.line) {
       textEditorRevealType =
         vscode.TextEditorRevealType.InCenterIfOutsideViewport;
