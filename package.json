@@ -93,7 +93,7 @@
     "publish pre-release": "vsce publish --pre-release"
   },
   "devDependencies": {
-    "@types/glob": "^7.2.0",
+    "@types/glob": "^8.0.0",
     "@types/jest": "^29.0.0",
     "@types/node": "18.x",
     "@types/vscode": "^1.66.0",
