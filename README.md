@@ -26,6 +26,7 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 ## Features / Command / Keyboard / ToDos / Ideas
 
+- do not write empty taskmarks.json  
 - remove all vscode references from tests (or better mock them) (UnhandledPromiseRejectionWarning: Unhandled promise rejection. in tests)
 - new command : remove unused (empty) Tasks
 - Tests
