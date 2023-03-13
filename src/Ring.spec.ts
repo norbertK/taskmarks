@@ -8,6 +8,10 @@ describe('Ring Tests', () => {
     expect(testRing.empty).toBe(true);
   });
 
+  it('current should be undefined', () => {
+    expect(testRing.current).toBe(undefined);
+  });
+
   it('push should return the number of inserted elements', () => {
     expect(testRing.push('zero')).toBe(1);
     expect(testRing.pushArray(['one', 'two'])).toBe(2);
