@@ -32,7 +32,9 @@ export abstract class DecoratorHelper {
   static showLine(lineNumber: number): void {
     const activeTextEditor = vscode.window.activeTextEditor;
     if (Number.isNaN(lineNumber)) {
-      throw new Error("DecoratorHelper.showLine(lineNumber: number) lineNumber should never be NaN");
+      throw new Error(
+        'DecoratorHelper.showLine(lineNumber: number) lineNumber should never be NaN'
+      );
     }
     if (activeTextEditor === null || activeTextEditor === undefined) {
       return;
