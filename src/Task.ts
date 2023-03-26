@@ -10,9 +10,6 @@ export class Task {
   private _files: Ring<File>;
 
   constructor(name: string) {
-    if (name === undefined) {
-      throw new Error('Task must always have a name.');
-    }
     this._name = name;
     this._files = new Ring();
   }
@@ -35,10 +32,6 @@ export class Task {
   get activeFile(): File | undefined {
     return this._activeFile;
   }
-
-  // set activeFile(file: File) {
-  //   this._activeFile = file;
-  // }
 
   get files(): Ring<File> {
     return this._files;
@@ -131,7 +124,7 @@ export class Task {
     return false;
   }
 
-  toggle(filename: string, lineNumber: number, label: string): boolean {
+  toggle(filename: string, lineNumber: number, label: string): void {
     const reducedFilePath = PathHelper.reducePath(filename);
 
     let file: File | undefined = this._files.find((aFile) => {
@@ -140,12 +133,13 @@ export class Task {
 
     if (file) {
       file.toggleTaskMark({ lineNumber, label });
+      if (!file.hasMarks) {
+        this._files.delete(file);
+      }
     } else {
       file = new File(reducedFilePath, lineNumber, label);
       this._files.push(file);
     }
-
-    return file.hasMarks;
   }
 
   use(path: string): File {
@@ -157,7 +151,7 @@ export class Task {
 
     if (!file) {
       file = new File(filePath, -1);
-      // this._files.push(file);
+      this._files.push(file);
     }
 
     this._activeFile = file;

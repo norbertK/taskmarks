@@ -2,6 +2,10 @@
 export class Ring<T> extends Array<T> {
   private _current = -1;
 
+  //   constructor(items: T[] = []) {
+  //     super(...items);
+  //   }
+
   get current(): T | undefined {
     if (this._current === -1) {
       return undefined;
@@ -73,5 +77,20 @@ export class Ring<T> extends Array<T> {
     this.checkPosition();
     const current = this.current;
     return current;
+  }
+
+  delete(key: T): void {
+    const index = super.indexOf(key, 0);
+    if (index > -1) {
+      super.splice(index, 1);
+    }
+    if (this.length === 0) {
+      this._current = -1;
+      return;
+    }
+    if (this._current < this.length) {
+      return;
+    }
+    this._current = this.length - 1;
   }
 }

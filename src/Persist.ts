@@ -43,9 +43,8 @@ export abstract class Persist {
             PathHelper.inactivePathChar,
             PathHelper.activePathChar
           );
-
-          taskManager.addTask(persistTask);
         });
+        taskManager.addTask(persistTask);
       }
     );
     if (taskManager.activeTask.name !== persistTaskManager.activeTaskName) {

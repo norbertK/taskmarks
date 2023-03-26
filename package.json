@@ -1,153 +1,130 @@
 {
-  "name": "taskmarks",
-  "displayName": "Taskmarks",
-  "description": "Little helper for teams to navigate through files. Persists bookmarks for different tasks.",
-  "version": "0.8.33",
-  "publisher": "NorbertKlein",
-  "contributors": [
-    "Klein Norbert",
-    "Brent Whitehead"
-  ],
-  "engines": {
-    "vscode": "^1.66.0"
-  },
-  "license": "(MIT OR Apache-2.0)",
-  "icon": "images/taskmarks-icon.png",
-  "categories": [
-    "Other"
-  ],
-  "keywords": [
-    "Bookmark, Tasks, Remember, Places, Teamwork, Collaboration"
-  ],
-  "activationEvents": [
-    "onStartupFinished"
-  ],
-  "main": "./dist/extension.js",
-  "contributes": {
-    "configuration": {
-      "title": "Taskmarks",
-      "properties": {
-        "taskmarks.enableLabel": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable your own label for marks."
-        }
-      }
-    },
-    "commands": [
-      {
-        "command": "taskmarks.selectMarkFromList",
-        "title": "Taskmarks: Select Bookmark from List"
-      },
-      {
-        "command": "taskmarks.selectTask",
-        "title": "Taskmarks: Select Active Task"
-      },
-      {
-        "command": "taskmarks.renameTask",
-        "title": "Taskmarks: Rename Task"
-      },
-      {
-        "command": "taskmarks.createTask",
-        "title": "Taskmarks: Create new Task"
-      },
-      {
-        "command": "taskmarks.deleteTask",
-        "title": "Taskmarks: Delete Task"
-      },
-      {
-        "command": "taskmarks.toggleMark",
-        "title": "Taskmarks: Toggle Bookmark at Current Position"
-      },
-      {
-        "command": "taskmarks.nextMark",
-        "title": "Taskmarks: Find next Bookmark"
-      },
-      {
-        "command": "taskmarks.previousMark",
-        "title": "Taskmarks: Find previous Bookmark"
-      },
-      {
-        "command": "taskmarks.copyToClipboard",
-        "title": "Taskmarks: copy active Task to clipboard"
-      },
-      {
-        "command": "taskmarks.pasteFromClipboard",
-        "title": "Taskmarks: paste Task from clipboard"
-      }
-    ]
-  },
-  "scripts": {
-    "prettify": "prettier -l --write \"**/*.ts\"",
-    "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
-    "lint": "eslint src --ext ts",
-    "test": "jest",
-    "checkForUpgrade": "ncu",
-    "upgrade": "ncu -u && npm install",
-    "inst": "npm install",
-    "build package": "vsce package",
-    "publish": "vsce publish",
-    "publish pre-release": "vsce publish --pre-release"
-  },
-  "devDependencies": {
-    "@types/glob": "^8.1.0",
-    "@types/jest": "^29.4.0",
-    "@types/node": "18.x",
-    "@types/vscode": "^1.76.0",
-    "@typescript-eslint/eslint-plugin": "^5.54.1",
-    "@typescript-eslint/parser": "^5.54.1",
-    "@vscode/test-electron": "^2.3.0",
-    "eslint": "^8.36.0",
-    "glob": "^9.2.1",
-    "jest": "^29.5.0",
-    "npm-check-updates": "^16.7.12",
-    "prettier": "2.8.7",
-    "prettier-eslint-cli": "7.1.0",
-    "ts-jest": "^29.0.5",
-    "ts-loader": "^9.4.2",
-    "typescript": "^5.0.2",
-    "vsce": "^2.7.0",
-    "webpack": "^5.76.1",
-    "webpack-cli": "^5.0.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/norbertK/taskmarks"
-  },
-  "homepage": "https://github.com/norbertK/taskmarks/blob/master/README.md",
-  "jest": {
-    "moduleNameMapper": {
-      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
-      "\\.(css|less)$": "<rootDir>/__mocks__/styleMock.js"
-    },
-    "moduleFileExtensions": [
-      "js",
-      "jsx",
-      "json",
-      "ts"
-    ],
-    "moduleDirectories": [
-      "node_modules",
-      "shared"
-    ],
-    "rootDir": ".",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "src/**/*.ts"
-    ],
-    "coverageDirectory": "./coverage",
-    "testEnvironment": "node",
-    "modulePathIgnorePatterns": [
-      "<rootDir>/out"
-    ]
-  },
-  "dependencies": {
-    "clipboard": "^2.0.11"
-  }
+	"name": "taskmarks",
+	"displayName": "Taskmarks",
+	"description": "Little helper for teams to navigate through files. Persists bookmarks for different tasks.",
+	"version": "0.9.1",
+	"publisher": "NorbertKlein",
+	"contributors": [
+		"Klein Norbert",
+		"Brent Whitehead"
+	],
+	"engines": {
+		"vscode": "^1.76.0"
+	},
+	"license": "(MIT OR Apache-2.0)",
+	"icon": "images/taskmarks-icon.png",
+	"categories": [
+		"Other"
+	],
+	"keywords": [
+		"Bookmark, Tasks, Remember, Places, Teamwork, Collaboration"
+	],
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"configuration": {
+			"title": "Taskmarks",
+			"properties": {
+				"taskmarks.enableLabel": {
+					"type": "boolean",
+					"default": false,
+					"description": "Enable your own label for marks."
+				}
+			}
+		},
+		"commands": [
+			{
+				"command": "taskmarks.selectMarkFromList",
+				"title": "Taskmarks: Select Bookmark from List"
+			},
+			{
+				"command": "taskmarks.selectTask",
+				"title": "Taskmarks: Select Active Task"
+			},
+			{
+				"command": "taskmarks.renameTask",
+				"title": "Taskmarks: Rename Task"
+			},
+			{
+				"command": "taskmarks.createTask",
+				"title": "Taskmarks: Create new Task"
+			},
+			{
+				"command": "taskmarks.deleteTask",
+				"title": "Taskmarks: Delete Task"
+			},
+			{
+				"command": "taskmarks.helloWorld",
+				"title": "Hello World"
+			},
+			{
+				"command": "taskmarks.toggleMark",
+				"title": "Taskmarks: Toggle Bookmark at Current Position"
+			},
+			{
+				"command": "taskmarks.nextMark",
+				"title": "Taskmarks: Find next Bookmark"
+			},
+			{
+				"command": "taskmarks.previousMark",
+				"title": "Taskmarks: Find previous Bookmark"
+			},
+			{
+				"command": "taskmarks.copyToClipboard",
+				"title": "Taskmarks: copy active Task to clipboard"
+			},
+			{
+				"command": "taskmarks.pasteFromClipboard",
+				"title": "Taskmarks: paste Task from clipboard"
+			}
+		]
+	},
+	"scripts": {
+		"prettify": "prettier -l --write \"**/*.ts\"",
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"lint": "eslint src --ext ts",
+		"test": "node ./out/test/runTest.js ",
+		"testY": "nyc --reporter=html mocha \"./out/test/**/Mark.test.js\"",
+		"checkForUpgrade": "ncu",
+		"upgrade": "ncu -u && npm install",
+		"inst": "npm install",
+		"build package": "vsce package",
+		"publish": "vsce publish",
+		"publish pre-release": "vsce publish --pre-release"
+	},
+	"devDependencies": {
+		"@types/chai": "^4.3.4",
+		"@types/glob": "^8.1.0",
+		"@types/mocha": "^10.0.1",
+		"@types/node": "16.x",
+		"@types/sinon": "^10.0.13",
+		"@types/vscode": "^1.76.0",
+		"@typescript-eslint/eslint-plugin": "^5.53.0",
+		"@typescript-eslint/parser": "^5.53.0",
+		"@vscode/test-electron": "^2.3.0",
+		"chai": "^4.3.7",
+		"eslint": "^8.34.0",
+		"glob": "^8.1.0",
+		"mocha": "^10.2.0",
+		"npm-check-updates": "^16.7.12",
+		"nyc": "^15.1.0",
+		"prettier": "2.8.4",
+		"prettier-eslint-cli": "7.1.0",
+		"sinon": "^15.0.2",
+		"ts-node": "^10.9.1",
+		"typescript": "^4.9.5"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/norbertK/taskmarks"
+	},
+	"homepage": "https://github.com/norbertK/taskmarks/blob/master/README.md",
+	"dependencies": {
+		"clipboard": "^2.0.11"
+	}
 }
