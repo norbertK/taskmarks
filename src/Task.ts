@@ -145,7 +145,7 @@ export class Task {
   use(path: string): File {
     const filePath = PathHelper.reducePath(path);
     let file: File | undefined = undefined;
-    if (this.hasEntries) {
+    if (this.hasFiles) {
       file = this.getFile(filePath);
     }
 
@@ -167,7 +167,17 @@ export class Task {
     return fileMark;
   }
 
-  get hasEntries(): boolean {
+  get hasFiles(): boolean {
     return this._files.length > 0;
+  }
+
+  get hasMarks(): boolean {
+    const fileWithMark: File | undefined = this._files.find((file) => {
+      return file.hasMarks;
+    });
+    if (fileWithMark) {
+      return true;
+    }
+    return false;
   }
 }

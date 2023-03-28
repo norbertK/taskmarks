@@ -80,7 +80,7 @@ describe('Task', () => {
     it('should add a mark to a new file', () => {
       const task = new Task('MyTask');
       task.toggle('file1.txt', 1, 'label1');
-      const hasMarks = task.hasEntries;
+      const hasMarks = task.hasFiles;
       expect(hasMarks).to.be.true;
       const file = task.getFile('file1.txt');
       expect(file?.hasMark(1)).to.be.true;
@@ -91,7 +91,7 @@ describe('Task', () => {
       const file1 = new File('file1.txt', 1);
       task.files.push(file1);
       task.toggle('file1.txt', 2, 'label2');
-      const hasMarks = task.hasEntries;
+      const hasMarks = task.hasFiles;
       expect(hasMarks).to.be.true;
       expect(file1.hasMark(2)).to.be.true;
     });
@@ -101,7 +101,7 @@ describe('Task', () => {
       const file1 = new File('file1.txt', 1, 'label1');
       task.files.push(file1);
       task.toggle('file1.txt', 1, 'label1');
-      const hasMarks = task.hasEntries;
+      const hasMarks = task.hasFiles;
       expect(hasMarks).to.be.false;
       expect(file1.hasMark(1)).to.be.false;
     });

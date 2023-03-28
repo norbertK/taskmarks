@@ -23,10 +23,12 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 - **Taskmarks: Toggle** Toggle Bookmark at Current Position
 - **Taskmarks: Find next Bookmark** Move the cursor to the next bookmark
 - **Taskmarks: Find previous Bookmark** Move the cursor to the previous bookmark
+- **Taskmarks: Select Bookmark from List** show Bookmarks and jump to Selected
 
 ## Features / Command / Keyboard / ToDos / Ideas
 
-- do not write empty taskmarks.json  
+- Version 1.0.0 ???
+- paste (from clipboard) to active task
 - one central taskmarks.json (setting) - local trumps central 
 - remove all vscode references from tests (or better mock them) (UnhandledPromiseRejectionWarning: Unhandled promise rejection. in tests)
 - new command : remove unused (empty) Tasks
@@ -38,6 +40,10 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 - add debug points to task (toggle, switch all on or off)
 - perhaps? be able to leave comments on tasks - for starters, just keep them in taskmarks.json  
 - version taskmarks.json? import old?
+
+## Done (still testing)
+
+(0.9.2) - do not write <span style="text-decoration: underline">new</span> empty taskmarks.json  
 
 ## Requirements
 

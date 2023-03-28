@@ -301,10 +301,11 @@ export abstract class Helper {
   static async toggleMark(): Promise<void> {
     try {
       const activeTextEditor = vscode.window.activeTextEditor;
-      let enableLabel = vscode.workspace
+      const enableLabel = vscode.workspace
         .getConfiguration()
         .get<boolean>('taskmarks.enableLabel');
-      enableLabel = enableLabel ? true : false;
+      console.log('🚀 ~ Helper ~ toggleMark ~ enableLabel:', enableLabel);
+      //   enableLabel = enableLabel ? true : false;
 
       if (!activeTextEditor || !this._taskManager.activeTask) {
         return;

@@ -2,6 +2,10 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
+## [0.9.2] - 2023-03-28 
+
+only save new taskmarks.json, if bookmarks in active task 'default'
+
 ## [0.9.1] - 2023-03-26 
 
 removed webpack - mocha instead of jest - new tests - moved tests - still tests missing

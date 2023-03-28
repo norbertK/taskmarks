@@ -2,7 +2,7 @@
 	"name": "taskmarks",
 	"displayName": "Taskmarks",
 	"description": "Little helper for teams to navigate through files. Persists bookmarks for different tasks.",
-	"version": "0.9.1",
+	"version": "0.9.2",
 	"publisher": "NorbertKlein",
 	"contributors": [
 		"Klein Norbert",
@@ -69,11 +69,11 @@
 			},
 			{
 				"command": "taskmarks.copyToClipboard",
-				"title": "Taskmarks: copy active Task to clipboard"
+				"title": "Taskmarks: Copy Active Task to Clipboard"
 			},
 			{
 				"command": "taskmarks.pasteFromClipboard",
-				"title": "Taskmarks: paste Task from clipboard"
+				"title": "Taskmarks: Paste Task from Clipboard"
 			}
 		]
 	},
@@ -92,7 +92,7 @@
 		"test": "node ./out/test/runTest.js ",
 		"testY": "nyc --reporter=html mocha \"./out/test/**/Mark.test.js\"",
 		"checkForUpgrade": "ncu",
-		"upgrade": "ncu -u && npm install",
+		"upgrade": "ncu --reject glob --upgrade && npm install",
 		"inst": "npm install",
 		"build package": "vsce package",
 		"publish": "vsce publish",
@@ -105,8 +105,8 @@
 		"@types/node": "18.x",
 		"@types/sinon": "^10.0.13",
 		"@types/vscode": "^1.76.0",
-		"@typescript-eslint/eslint-plugin": "^5.56.0",
-		"@typescript-eslint/parser": "^5.56.0",
+		"@typescript-eslint/eslint-plugin": "^5.57.0",
+		"@typescript-eslint/parser": "^5.57.0",
 		"@vscode/test-electron": "^2.3.0",
 		"chai": "^4.3.7",
 		"esbuild": "^0.17.14",
@@ -117,7 +117,7 @@
 		"nyc": "^15.1.0",
 		"prettier": "2.8.7",
 		"prettier-eslint-cli": "7.1.0",
-		"sinon": "^15.0.2",
+		"sinon": "^15.0.3",
 		"ts-node": "^10.9.1",
 		"typescript": "^5.0.2"
 	},

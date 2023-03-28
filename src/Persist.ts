@@ -1,18 +1,14 @@
 import * as vscode from 'vscode';
 
-import { TaskManager } from './TaskManager';
-import { Task } from './Task';
-
 import type {
   IPersistFile,
   IPersistMark,
   IPersistTask,
   IPersistTaskManager,
-  PathMark,
 } from './types';
 import { PathHelper } from './PathHelper';
-import { Mark } from './Mark';
-import { Helper } from './Helper';
+import { TaskManager } from './TaskManager';
+import { Task } from './Task';
 
 export abstract class Persist {
   private static _taskManager: TaskManager;
@@ -53,16 +49,24 @@ export abstract class Persist {
   }
 
   static saveTaskmarksJson(): void {
+    if (!this._taskManager.activeTask) {
+      console.log('no active task? - should never happen!');
+      return;
+    }
+    if (PathHelper.taskmarksJsonIsNew) {
+      if (
+        this._taskManager.activeTask.name === 'default' &&
+        !this._taskManager.activeTask.hasMarks
+      ) {
+        return;
+      }
+    }
     PathHelper.checkTaskmarksDataFilePath();
 
-    if (!this._taskManager.activeTask) {
-      throw new Error('no active task');
-    }
     const persistTaskManager: IPersistTaskManager = {
       activeTaskName: this._taskManager.activeTask.name,
       persistTasks: [],
     };
-
     this._taskManager.allTasks.forEach((task) => {
       const persistTask: IPersistTask = this.copyTaskToPersistTask(task);
       persistTaskManager.persistTasks.push(persistTask);

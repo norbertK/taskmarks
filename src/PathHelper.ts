@@ -10,6 +10,7 @@ export abstract class PathHelper {
   private static _taskmarksDataFilePath: string;
   private static _activePathChar: string;
   private static _inactivePathChar: string;
+  private static _taskmarksJsonIsNew = false;
 
   static get taskmarksDataFilePath(): string {
     return this._taskmarksDataFilePath;
@@ -29,6 +30,10 @@ export abstract class PathHelper {
 
   static set basePath(basePath: string) {
     this._basePath = basePath;
+  }
+
+  static get taskmarksJsonIsNew(): boolean {
+    return this._taskmarksJsonIsNew;
   }
 
   static initTaskmarksDataFilePath(): void {
@@ -70,6 +75,7 @@ export abstract class PathHelper {
   }
 
   static saveTaskmarks(persistTaskManager: IPersistTaskManager) {
+    this._taskmarksJsonIsNew = false;
     const taskmarksDataFilePath = PathHelper.taskmarksDataFilePath;
     writeFileSync(
       taskmarksDataFilePath,
@@ -94,6 +100,7 @@ export abstract class PathHelper {
     PathHelper.initTaskmarksDataFilePath();
     const fileFound = existsSync(PathHelper._taskmarksDataFilePath);
     if (PathHelper._taskmarksDataFilePath === undefined || !fileFound) {
+      this._taskmarksJsonIsNew = true;
       return '{"activeTaskName": "default", "persistTasks": [{"name": "default", "persistFiles": []}]}';
     }
     let taskmarksJson = readFileSync(
