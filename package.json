@@ -2,7 +2,7 @@
 	"name": "taskmarks",
 	"displayName": "Taskmarks",
 	"description": "Little helper for teams to navigate through files. Persists bookmarks for different tasks.",
-	"version": "0.9.2",
+	"version": "0.9.3",
 	"publisher": "NorbertKlein",
 	"contributors": [
 		"Klein Norbert",
@@ -31,6 +31,11 @@
 					"type": "boolean",
 					"default": false,
 					"description": "Enable your own label for marks."
+				},
+				"taskmarks.useGlobalTaskmarksJson": {
+					"type": "boolean",
+					"default": false,
+					"description": "Use one central Taskmarks.json"
 				}
 			}
 		},
@@ -90,10 +95,11 @@
 		"pretest": "npm run compile && npm run lint",
 		"lint": "eslint src --ext ts",
 		"test": "node ./out/test/runTest.js ",
+		"testAll": "npm run compile && nyc --reporter=html mocha \"./out/test/**/*.test.js\"",
 		"testFile": "npm run compile && nyc --reporter=html mocha \"./out/test/**/File.test.js\"",
 		"testRing": "npm run compile && nyc --reporter=html mocha \"./out/test/**/Ring.test.js\"",
 		"checkForUpgrade": "ncu",
-		"upgrade": "ncu --reject glob --upgrade && npm install",
+		"upgrade": "ncu --upgrade && npm install",
 		"inst": "npm install",
 		"build package": "vsce package",
 		"publish": "vsce publish",
@@ -112,7 +118,7 @@
 		"chai": "^4.3.7",
 		"esbuild": "^0.17.14",
 		"eslint": "^8.36.0",
-		"glob": "^8.1.0",
+		"glob": "^9.3.2",
 		"mocha": "^10.2.0",
 		"npm-check-updates": "^16.8.0",
 		"nyc": "^15.1.0",

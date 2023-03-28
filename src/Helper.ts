@@ -64,7 +64,7 @@ export abstract class Helper {
       PathHelper.basePath = uri.fsPath;
 
       this._taskManager = TaskManager.instance;
-      Persist.initAndLoad(this._taskManager);
+      Persist.initAndLoad(this._taskManager, context);
 
       DecoratorHelper.initDecorator(context);
 
@@ -304,8 +304,6 @@ export abstract class Helper {
       const enableLabel = vscode.workspace
         .getConfiguration()
         .get<boolean>('taskmarks.enableLabel');
-      console.log('🚀 ~ Helper ~ toggleMark ~ enableLabel:', enableLabel);
-      //   enableLabel = enableLabel ? true : false;
 
       if (!activeTextEditor || !this._taskManager.activeTask) {
         return;

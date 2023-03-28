@@ -13,9 +13,12 @@ import { Task } from './Task';
 export abstract class Persist {
   private static _taskManager: TaskManager;
 
-  static initAndLoad(taskManager: TaskManager): void {
+  static initAndLoad(
+    taskManager: TaskManager,
+    context: vscode.ExtensionContext
+  ): void {
     this._taskManager = taskManager;
-    let taskmarksJson = PathHelper.getTaskmarksJson();
+    let taskmarksJson = PathHelper.getTaskmarksJson(context);
     let persistTaskManager = JSON.parse(taskmarksJson);
 
     if (

@@ -37,18 +37,18 @@ export function activate(context: vscode.ExtensionContext) {
   // 	vscode.window.showInformationMessage(`Saved ${evt.fileName}`);
   // });
   // context.subscriptions.push(disposable);
-  const disposable01 = vscode.window.setStatusBarMessage(
-    'Never saved anything'
-  );
-  context.subscriptions.push(disposable01);
+  //   const disposable01 = vscode.window.setStatusBarMessage(
+  //     'Never saved anything'
+  //   );
+  //   context.subscriptions.push(disposable01);
 
-  const disposable02 = vscode.workspace.onDidSaveTextDocument((evt) => {
-    const disposable = vscode.window.setStatusBarMessage(
-      `Saved ${evt.fileName} at ${Date.now()}`
-    );
-    context.subscriptions.push(disposable);
-  });
-  context.subscriptions.push(disposable02);
+  //   const disposable02 = vscode.workspace.onDidSaveTextDocument((evt) => {
+  //     const disposable = vscode.window.setStatusBarMessage(
+  //       `Saved ${evt.fileName} at ${Date.now()}`
+  //     );
+  //     context.subscriptions.push(disposable);
+  //   });
+  //   context.subscriptions.push(disposable02);
 
   let selectMarkFromListDisposable = vscode.commands.registerCommand(
     'taskmarks.selectMarkFromList',

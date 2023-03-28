@@ -29,7 +29,6 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 - Version 1.0.0 ???
 - paste (from clipboard) to active task
-- one central taskmarks.json (setting) - local trumps central 
 - remove all vscode references from tests (or better mock them) (UnhandledPromiseRejectionWarning: Unhandled promise rejection. in tests)
 - new command : remove unused (empty) Tasks
 - Tests
@@ -43,6 +42,7 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 ## Done (still testing)
 
+(0.9.3) - one central taskmarks.json (setting) - local trumps central 
 (0.9.2) - do not write <span style="text-decoration: underline">new</span> empty taskmarks.json  
 
 ## Requirements
