@@ -27,6 +27,7 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 ## Features / Command / Keyboard / ToDos / Ideas
 
+- tabs - spaces why
 - Version 1.0.0 ???
 - paste (from clipboard) to active task
 - remove all vscode references from tests (or better mock them) (UnhandledPromiseRejectionWarning: Unhandled promise rejection. in tests)
@@ -50,6 +51,12 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 ## Extension Settings
 
 ## Known Issues
+
+https://github.com/norbertK/taskmarks/issues/45
+if too many lines are deleted, marker at end, can not be removed
+
+https://github.com/norbertK/taskmarks/issues/22
+marker does not move while deleting / inserting lines
 
 ## Release Notes
 
