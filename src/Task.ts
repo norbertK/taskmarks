@@ -5,179 +5,172 @@ import { PathHelper } from './PathHelper';
 import type { IPersistTask, PathMark } from './types';
 
 export class Task {
-  private _name: string;
-  private _activeFile: File | undefined;
-  private _files: Ring<File>;
+	private _name: string;
+	private _activeFile: File | undefined;
+	private _files: Ring<File>;
 
-  constructor(name: string) {
-    this._name = name;
-    this._files = new Ring();
-  }
+	constructor(name: string) {
+		this._name = name;
+		this._files = new Ring();
+	}
 
-  get name(): string {
-    return this._name;
-  }
+	get name(): string {
+		return this._name;
+	}
 
-  set name(name: string) {
-    this._name = name;
-  }
+	set name(name: string) {
+		this._name = name;
+	}
 
-  get activeFileFilePath(): string | undefined {
-    if (this._activeFile) {
-      return this._activeFile.filepath;
-    }
-    return undefined;
-  }
+	get activeFileFilePath(): string | undefined {
+		if (this._activeFile) {
+			return this._activeFile.filepath;
+		}
+		return undefined;
+	}
 
-  get activeFile(): File | undefined {
-    return this._activeFile;
-  }
+	get activeFile(): File | undefined {
+		return this._activeFile;
+	}
 
-  get files(): Ring<File> {
-    return this._files;
-  }
+	get files(): Ring<File> {
+		return this._files;
+	}
 
-  get allMarks(): PathMark[] {
-    const allMarks: PathMark[] = [];
-    this._files.forEach((file) => {
-      allMarks.push(...file.allPathMarks);
-    });
-    return allMarks;
-  }
+	get allMarks(): PathMark[] {
+		const allMarks: PathMark[] = [];
+		this._files.forEach((file) => {
+			allMarks.push(...file.allPathMarks);
+		});
+		return allMarks;
+	}
 
-  get quickPickItems(): vscode.QuickPickItem[] {
-    const quickPickItems: vscode.QuickPickItem[] = [];
-    this._files.forEach((file) => {
-      quickPickItems.push(...file.quickPickItems);
-    });
+	get quickPickItems(): vscode.QuickPickItem[] {
+		const quickPickItems: vscode.QuickPickItem[] = [];
+		this._files.forEach((file) => {
+			quickPickItems.push(...file.quickPickItems);
+		});
 
-    return quickPickItems;
-  }
+		return quickPickItems;
+	}
 
-  mergeFilesWithPersistFiles(persistTaskToMerge: IPersistTask): Task {
-    // start with an empty Ring
-    const newFiles: Ring<File> = new Ring();
+	mergeFilesWithPersistFiles(persistTaskToMerge: IPersistTask): Task {
+		// start with an empty Ring
+		const newFiles: Ring<File> = new Ring();
 
-    // copy all old, but check for doubles
-    if (this._files && this._files.length > 0) {
-      this._files.forEach((oldFile) => {
-        if (oldFile !== undefined) {
-          const fileFound: File | undefined = newFiles.find(
-            (newFile) => oldFile?.filepath === newFile?.filepath
-          );
+		// copy all old, but check for doubles
+		if (this._files && this._files.length > 0) {
+			this._files.forEach((oldFile) => {
+				if (oldFile !== undefined) {
+					const fileFound: File | undefined = newFiles.find((newFile) => oldFile?.filepath === newFile?.filepath);
 
-          if (fileFound === undefined) {
-            newFiles.push(oldFile);
-          } else {
-            // if double, merge line numbers
-            fileFound.mergeMarksAndLineNumbers(oldFile.allPathMarks);
-          }
-        }
-      });
-    }
+					if (fileFound === undefined) {
+						newFiles.push(oldFile);
+					} else {
+						// if double, merge line numbers
+						fileFound.mergeMarksAndLineNumbers(oldFile.allPathMarks);
+					}
+				}
+			});
+		}
 
-    if (
-      persistTaskToMerge === undefined ||
-      persistTaskToMerge.persistFiles === undefined
-    ) {
-      return this;
-    }
-    // now do the same with persistTaskToMerge.files
-    if (persistTaskToMerge.persistFiles.length > 0) {
-      persistTaskToMerge.persistFiles.forEach((persistFile) => {
-        const fileFound: File | undefined = newFiles.find(
-          (newFile) => persistFile.filepath === newFile?.filepath
-        );
+		if (persistTaskToMerge === undefined || persistTaskToMerge.persistFiles === undefined) {
+			return this;
+		}
+		// now do the same with persistTaskToMerge.files
+		if (persistTaskToMerge.persistFiles.length > 0) {
+			persistTaskToMerge.persistFiles.forEach((persistFile) => {
+				const fileFound: File | undefined = newFiles.find((newFile) => persistFile.filepath === newFile?.filepath);
 
-        if (fileFound === undefined) {
-          const newFile = new File(persistFile.filepath, -1);
-          if (persistFile.persistMarks && persistFile.persistMarks.length > 0) {
-            persistFile.persistMarks.forEach((lineNumber) => {
-              newFile.addMark(lineNumber);
-            });
-          }
-          newFiles.push(newFile);
-        } else {
-          // if double, merge line numbers
-          fileFound.mergeMarksAndLineNumbers(persistFile.persistMarks);
-        }
-      });
-    }
+				if (fileFound === undefined) {
+					const newFile = new File(persistFile.filepath, -1);
+					if (persistFile.persistMarks && persistFile.persistMarks.length > 0) {
+						persistFile.persistMarks.forEach((lineNumber) => {
+							newFile.addMark(lineNumber);
+						});
+					}
+					newFiles.push(newFile);
+				} else {
+					// if double, merge line numbers
+					fileFound.mergeMarksAndLineNumbers(persistFile.persistMarks);
+				}
+			});
+		}
 
-    // replace old _files Ring with newFiles
-    this._files = newFiles;
+		// replace old _files Ring with newFiles
+		this._files = newFiles;
 
-    return this;
-  }
+		return this;
+	}
 
-  lineHasMark(filename: string, lineNumber: number): boolean {
-    const reducedFilePath = PathHelper.reducePath(filename);
+	lineHasMark(filename: string, lineNumber: number): boolean {
+		const reducedFilePath = PathHelper.reducePath(filename);
 
-    let file: File | undefined = this._files.find((aFile) => {
-      return aFile.filepath === reducedFilePath;
-    });
+		let file: File | undefined = this._files.find((aFile) => {
+			return aFile.filepath === reducedFilePath;
+		});
 
-    if (file && file.hasMark(lineNumber)) {
-      return true;
-    }
+		if (file && file.hasMark(lineNumber)) {
+			return true;
+		}
 
-    return false;
-  }
+		return false;
+	}
 
-  toggle(filename: string, lineNumber: number, label: string): void {
-    const reducedFilePath = PathHelper.reducePath(filename);
+	toggle(filename: string, lineNumber: number, label: string): void {
+		const reducedFilePath = PathHelper.reducePath(filename);
 
-    let file: File | undefined = this._files.find((aFile) => {
-      return aFile.filepath === reducedFilePath;
-    });
+		let file: File | undefined = this._files.find((aFile) => {
+			return aFile.filepath === reducedFilePath;
+		});
 
-    if (file) {
-      file.toggleTaskMark({ lineNumber, label });
-      if (!file.hasMarks) {
-        this._files.delete(file);
-      }
-    } else {
-      file = new File(reducedFilePath, lineNumber, label);
-      this._files.push(file);
-    }
-  }
+		if (file) {
+			file.toggleTaskMark({ lineNumber, label });
+			if (!file.hasMarks) {
+				this._files.delete(file);
+			}
+		} else {
+			file = new File(reducedFilePath, lineNumber, label);
+			this._files.push(file);
+		}
+	}
 
-  use(path: string): File {
-    const filePath = PathHelper.reducePath(path);
-    let file: File | undefined = undefined;
-    if (this.hasFiles) {
-      file = this.getFile(filePath);
-    }
+	use(path: string): File {
+		const filePath = PathHelper.reducePath(path);
+		let file: File | undefined = undefined;
+		if (this.hasFiles) {
+			file = this.getFile(filePath);
+		}
 
-    if (!file) {
-      file = new File(filePath, -1);
-      this._files.push(file);
-    }
+		if (!file) {
+			file = new File(filePath, -1);
+			this._files.push(file);
+		}
 
-    this._activeFile = file;
+		this._activeFile = file;
 
-    return file;
-  }
+		return file;
+	}
 
-  getFile(reducedFilePath: string): File | undefined {
-    const fileMark: File | undefined = this._files.find((file) => {
-      return file.filepath === reducedFilePath;
-    });
+	getFile(reducedFilePath: string): File | undefined {
+		const fileMark: File | undefined = this._files.find((file) => {
+			return file.filepath === reducedFilePath;
+		});
 
-    return fileMark;
-  }
+		return fileMark;
+	}
 
-  get hasFiles(): boolean {
-    return this._files.length > 0;
-  }
+	get hasFiles(): boolean {
+		return this._files.length > 0;
+	}
 
-  get hasMarks(): boolean {
-    const fileWithMark: File | undefined = this._files.find((file) => {
-      return file.hasMarks;
-    });
-    if (fileWithMark) {
-      return true;
-    }
-    return false;
-  }
+	get hasMarks(): boolean {
+		const fileWithMark: File | undefined = this._files.find((file) => {
+			return file.hasMarks;
+		});
+		if (fileWithMark) {
+			return true;
+		}
+		return false;
+	}
 }

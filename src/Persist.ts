@@ -1,145 +1,117 @@
 import * as vscode from 'vscode';
 
-import type {
-  IPersistFile,
-  IPersistMark,
-  IPersistTask,
-  IPersistTaskManager,
-} from './types';
+import type { IPersistFile, IPersistMark, IPersistTask, IPersistTaskManager } from './types';
 import { PathHelper } from './PathHelper';
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
 
 export abstract class Persist {
-  private static _taskManager: TaskManager;
+	private static _taskManager: TaskManager;
+	private static _lastSavedTaskmarksJson: string;
 
-  static initAndLoad(
-    taskManager: TaskManager,
-    context: vscode.ExtensionContext
-  ): void {
-    this._taskManager = taskManager;
-    let taskmarksJson = PathHelper.getTaskmarksJson(context);
-    let persistTaskManager = JSON.parse(taskmarksJson);
+	static initAndLoad(taskManager: TaskManager, context: vscode.ExtensionContext): void {
+		this._taskManager = taskManager;
+		let taskmarksJson = PathHelper.getTaskmarksJson(context);
+		Persist._lastSavedTaskmarksJson = taskmarksJson;
+		let persistTaskManager = JSON.parse(taskmarksJson);
 
-    if (
-      persistTaskManager.persistTasks === undefined ||
-      taskmarksJson.indexOf('"lineNumbers": [') > -1
-    ) {
-      // old version of taskmarks.json - discard
-      const taskName = persistTaskManager.activeTaskName
-        ? persistTaskManager.activeTaskName
-        : 'default';
-      taskManager.useActiveTask(taskName);
-      Persist.saveTaskmarksJson();
-      return;
-    }
+		if (persistTaskManager.persistTasks === undefined || taskmarksJson.indexOf('"lineNumbers": [') > -1) {
+			// old version of taskmarks.json - discard
+			const taskName = persistTaskManager.activeTaskName ? persistTaskManager.activeTaskName : 'default';
+			taskManager.useActiveTask(taskName);
+			Persist.saveTaskmarksJson();
+			return;
+		}
 
-    (<IPersistTaskManager>persistTaskManager).persistTasks.forEach(
-      (persistTask) => {
-        persistTask.persistFiles.forEach((persistFile) => {
-          persistFile.filepath = PathHelper.replaceAll(
-            persistFile.filepath,
-            PathHelper.inactivePathChar,
-            PathHelper.activePathChar
-          );
-        });
-        taskManager.addTask(persistTask);
-      }
-    );
-    if (taskManager.activeTask.name !== persistTaskManager.activeTaskName) {
-      taskManager.useActiveTask(persistTaskManager.activeTaskName);
-    }
-  }
+		(<IPersistTaskManager>persistTaskManager).persistTasks.forEach((persistTask) => {
+			persistTask.persistFiles.forEach((persistFile) => {
+				persistFile.filepath = PathHelper.replaceAll(persistFile.filepath, PathHelper.inactivePathChar, PathHelper.activePathChar);
+			});
+			taskManager.addTask(persistTask);
+		});
+		if (taskManager.activeTask.name !== persistTaskManager.activeTaskName) {
+			taskManager.useActiveTask(persistTaskManager.activeTaskName);
+		}
+	}
 
-  static saveTaskmarksJson(): void {
-    if (!this._taskManager.activeTask) {
-      console.log('no active task? - should never happen!');
-      return;
-    }
-    if (PathHelper.taskmarksJsonIsNew) {
-      if (
-        this._taskManager.activeTask.name === 'default' &&
-        !this._taskManager.activeTask.hasMarks
-      ) {
-        return;
-      }
-    }
-    PathHelper.checkTaskmarksDataFilePath();
+	static saveTaskmarksJson(): void {
+		if (!this._taskManager.activeTask) {
+			console.log('no active task? - should never happen!');
+			return;
+		}
+		if (PathHelper.taskmarksJsonIsNew) {
+			if (this._taskManager.activeTask.name === 'default' && !this._taskManager.activeTask.hasMarks) {
+				return;
+			}
+		}
+		PathHelper.checkTaskmarksDataFilePath();
 
-    const persistTaskManager: IPersistTaskManager = {
-      activeTaskName: this._taskManager.activeTask.name,
-      persistTasks: [],
-    };
-    this._taskManager.allTasks.forEach((task) => {
-      const persistTask: IPersistTask = this.copyTaskToPersistTask(task);
-      persistTaskManager.persistTasks.push(persistTask);
-    });
+		const persistTaskManager: IPersistTaskManager = {
+			activeTaskName: this._taskManager.activeTask.name,
+			persistTasks: [],
+		};
+		this._taskManager.allTasks.forEach((task) => {
+			const persistTask: IPersistTask = this.copyTaskToPersistTask(task);
+			persistTaskManager.persistTasks.push(persistTask);
+		});
 
-    PathHelper.saveTaskmarks(persistTaskManager);
-  }
+		const taskmarksJsonToBeSaved = JSON.stringify(persistTaskManager, null, '  ');
+		if (Persist._lastSavedTaskmarksJson !== taskmarksJsonToBeSaved) {
+			Persist._lastSavedTaskmarksJson = taskmarksJsonToBeSaved;
+			PathHelper.saveTaskmarks(taskmarksJsonToBeSaved);
+		}
+	}
 
-  static copyToClipboard(): void {
-    if (!this._taskManager.activeTask) {
-      throw new Error('no active task');
-    }
-    const persistTaskVersionOfActiveTask = this.copyTaskToPersistTask(
-      this._taskManager.activeTask
-    );
+	static copyToClipboard(): void {
+		if (!this._taskManager.activeTask) {
+			throw new Error('no active task');
+		}
+		const persistTaskVersionOfActiveTask = this.copyTaskToPersistTask(this._taskManager.activeTask);
 
-    const activeTaskString = JSON.stringify(persistTaskVersionOfActiveTask);
+		const activeTaskString = JSON.stringify(persistTaskVersionOfActiveTask);
 
-    vscode.env.clipboard.writeText(activeTaskString);
-  }
+		vscode.env.clipboard.writeText(activeTaskString);
+	}
 
-  static pasteFromClipboard(): void {
-    vscode.env.clipboard.readText().then((clip) => {
-      let activeTaskString = clip;
+	static pasteFromClipboard(): void {
+		vscode.env.clipboard.readText().then((clip) => {
+			let activeTaskString = clip;
 
-      if (!activeTaskString) {
-        vscode.window.showInformationMessage(
-          'Could not paste Task from Clipboard.'
-        );
-        return;
-      }
+			if (!activeTaskString) {
+				vscode.window.showInformationMessage('Could not paste Task from Clipboard.');
+				return;
+			}
 
-      try {
-        const persistedTask = <IPersistTask>JSON.parse(activeTaskString);
+			try {
+				const persistedTask = <IPersistTask>JSON.parse(activeTaskString);
 
-        this._taskManager.addTask(persistedTask);
+				this._taskManager.addTask(persistedTask);
 
-        this.saveTaskmarksJson();
-      } catch (error) {
-        vscode.window.showInformationMessage(
-          'PasteFromClipboard failed with ' + error
-        );
-      }
-    });
-  }
+				this.saveTaskmarksJson();
+			} catch (error) {
+				vscode.window.showInformationMessage('PasteFromClipboard failed with ' + error);
+			}
+		});
+	}
 
-  static copyTaskToPersistTask(task: Task): IPersistTask {
-    const persistTask: IPersistTask = {
-      name: task.name,
-      persistFiles: [],
-    };
+	static copyTaskToPersistTask(task: Task): IPersistTask {
+		const persistTask: IPersistTask = {
+			name: task.name,
+			persistFiles: [],
+		};
+		task.files.forEach((file) => {
+			if (file && file.filepath && file.lineNumbers && file.lineNumbers.length > 0) {
+				if (PathHelper.fileExists(file.filepath)) {
+					const marks: IPersistMark[] = file.allPersistMarks;
 
-    task.files.forEach((file) => {
-      if (
-        file &&
-        file.filepath &&
-        file.lineNumbers &&
-        file.lineNumbers.length > 0
-      ) {
-        if (PathHelper.fileExists(file.filepath)) {
-          const marks: IPersistMark[] = file.allPersistMarks;
-
-          const persistFile: IPersistFile = {
-            filepath: file.filepath,
-            persistMarks: marks.sort((a, b) => a.lineNumber - b.lineNumber),
-          };
-          persistTask.persistFiles.push(persistFile);
-        }
-      }
-    });
-    return persistTask;
-  }
+					const persistFile: IPersistFile = {
+						filepath: file.filepath,
+						persistMarks: marks.sort((a, b) => a.lineNumber - b.lineNumber),
+					};
+					persistTask.persistFiles.push(persistFile);
+				}
+			}
+		});
+		return persistTask;
+	}
 }

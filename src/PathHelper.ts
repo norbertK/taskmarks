@@ -2,9 +2,10 @@ import * as os from 'os';
 import * as vscode from 'vscode';
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import * as path from 'path';
 import { dirname, join } from 'path';
+
 import { IPersistTaskManager } from './types';
-import path = require('path'); // todo
 
 export abstract class PathHelper {
 	private static _basePath = '';
@@ -45,11 +46,7 @@ export abstract class PathHelper {
 			if (workspaceFolders === undefined || workspaceFolders.length === 0) {
 				throw new Error('Error loading vscode.workspace! Stop!');
 			}
-			this._taskmarksDataFilePath = join(
-				workspaceFolders[0].uri.fsPath,
-				'.vscode',
-				'taskmarks.json'
-			);
+			this._taskmarksDataFilePath = join(workspaceFolders[0].uri.fsPath, '.vscode', 'taskmarks.json');
 
 			if (this._taskmarksDataFilePath.indexOf('/') > -1) {
 				// PathHelper._pathType = PathType.unixLike;
@@ -65,19 +62,14 @@ export abstract class PathHelper {
 				return;
 			}
 			// otherwise (nothing there) let´s check useGlobalTaskmarksJson
-			const useGlobalTaskmarksJson = vscode.workspace
-				.getConfiguration()
-				.get<boolean>('taskmarks.useGlobalTaskmarksJson');
+			const useGlobalTaskmarksJson = vscode.workspace.getConfiguration().get<boolean>('taskmarks.useGlobalTaskmarksJson');
 
 			if (!useGlobalTaskmarksJson) {
 				return;
 			}
 
 			// let´s use the global path instead
-			this._taskmarksDataFilePath = join(
-				context.globalStorageUri.fsPath,
-				'taskmarks.json'
-			);
+			this._taskmarksDataFilePath = join(context.globalStorageUri.fsPath, 'taskmarks.json');
 		}
 	}
 
@@ -95,13 +87,10 @@ export abstract class PathHelper {
 		return existsSync(PathHelper.getFullPath(filepath));
 	}
 
-	static saveTaskmarks(persistTaskManager: IPersistTaskManager) {
+	static saveTaskmarks(taskmarksJsonToBeSaved: string) {
 		this._taskmarksJsonIsNew = false;
 		const taskmarksDataFilePath = PathHelper.taskmarksDataFilePath;
-		writeFileSync(
-			taskmarksDataFilePath,
-			JSON.stringify(persistTaskManager, null, '  ')
-		);
+		writeFileSync(taskmarksDataFilePath, taskmarksJsonToBeSaved);
 	}
 
 	static getFullPath(filepath: string): string {
@@ -125,9 +114,7 @@ export abstract class PathHelper {
 			this._taskmarksJsonIsNew = true;
 			return '{"activeTaskName": "default", "persistTasks": [{"name": "default", "persistFiles": []}]}';
 		}
-		let taskmarksJson = readFileSync(
-			PathHelper._taskmarksDataFilePath
-		).toString();
+		let taskmarksJson = readFileSync(PathHelper._taskmarksDataFilePath).toString();
 
 		// // 'upgrade' taskmarks.json
 		// taskmarksJson = PathHelper.replaceAll(

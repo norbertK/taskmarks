@@ -1,27 +1,28 @@
 
-
 @startuml
-
 
 class TaskManager {
     -{static}_instance: TaskManager
     +{static}get instance(): TaskManager
     -constructor()
- -_activeTask: Task
- -_allTasks: Task[]
- -_statusBarItem: vscode.StatusBarItem
+    -_activeTask: Task
+    -_allTasks: Task[]
+    -_statusBarItem: vscode.StatusBarItem
 
- +activeTask(): Task
- +get allTasks(): Task[]
- +taskNames(): string[]
- +setActiveTask(taskname: string): void
- +addTask(task: IPersistTask): void
- +useActiveTask(taskname = 'default'): Task
- +delete(taskname: string): Task
- +nextMark(activeFile: string, currentline: number): void
- +previousMark(activeFile: string, currentline: number): void
- +nextDocument(): void
- +previousDocument(): void
+    +get activeTask(): Task
+    +get allTasks(): Task[]
+    +get taskNames(): string[]
+
+    +renameTask(oldTaskName: string, newTaskName: string): void 
+    +useActiveTask(taskname = 'default'): Task
+    +addTask(task: IPersistTask): void
+    +delete(taskname: string): Task
+    +nextMark(currentline: number): void
+    +previousMark(currentline: number): void
+    +nextDocument(): void
+    +previousDocument(): void
+
+    -_addTaskByNameIfMissing(taskname: string): Task
 }
 
 class Task {
@@ -155,20 +156,10 @@ abstract class PathHelper{
 
 abstract class Persist{
     -{static}_taskManager: TaskManager;
-    -{static}_tasksDataFilePath: string;
-    -{static}_pathType: PathType;
-    +{static}initAndLoad(taskManager: TaskManager): void
-    +{static}saveTasks(): void
-    +{static}get taskmarksDataFilePath(): string
-    +{static}taskToPersistTask(task: Task): IPersistTask
-}
-
-abstract class WriteFile{
-    -{static}_filePath: string
-    -{static}_stream: WriteStream
-    +{static}init(filePath: string, clear = true): void
-    +{static}enabled(): boolean
-    +{static}saveLine(line: string): void
+    +{static}initAndLoad(taskManager: TaskManager, context: vscode.ExtensionContext): void
+    -{static}copyToClipboard(): void;
+    -{static}pasteFromClipboard(): void;
+    -{static}copyTaskToPersistTask(task: Task): IPersistTask;
 }
 
 abstract class DecoratorHelper{

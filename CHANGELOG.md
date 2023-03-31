@@ -2,6 +2,15 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
+## [0.9.5] - 2023-03-31 
+
+some cleanup
+
+
+## [0.9.4] - 2023-03-31 
+
+fixed https://github.com/norbertK/taskmarks/issues/22 - do not write if equal
+
 ## [0.9.3] - 2023-03-28 
 
 setting taskmarks.useGlobalTaskmarksJson added - Use one central Taskmarks.json
