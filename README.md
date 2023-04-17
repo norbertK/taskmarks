@@ -27,6 +27,7 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 ## Features / Command / Keyboard / ToDos / Ideas
 
+- only load ? usefull ? tasks
 - Version 1.0.0 ???
 - paste (from clipboard) to active task
 - remove all vscode references from tests (or better mock them) (UnhandledPromiseRejectionWarning: Unhandled promise rejection. in tests)
