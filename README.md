@@ -27,7 +27,7 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 ## Features / Command / Keyboard / ToDos / Ideas
 
-- only load ? usefull ? tasks
+- only load ? useful ? tasks
 - Version 1.0.0 ???
 - paste (from clipboard) to active task
 - remove all vscode references from tests (or better mock them) (UnhandledPromiseRejectionWarning: Unhandled promise rejection. in tests)
@@ -38,15 +38,16 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 - make little demo, how to work with taskmarks
 - find better shortcuts and make them work outside the edit mode (eg 'goto next' or 'Select Active Task' should work always)
 - add debug points to task (toggle, switch all on or off)
-- perhaps? be able to leave comments on tasks - for starters, just keep them in taskmarks.json  
+- perhaps? be able to leave comments on tasks - for starters, just keep them in taskmarks.json
 - version taskmarks.json? import old?
 
 ## Done (still testing)
 
+(0.9.6) - ring and ring tests - some refactoring
 (0.9.5) - some cleanup
 (0.9.4) - fixed https://github.com/norbertK/taskmarks/issues/22 - do not write if equal
 (0.9.3) - one central taskmarks.json (setting) - local trumps central  
-(0.9.2) - do not write <span style="text-decoration: underline">new</span> empty taskmarks.json  
+(0.9.2) - do not write <span style="text-decoration: underline">new</span> empty taskmarks.json
 
 ## Requirements
 
@@ -63,5 +64,3 @@ marker does not move while deleting / inserting lines
 ## Release Notes
 
 See [CHANGELOG.md](https://github.com/norbertK/taskmarks/blob/master/CHANGELOG.md)
-
-

@@ -2,33 +2,36 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
-## [0.9.5] - 2023-03-31 
+## [0.9.6] - 2023-11-27
+
+ring and ring tests - some refactoring
+
+## [0.9.5] - 2023-03-31
 
 some cleanup
 
-
-## [0.9.4] - 2023-03-31 
+## [0.9.4] - 2023-03-31
 
 fixed https://github.com/norbertK/taskmarks/issues/22 - do not write if equal
 
-## [0.9.3] - 2023-03-28 
+## [0.9.3] - 2023-03-28
 
 setting taskmarks.useGlobalTaskmarksJson added - Use one central Taskmarks.json
 
-## [0.9.2] - 2023-03-28 
+## [0.9.2] - 2023-03-28
 
 only save new taskmarks.json, if bookmarks in active task 'default'
 
-## [0.9.1] - 2023-03-26 
+## [0.9.1] - 2023-03-26
 
 removed webpack - mocha instead of jest - new tests - moved tests - still tests missing
 
-## [0.8.33] - 2022-04-26 
+## [0.8.33] - 2022-04-26
 
 fixed DecoratorHelper showLine(lineNumber) when lineNumber is NaN
 https://github.com/norbertK/taskmarks/issues/20#issuecomment-1108790922
 
-## [0.8.31] - 2022-04-25 
+## [0.8.31] - 2022-04-25
 
 aah, didn't think that one through
 
