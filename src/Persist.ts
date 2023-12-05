@@ -101,7 +101,7 @@ export abstract class Persist {
 		};
 		task.files.forEach((file) => {
 			if (file && file.filepath && file.lineNumbers && file.lineNumbers.length > 0) {
-				if (PathHelper.fileExists(file.filepath)) {
+				if (PathHelper.fileExistsInWorkspace(file.filepath)) {
 					const marks: IPersistMark[] = file.allPersistMarks;
 
 					const persistFile: IPersistFile = {

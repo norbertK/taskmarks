@@ -70,6 +70,8 @@ export abstract class PathHelper {
 
 			// let´s use the global path instead
 			this._taskmarksDataFilePath = join(context.globalStorageUri.fsPath, 'taskmarks.json');
+			const exists = existsSync(this._taskmarksDataFilePath);
+			console.log('🚀 ~ PathHelper ~ initTaskmarksDataFilePath ~ this._taskmarksDataFilePath:', this._taskmarksDataFilePath, ' ', exists);
 		}
 	}
 
@@ -83,8 +85,8 @@ export abstract class PathHelper {
 		}
 	}
 
-	static fileExists(filepath: string) {
-		return existsSync(PathHelper.getFullPath(filepath));
+	static fileExistsInWorkspace(filepath: string) {
+		return existsSync(PathHelper.getFullProjectPath(filepath));
 	}
 
 	static saveTaskmarks(taskmarksJsonToBeSaved: string) {
@@ -93,7 +95,7 @@ export abstract class PathHelper {
 		writeFileSync(taskmarksDataFilePath, taskmarksJsonToBeSaved);
 	}
 
-	static getFullPath(filepath: string): string {
+	static getFullProjectPath(filepath: string): string {
 		const pathWithBasePath = PathHelper.basePath + filepath;
 		return pathWithBasePath;
 	}

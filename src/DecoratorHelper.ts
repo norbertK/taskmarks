@@ -46,7 +46,7 @@ export abstract class DecoratorHelper {
 	}
 
 	static openAndShow(filepath: string, lineNumber: number): void {
-		const fullPath = PathHelper.getFullPath(filepath);
+		const fullPath = PathHelper.getFullProjectPath(filepath);
 		vscode.workspace.openTextDocument(fullPath).then((textDocument) => {
 			if (textDocument) {
 				vscode.window.showTextDocument(textDocument).then(() => {

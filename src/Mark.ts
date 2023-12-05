@@ -21,7 +21,7 @@ export class Mark implements PathMark {
 	// private
 	async setQuickPickItem(filepath: string, lineNumber: number, label: string): Promise<void> {
 		try {
-			const fullPath = PathHelper.getFullPath(this._filepath);
+			const fullPath = PathHelper.getFullProjectPath(this._filepath);
 			const uri = vscode.Uri.file(fullPath);
 			vscode.workspace.openTextDocument(uri).then((doc) => {
 				if (doc === undefined) {
