@@ -122,7 +122,7 @@
 		"mocha": "^10.2.0",
 		"npm-check-updates": "^16.8.0",
 		"nyc": "^15.1.0",
-		"prettier": "3.2.0",
+		"prettier": "3.2.2",
 		"prettier-eslint-cli": "8.0.1",
 		"sinon": "^17.0.0",
 		"ts-node": "^10.9.1",
