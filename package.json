@@ -106,7 +106,7 @@
 		"publish pre-release": "vsce publish --pre-release"
 	},
 	"devDependencies": {
-		"@types/chai": "^4.3.4",
+		"@types/chai": "^5.0.0",
 		"@types/glob": "^8.1.0",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "22.x",
