@@ -121,7 +121,7 @@
 		"glob": "^13.0.0",
 		"mocha": "^11.0.1",
 		"npm-check-updates": "^19.1.1",
-		"nyc": "^17.0.0",
+		"nyc": "^18.0.0",
 		"prettier": "3.8.1",
 		"prettier-eslint-cli": "8.0.1",
 		"sinon": "^21.0.0",
