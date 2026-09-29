@@ -20,7 +20,7 @@
 		"Bookmark, Tasks, Remember, Places, Teamwork, Collaboration"
 	],
 	"activationEvents": [
-		"onStartupFinished"
+		"workspaceContains:.vscode/taskmarks.json"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -39,6 +39,28 @@
 				}
 			}
 		},
+		"keybindings": [
+			{
+				"command": "taskmarks.toggleMark",
+				"key": "ctrl+alt+m",
+				"mac": "cmd+alt+m"
+			},
+			{
+				"command": "taskmarks.nextMark",
+				"key": "ctrl+alt+n",
+				"mac": "cmd+alt+n"
+			},
+			{
+				"command": "taskmarks.previousMark",
+				"key": "ctrl+alt+p",
+				"mac": "cmd+alt+p"
+			},
+			{
+				"command": "taskmarks.selectTask",
+				"key": "ctrl+alt+t",
+				"mac": "cmd+alt+t"
+			}
+		],
 		"commands": [
 			{
 				"command": "taskmarks.selectMarkFromList",
