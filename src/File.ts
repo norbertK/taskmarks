@@ -33,13 +33,14 @@ export class File {
 		});
 	}
 
-	get quickPickItems(): vscode.QuickPickItem[] {
+	async getQuickPickItems(): Promise<vscode.QuickPickItem[]> {
 		const quickPickItems: vscode.QuickPickItem[] = [];
-		this._marks.forEach((mark) => {
-			if (mark.quickPickItem !== undefined) {
-				quickPickItems.push(mark.quickPickItem);
+		for (const mark of this._marks) {
+			const item = await mark.getQuickPickItem();
+			if (item !== undefined) {
+				quickPickItems.push(item);
 			}
-		});
+		}
 		return quickPickItems;
 	}
 
@@ -61,8 +62,7 @@ export class File {
 		this.toggleTaskMark({ lineNumber, label });
 	}
 
-	// eslint-disable-next-line @typescript-eslint/naming-convention
-	mergeMarksAnd_PersistFile_(persistFile: IPersistFile): File {
+	mergeMarksWithPersistFile(persistFile: IPersistFile): File {
 		if (persistFile === undefined || persistFile.persistMarks === undefined) {
 			return this.mergeMarksAndLineNumbers([]);
 		}

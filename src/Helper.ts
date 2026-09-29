@@ -78,13 +78,10 @@ export abstract class Helper {
 	}
 
 	private static initSaveHandler(): void {
-		vscode.workspace.onDidSaveTextDocument((textDocument) => {
-			const activeTask = this._taskManager.activeTask;
-			if (!activeTask) {
+		vscode.workspace.onDidSaveTextDocument(() => {
+			if (!this._taskManager.activeTask) {
 				return;
 			}
-			const file = activeTask.getFile(PathHelper.reducePath(textDocument.fileName));
-
 			Persist.saveTaskmarksJson();
 		});
 	}
@@ -141,12 +138,12 @@ export abstract class Helper {
 				placeHolder: 'select Bookmark',
 			};
 
-			vscode.window.showQuickPick(this._taskManager.activeTask.quickPickItems, options).then((result) => {
-				if (result && result.detail && result.description) {
-					const lineNumber = Number.parseInt(result.description);
-					DecoratorHelper.openAndShow(result.detail, lineNumber);
-				}
-			});
+			const quickPickItems = await this._taskManager.activeTask.getQuickPickItems();
+			const result = await vscode.window.showQuickPick(quickPickItems, options);
+			if (result && result.detail && result.description) {
+				const lineNumber = Number.parseInt(result.description);
+				DecoratorHelper.openAndShow(result.detail, lineNumber);
+			}
 		} catch (error: unknown) {
 			const message = Helper.getErrorMessage(error);
 			Helper.reportError({ message });

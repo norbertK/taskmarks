@@ -45,12 +45,12 @@ export class Task {
 		return allMarks;
 	}
 
-	get quickPickItems(): vscode.QuickPickItem[] {
+	async getQuickPickItems(): Promise<vscode.QuickPickItem[]> {
 		const quickPickItems: vscode.QuickPickItem[] = [];
-		this._files.forEach((file) => {
-			quickPickItems.push(...file.quickPickItems);
-		});
-
+		for (const file of this._files) {
+			const items = await file.getQuickPickItems();
+			quickPickItems.push(...items);
+		}
 		return quickPickItems;
 	}
 

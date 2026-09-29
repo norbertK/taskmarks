@@ -1,8 +1,6 @@
-import * as os from 'os';
 import * as vscode from 'vscode';
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import * as path from 'path';
 import { dirname, join } from 'path';
 
 import { IPersistTaskManager } from './types';
@@ -135,10 +133,7 @@ export abstract class PathHelper {
 		return taskmarksJson;
 	}
 
-	static replaceAll(theString: string, old: string, newString: string) {
-		while (theString.indexOf(old) > -1) {
-			theString = theString.replace(old, newString);
-		}
-		return theString;
+	static replaceAll(theString: string, old: string, newString: string): string {
+		return theString.replaceAll(old, newString);
 	}
 }

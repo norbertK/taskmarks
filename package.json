@@ -2,7 +2,7 @@
 	"name": "taskmarks",
 	"displayName": "Taskmarks",
 	"description": "Little helper for teams to navigate through files. Persists bookmarks for different tasks.",
-	"version": "0.9.6",
+	"version": "1.0.0",
 	"publisher": "NorbertKlein",
 	"contributors": [
 		"Klein Norbert",
@@ -20,7 +20,7 @@
 		"Bookmark, Tasks, Remember, Places, Teamwork, Collaboration"
 	],
 	"activationEvents": [
-		"workspaceContains:**"
+		"onStartupFinished"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -101,9 +101,9 @@
 		"checkForUpgrade": "ncu",
 		"upgrade": "ncu --upgrade && npm install",
 		"inst": "npm install",
-		"build package": "vsce package",
-		"publish": "vsce publish",
-		"publish pre-release": "vsce publish --pre-release"
+		"build package": "npx @vscode/vsce package",
+		"publish": "npx @vscode/vsce publish",
+		"publish pre-release": "npx @vscode/vsce publish --pre-release"
 	},
 	"devDependencies": {
 		"@types/chai": "^5.0.0",
@@ -132,9 +132,5 @@
 		"type": "git",
 		"url": "https://github.com/norbertK/taskmarks"
 	},
-	"homepage": "https://github.com/norbertK/taskmarks/blob/master/README.md",
-	"dependencies": {
-		"clipboard": "^2.0.11",
-		"vsce": "^2.15.0"
-	}
+	"homepage": "https://github.com/norbertK/taskmarks/blob/master/README.md"
 }

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/naming-convention */
+ 
 import * as sinon from 'sinon';
 
 const mockUri = {
