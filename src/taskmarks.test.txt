@@ -15,3 +15,35 @@ log and end taskmarks:
 
 throw new Error('xyz');
 
+
+{
+    "name": "taskMarks",
+    "persistFiles": [
+        {
+            "filepath": "\\package.json",
+            "persistMarks": [
+                {
+                    "lineNumber": 41,
+                    "label": ""
+                },
+                {
+                    "lineNumber": 65,
+                    "label": ""
+                },
+                {
+                    "lineNumber": 106,
+                    "label": ""
+                }
+            ]
+        },
+        {
+            "filepath": "\\src\\Ring.ts",
+            "persistMarks": [
+                {
+                    "lineNumber": 7,
+                    "label": ""
+                }
+            ]
+        }
+    ]
+}

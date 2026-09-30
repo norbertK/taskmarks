@@ -12,7 +12,33 @@
           "filepath": "\\package.json",
           "persistMarks": [
             {
-              "lineNumber": 86,
+              "lineNumber": 41,
+              "label": ""
+            },
+            {
+              "lineNumber": 65,
+              "label": ""
+            },
+            {
+              "lineNumber": 106,
+              "label": ""
+            }
+          ]
+        },
+        {
+          "filepath": "\\src\\taskmarks.test.txt",
+          "persistMarks": [
+            {
+              "lineNumber": 17,
+              "label": ""
+            }
+          ]
+        },
+        {
+          "filepath": "\\src\\Ring.ts",
+          "persistMarks": [
+            {
+              "lineNumber": 7,
               "label": ""
             }
           ]
