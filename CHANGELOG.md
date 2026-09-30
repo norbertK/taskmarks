@@ -2,6 +2,19 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
+## [1.0.0] - 2026-09-30
+
+### Fixed
+- [#45](https://github.com/norbertK/taskmarks/issues/45) - Markers at end of file now properly removed when too many lines are deleted
+
+### Added
+- Pure `core/` modules for testability: `navigation.ts`, `serialization.ts`, `paths.ts`, `lineAdjustment.ts`
+- Tests for line adjustment logic covering issues #22 and #45
+- Technical architecture documentation (`docs/ARCHITECTURE.md`)
+
+### Changed
+- Total test count: 181 passing tests
+
 ## [0.9.6] - 2023-11-27
 
 ring and ring tests - some refactoring

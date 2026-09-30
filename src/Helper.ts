@@ -4,6 +4,7 @@ import { TaskManager } from './TaskManager';
 import { Persist } from './Persist';
 import { DecoratorHelper } from './DecoratorHelper';
 import { PathHelper } from './PathHelper';
+import { adjustMarkLineNumbers } from './core/lineAdjustment';
 
 export abstract class Helper {
 	private static _activeEditorLineCount: number;
@@ -110,15 +111,22 @@ export abstract class Helper {
 					return;
 				}
 				const startLine = event.contentChanges[0].range.start.line;
-				let diffLine: number;
 				if (event.document.lineCount !== lastLineCount) {
-					diffLine = event.document.lineCount - lastLineCount;
-					allMarks.forEach((mark) => {
-						if (mark.lineNumber && mark.lineNumber > startLine) {
-							const oldLineNumber = mark.lineNumber;
-							mark.lineNumber = mark.lineNumber + diffLine;
+					const diffLine = event.document.lineCount - lastLineCount;
+					const newLineCount = event.document.lineCount;
+
+					// Use the pure function to adjust marks and handle edge cases (issue #45)
+					const { removed } = adjustMarkLineNumbers(allMarks, startLine, diffLine, newLineCount);
+
+					// Remove marks that are now invalid (out of bounds or in deleted range)
+					if (removed.length > 0) {
+						const activeFile = this._taskManager.activeTask.activeFile;
+						if (activeFile) {
+							removed.forEach((mark) => {
+								activeFile.toggleTaskMark({ lineNumber: mark.lineNumber, label: '' });
+							});
 						}
-					});
+					}
 
 					Helper.triggerChangeActiveFile();
 					Persist.saveTaskmarksJson();
