@@ -157,16 +157,5 @@
 		"type": "git",
 		"url": "https://github.com/norbertK/taskmarks"
 	},
-	"homepage": "https://github.com/norbertK/taskmarks/blob/master/README.md",
-	"nyc": {
-		"include": [
-			"out/**/*.js"
-		],
-		"exclude": [
-			"out/test/**",
-			"out-instrumented/**"
-		],
-		"sourceMap": true,
-		"instrument": true
-	}
+	"homepage": "https://github.com/norbertK/taskmarks/blob/master/README.md"
 }

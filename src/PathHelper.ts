@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 
 import { IPersistTaskManager } from './types';
+import { detectPathCharacters, getFullPath as coreGetFullPath, reducePath as coreReducePath } from './core/paths';
 
 export abstract class PathHelper {
 	private static _basePath = '';
@@ -46,15 +47,9 @@ export abstract class PathHelper {
 			}
 			this._taskmarksDataFilePath = join(workspaceFolders[0].uri.fsPath, '.vscode', 'taskmarks.json');
 
-			if (this._taskmarksDataFilePath.indexOf('/') > -1) {
-				// PathHelper._pathType = PathType.unixLike;
-				PathHelper._activePathChar = '/';
-				PathHelper._inactivePathChar = '\\';
-			} else {
-				// PathHelper._pathType = PathType.windowsLike;
-				PathHelper._activePathChar = '\\';
-				PathHelper._inactivePathChar = '/';
-			}
+			const pathChars = detectPathCharacters(this._taskmarksDataFilePath);
+			PathHelper._activePathChar = pathChars.active;
+			PathHelper._inactivePathChar = pathChars.inactive;
 			// is there already something -> keep using it
 			if (existsSync(this._taskmarksDataFilePath)) {
 				return;
@@ -92,16 +87,11 @@ export abstract class PathHelper {
 	}
 
 	static getFullPath(filepath: string): string {
-		const pathWithBasePath = PathHelper.basePath + filepath;
-		return pathWithBasePath;
+		return coreGetFullPath(PathHelper.basePath, filepath);
 	}
 
 	static reducePath(filepath: string): string {
-		let reducedPath = filepath;
-		if (filepath.startsWith(this.basePath)) {
-			reducedPath = filepath.substring(this._basePath.length);
-		}
-		return reducedPath;
+		return coreReducePath(PathHelper.basePath, filepath);
 	}
 
 	static getTaskmarksJson(context: vscode.ExtensionContext): string {

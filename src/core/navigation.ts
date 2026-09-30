@@ -1,5 +1,5 @@
 /**
- * Pure navigation logic - finds targets without VS Code dependencies.
+ * Pure navigation and path logic - no VS Code dependencies.
  * The caller handles the actual navigation (showing lines, opening files).
  */
 
