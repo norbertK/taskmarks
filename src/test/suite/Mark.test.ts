@@ -1,14 +1,13 @@
-import { describe, it, beforeEach, afterEach } from 'mocha';
+import { describe, it } from 'mocha';
 import { expect } from 'chai';
 
 import assert = require('assert');
-// import * as vscode from 'vscode';
 import { Mark } from '../../Mark';
 import * as sinon from 'sinon';
 import { vscode } from '../mock/vscode.mock';
 
-suite('Mark', () => {
-	test('Constructor', () => {
+describe('Mark', () => {
+	it('Constructor', () => {
 		const filepath = 'src/test.ts';
 		const lineNumber = 5;
 		const label = 'My mark';
@@ -16,6 +15,17 @@ suite('Mark', () => {
 		assert.strictEqual(mark.filepath, filepath);
 		assert.strictEqual(mark.lineNumber, lineNumber);
 		assert.strictEqual(mark.label, label);
+	});
+
+	it('should allow setting lineNumber', () => {
+		const mark = new Mark('test.ts', 10, 'label');
+		mark.lineNumber = 20;
+		expect(mark.lineNumber).to.equal(20);
+	});
+
+	it('should return undefined quickPickItem before initialization', () => {
+		const mark = new Mark('test.ts', 10, 'label');
+		expect(mark.quickPickItem).to.be.undefined;
 	});
 
 	it('should call myFunction once', () => {
@@ -44,7 +54,7 @@ describe('My Extension', () => {
 		expect(vscode.window.showInformationMessage.calledWith('Hello, World!'));
 	});
 
-	test('Test something that requires vscode', async () => {
+	it('Test something that requires vscode', async () => {
 		// Create a mock of the workspace module
 		const mockWorkspace = {
 			openTextDocument: async (path: string) => {

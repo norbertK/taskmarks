@@ -140,6 +140,51 @@ describe('TaskManager', () => {
 		});
 	});
 
+	describe('#renameTask', () => {
+		it('should rename an existing task', () => {
+			taskManager.useActiveTask('task-to-rename');
+			taskManager.renameTask('task-to-rename', 'renamed-task');
+			expect(taskManager.taskNames).to.include('renamed-task');
+		});
+
+		it('should throw error for non-existent task', () => {
+			expect(() => taskManager.renameTask('non-existent', 'new-name')).to.throw();
+		});
+	});
+
+	describe('#taskNames', () => {
+		it('should return array of task names', () => {
+			taskManager.useActiveTask('task-a');
+			taskManager.useActiveTask('task-b');
+			const names = taskManager.taskNames;
+			expect(names).to.include('task-a');
+			expect(names).to.include('task-b');
+		});
+	});
+
+	describe('#delete', () => {
+		it('should remove the specified task', () => {
+			taskManager.useActiveTask('delete-me');
+			expect(taskManager.taskNames).to.include('delete-me');
+			taskManager.delete('delete-me');
+			expect(taskManager.taskNames).to.not.include('delete-me');
+		});
+
+		it('should switch to default when active task is deleted', () => {
+			taskManager.useActiveTask('active-to-delete');
+			taskManager.delete('active-to-delete');
+			expect(taskManager.activeTask.name).to.equal('default');
+		});
+
+		it('should keep current active task when deleting a different task', () => {
+			taskManager.useActiveTask('keep-active');
+			taskManager.useActiveTask('delete-other');
+			taskManager.useActiveTask('keep-active');
+			taskManager.delete('delete-other');
+			expect(taskManager.activeTask.name).to.equal('keep-active');
+		});
+	});
+
 	// describe('#addTask', () => {
 	// 	it('should add a new task to the list of all tasks', () => {
 	// 		const taskName = 'test-task';

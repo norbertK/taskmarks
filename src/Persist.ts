@@ -4,6 +4,7 @@ import type { IPersistFile, IPersistMark, IPersistTask, IPersistTaskManager } fr
 import { PathHelper } from './PathHelper';
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
+import { parseTaskmarksJson, normalizeFilePaths, taskToPersistTask, type SerializableTask } from './core/serialization';
 
 export abstract class Persist {
 	private static _taskManager: TaskManager;
@@ -11,26 +12,26 @@ export abstract class Persist {
 
 	static initAndLoad(taskManager: TaskManager, context: vscode.ExtensionContext): void {
 		this._taskManager = taskManager;
-		let taskmarksJson = PathHelper.getTaskmarksJson(context);
+		const taskmarksJson = PathHelper.getTaskmarksJson(context);
 		Persist._lastSavedTaskmarksJson = taskmarksJson;
-		let persistTaskManager = JSON.parse(taskmarksJson);
 
-		if (persistTaskManager.persistTasks === undefined || taskmarksJson.indexOf('"lineNumbers": [') > -1) {
-			// old version of taskmarks.json - discard
-			const taskName = persistTaskManager.activeTaskName ? persistTaskManager.activeTaskName : 'default';
+		const parsed = parseTaskmarksJson(taskmarksJson);
+		if (parsed === null) {
+			// old version or invalid - start fresh
+			const oldParsed = JSON.parse(taskmarksJson);
+			const taskName = oldParsed.activeTaskName ? oldParsed.activeTaskName : 'default';
 			taskManager.useActiveTask(taskName);
 			Persist.saveTaskmarksJson();
 			return;
 		}
 
-		(<IPersistTaskManager>persistTaskManager).persistTasks.forEach((persistTask) => {
-			persistTask.persistFiles.forEach((persistFile) => {
-				persistFile.filepath = PathHelper.replaceAll(persistFile.filepath, PathHelper.inactivePathChar, PathHelper.activePathChar);
-			});
+		const normalized = normalizeFilePaths(parsed, PathHelper.inactivePathChar, PathHelper.activePathChar);
+		normalized.persistTasks.forEach((persistTask) => {
 			taskManager.addTask(persistTask);
 		});
-		if (taskManager.activeTask.name !== persistTaskManager.activeTaskName) {
-			taskManager.useActiveTask(persistTaskManager.activeTaskName);
+
+		if (taskManager.activeTask.name !== normalized.activeTaskName) {
+			taskManager.useActiveTask(normalized.activeTaskName);
 		}
 	}
 
@@ -95,23 +96,15 @@ export abstract class Persist {
 	}
 
 	static copyTaskToPersistTask(task: Task): IPersistTask {
-		const persistTask: IPersistTask = {
+		const serializableTask: SerializableTask = {
 			name: task.name,
-			persistFiles: [],
+			files: task.files
+				.filter((file) => file && file.filepath && file.lineNumbers)
+				.map((file) => ({
+					filepath: file.filepath,
+					marks: file.allPersistMarks,
+				})),
 		};
-		task.files.forEach((file) => {
-			if (file && file.filepath && file.lineNumbers && file.lineNumbers.length > 0) {
-				if (PathHelper.fileExists(file.filepath)) {
-					const marks: IPersistMark[] = file.allPersistMarks;
-
-					const persistFile: IPersistFile = {
-						filepath: file.filepath,
-						persistMarks: marks.sort((a, b) => a.lineNumber - b.lineNumber),
-					};
-					persistTask.persistFiles.push(persistFile);
-				}
-			}
-		});
-		return persistTask;
+		return taskToPersistTask(serializableTask, PathHelper.fileExists);
 	}
 }

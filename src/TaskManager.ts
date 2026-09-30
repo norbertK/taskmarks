@@ -2,6 +2,7 @@ import { Task } from './Task';
 import { DecoratorHelper } from './DecoratorHelper';
 import * as vscode from 'vscode';
 import type { IPersistTask } from './types';
+import { findNextMark, findPreviousMark } from './core/navigation';
 
 export class TaskManager {
 	private static _instance: TaskManager;
@@ -88,14 +89,12 @@ export class TaskManager {
 			return;
 		}
 
-		for (let lineNumber of this.activeTask.activeFile.lineNumbers) {
-			if (lineNumber > currentline) {
-				DecoratorHelper.showLine(lineNumber);
-				return;
-			}
+		const nextLine = findNextMark(currentline, this.activeTask.activeFile.lineNumbers);
+		if (nextLine !== undefined) {
+			DecoratorHelper.showLine(nextLine);
+		} else {
+			this.nextDocument();
 		}
-
-		this.nextDocument();
 	}
 
 	previousMark(currentline: number): void {
@@ -106,16 +105,13 @@ export class TaskManager {
 		if (!this.activeTask.activeFile) {
 			return;
 		}
-		for (let index = this.activeTask.activeFile.lineNumbers.length - 1; index > -1; index--) {
-			const lineNumber = this.activeTask.activeFile.lineNumbers[index];
 
-			if (lineNumber < currentline) {
-				DecoratorHelper.showLine(lineNumber);
-				return;
-			}
+		const prevLine = findPreviousMark(currentline, this.activeTask.activeFile.lineNumbers);
+		if (prevLine !== undefined) {
+			DecoratorHelper.showLine(prevLine);
+		} else {
+			this.previousDocument();
 		}
-
-		this.previousDocument();
 	}
 
 	nextDocument(): void {

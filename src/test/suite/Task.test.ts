@@ -155,4 +155,151 @@ describe('Task', () => {
 			expect(getFile2).to.equal(file2);
 		});
 	});
+
+	describe('#name setter', () => {
+		it('should allow changing the task name', () => {
+			const task = new Task('original');
+			task.name = 'renamed';
+			expect(task.name).to.equal('renamed');
+		});
+	});
+
+	describe('#activeFileFilePath', () => {
+		it('should return undefined when no active file', () => {
+			const task = new Task('Test');
+			expect(task.activeFileFilePath).to.be.undefined;
+		});
+
+		it('should return the filepath of the active file', () => {
+			const task = new Task('Test');
+			task.use('/path/to/file.ts');
+			expect(task.activeFileFilePath).to.equal('/path/to/file.ts');
+		});
+	});
+
+	describe('#hasMarks', () => {
+		it('should return false for a new task', () => {
+			const task = new Task('Test');
+			expect(task.hasMarks).to.be.false;
+		});
+
+		it('should return true when a file has marks', () => {
+			const task = new Task('Test');
+			task.toggle('file.ts', 10, 'label');
+			expect(task.hasMarks).to.be.true;
+		});
+
+		it('should return false when all marks are removed', () => {
+			const task = new Task('Test');
+			task.toggle('file.ts', 10, 'label');
+			task.toggle('file.ts', 10, '');
+			expect(task.hasMarks).to.be.false;
+		});
+	});
+
+	describe('#allMarks', () => {
+		it('should return empty array for new task', () => {
+			const task = new Task('Test');
+			expect(task.allMarks).to.deep.equal([]);
+		});
+
+		it('should return all marks from all files', () => {
+			const task = new Task('Test');
+			task.toggle('file1.ts', 10, 'label1');
+			task.toggle('file1.ts', 20, 'label2');
+			task.toggle('file2.ts', 5, 'label3');
+
+			const marks = task.allMarks;
+			expect(marks.length).to.equal(3);
+			expect(marks[0].lineNumber).to.equal(10);
+			expect(marks[1].lineNumber).to.equal(20);
+			expect(marks[2].lineNumber).to.equal(5);
+		});
+	});
+
+	describe('#lineHasMark', () => {
+		it('should return false for non-existent file', () => {
+			const task = new Task('Test');
+			expect(task.lineHasMark('nonexistent.ts', 10)).to.be.false;
+		});
+
+		it('should return false for line without mark', () => {
+			const task = new Task('Test');
+			task.toggle('file.ts', 10, 'label');
+			expect(task.lineHasMark('file.ts', 20)).to.be.false;
+		});
+
+		it('should return true for line with mark', () => {
+			const task = new Task('Test');
+			task.toggle('file.ts', 10, 'label');
+			expect(task.lineHasMark('file.ts', 10)).to.be.true;
+		});
+	});
+
+	describe('#mergeFilesWithPersistFiles', () => {
+		it('should handle undefined persistTask', () => {
+			const task = new Task('Test');
+			task.mergeFilesWithPersistFiles(undefined as any);
+			expect(task.files.length).to.equal(0);
+		});
+
+		it('should handle persistTask with undefined persistFiles', () => {
+			const task = new Task('Test');
+			task.mergeFilesWithPersistFiles({ name: 'test', persistFiles: undefined } as any);
+			expect(task.files.length).to.equal(0);
+		});
+
+		it('should merge new files from persistTask', () => {
+			const task = new Task('Test');
+			const persistTask = {
+				name: 'Test',
+				persistFiles: [
+					{
+						filepath: '/file1.ts',
+						persistMarks: [
+							{ lineNumber: 10, label: 'mark1' },
+							{ lineNumber: 20, label: 'mark2' },
+						],
+					},
+				],
+			};
+			task.mergeFilesWithPersistFiles(persistTask);
+			expect(task.files.length).to.equal(1);
+			expect(task.getFile('/file1.ts')?.marks.length).to.equal(2);
+		});
+
+		it('should merge marks into existing files', () => {
+			const task = new Task('Test');
+			task.toggle('/file1.ts', 5, 'existing');
+
+			const persistTask = {
+				name: 'Test',
+				persistFiles: [
+					{
+						filepath: '/file1.ts',
+						persistMarks: [{ lineNumber: 10, label: 'new' }],
+					},
+				],
+			};
+			task.mergeFilesWithPersistFiles(persistTask);
+			expect(task.files.length).to.equal(1);
+			expect(task.getFile('/file1.ts')?.marks.length).to.equal(2);
+		});
+
+		it('should handle empty persistMarks', () => {
+			const task = new Task('Test');
+			const persistTask = {
+				name: 'Test',
+				persistFiles: [
+					{
+						filepath: '/file1.ts',
+						persistMarks: [],
+					},
+				],
+			};
+			task.mergeFilesWithPersistFiles(persistTask);
+			expect(task.files.length).to.equal(1);
+			expect(task.getFile('/file1.ts')?.marks.length).to.equal(0);
+		});
+	});
 });
