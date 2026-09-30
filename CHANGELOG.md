@@ -2,15 +2,20 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
-## [1.0.1] - unreleased
+## [1.0.1] - 2026-09-30
+
+First release since 0.9.6 (1.0.0 was not published).
 
 ### Fixed
+- "Select Bookmark from List" could fail because a bookmark's list entry was read before it was ready
 - [#45](https://github.com/norbertK/taskmarks/issues/45) - marks are tracked from the actual edit (range + inserted text) instead of the difference in line count. Marks on deleted lines are removed, marks below move correctly, also after several edits in a row and with multiple cursors.
 - Pressing Delete at the end of a marked line (joining lines) keeps the mark
 - Pressing Enter at the start of a marked line moves the mark down with its text
 - An invalid taskmarks.json no longer stops the extension from starting
 
 ### Added
+- Keyboard shortcuts: `Ctrl+Alt+M` toggle bookmark, `Ctrl+Alt+N` / `Ctrl+Alt+P` next / previous bookmark, `Ctrl+Alt+T` select task (`Cmd` on macOS)
+- Faster start: the extension activates as soon as the workspace contains `.vscode/taskmarks.json`
 - Undo (Ctrl+Z) of an edit that removed marks brings the marks back, with their labels. Works for the last 20 such edits per file, as long as no other edit above them happened in between
 - Input boxes for "Create new Task", "Rename Task" and bookmark labels now say what to enter; "Rename Task" starts with the old name filled in
 - taskmarks.json now has a `"version": 2` field
