@@ -2,18 +2,22 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
-## [1.0.0] - 2026-09-30
+## [1.0.1] - unreleased
 
 ### Fixed
-- [#45](https://github.com/norbertK/taskmarks/issues/45) - Markers at end of file now properly removed when too many lines are deleted
+- [#45](https://github.com/norbertK/taskmarks/issues/45) - marks are tracked from the actual edit (range + inserted text) instead of the difference in line count. Marks on deleted lines are removed, marks below move correctly, also after several edits in a row and with multiple cursors. Not yet verified in VS Code.
+- Pressing Delete at the end of a marked line (joining lines) keeps the mark
+- Pressing Enter at the start of a marked line moves the mark down with its text
+- An invalid taskmarks.json no longer stops the extension from starting
 
 ### Added
-- Pure `core/` modules for testability: `navigation.ts`, `serialization.ts`, `paths.ts`, `lineAdjustment.ts`
-- Tests for line adjustment logic covering issues #22 and #45
-- Technical architecture documentation (`docs/ARCHITECTURE.md`)
-
-### Changed
-- Total test count: 181 passing tests
+- taskmarks.json now has a `"version": 2` field
+- All older taskmarks.json formats (2018 `tasks/files/marks`, 0.8.17 `lineNumbers`, 0.8.21 `persistTasks` + `lineNumbers`, 0.8.23 – 1.0.0 `persistMarks`) are upgraded on load instead of being discarded. The old file is kept as `taskmarks.json.v<old version>.bak`
+- An unreadable taskmarks.json is kept as `taskmarks.json.invalid.bak` before starting empty
+- A taskmarks.json written by a newer Taskmarks version is loaded but never overwritten
+- Paste from clipboard also accepts tasks copied by older versions
+- Pure `core/` modules for testability: `navigation.ts`, `serialization.ts`, `paths.ts`, `lineAdjustment.ts`, `migration.ts`
+- Technical architecture documentation (`docu/ARCHITECTURE.md`)
 
 ## [0.9.6] - 2023-11-27
 

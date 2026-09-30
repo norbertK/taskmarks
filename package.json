@@ -2,7 +2,7 @@
 	"name": "taskmarks",
 	"displayName": "Taskmarks",
 	"description": "Little helper for teams to navigate through files. Persists bookmarks for different tasks.",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"publisher": "NorbertKlein",
 	"contributors": [
 		"Klein Norbert",
@@ -105,7 +105,7 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run esbuild-base -- --minify",
+		"vscode:prepublish": "npm run compile",
 		"esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
 		"esbuild": "npm run esbuild-base -- --sourcemap",
 		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",

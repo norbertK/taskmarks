@@ -4,7 +4,6 @@ import {
 	taskToPersistTask,
 	persistTaskToTask,
 	serializeTaskManager,
-	parseTaskmarksJson,
 	normalizeFilePaths,
 	createDefaultTaskmarksJson,
 } from '../../core/serialization';
@@ -120,6 +119,7 @@ describe('Serialization (pure)', () => {
 			const result = serializeTaskManager('task1', tasks);
 			const parsed = JSON.parse(result);
 
+			expect(parsed.version).to.equal(2);
 			expect(parsed.activeTaskName).to.equal('task1');
 			expect(parsed.persistTasks.length).to.equal(1);
 		});
@@ -128,40 +128,6 @@ describe('Serialization (pure)', () => {
 			const result = serializeTaskManager('default', []);
 			expect(result).to.include('\n');
 			expect(result).to.include('  ');
-		});
-	});
-
-	describe('parseTaskmarksJson', () => {
-		it('should parse valid JSON', () => {
-			const json = JSON.stringify({
-				activeTaskName: 'default',
-				persistTasks: [{ name: 'default', persistFiles: [] }],
-			});
-
-			const result = parseTaskmarksJson(json);
-
-			expect(result).to.not.be.null;
-			expect(result?.activeTaskName).to.equal('default');
-		});
-
-		it('should return null for invalid JSON', () => {
-			expect(parseTaskmarksJson('not json')).to.be.null;
-		});
-
-		it('should return null for old format (missing persistTasks)', () => {
-			const oldFormat = JSON.stringify({ activeTaskName: 'default' });
-			expect(parseTaskmarksJson(oldFormat)).to.be.null;
-		});
-
-		it('should return null for old format (has lineNumbers array)', () => {
-			const oldFormat = JSON.stringify({
-				activeTaskName: 'default',
-				persistTasks: [],
-				something: '"lineNumbers": [1,2,3]',
-			});
-			// The check looks for the literal string in the JSON
-			const jsonWithOldFormat = '{"activeTaskName":"default","persistTasks":[],"lineNumbers": [1]}';
-			expect(parseTaskmarksJson(jsonWithOldFormat)).to.be.null;
 		});
 	});
 
@@ -204,6 +170,7 @@ describe('Serialization (pure)', () => {
 			const result = createDefaultTaskmarksJson();
 			const parsed = JSON.parse(result);
 
+			expect(parsed.version).to.equal(2);
 			expect(parsed.activeTaskName).to.equal('default');
 			expect(parsed.persistTasks.length).to.equal(1);
 			expect(parsed.persistTasks[0].name).to.equal('default');

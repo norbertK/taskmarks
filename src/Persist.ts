@@ -4,28 +4,38 @@ import type { IPersistFile, IPersistMark, IPersistTask, IPersistTaskManager } fr
 import { PathHelper } from './PathHelper';
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
-import { parseTaskmarksJson, normalizeFilePaths, taskToPersistTask, type SerializableTask } from './core/serialization';
+import { normalizeFilePaths, taskToPersistTask, type SerializableTask } from './core/serialization';
+import { CURRENT_VERSION, loadTaskmarksJson, upgradeTask } from './core/migration';
 
 export abstract class Persist {
 	private static _taskManager: TaskManager;
 	private static _lastSavedTaskmarksJson: string;
+	private static _readOnly = false;
 
 	static initAndLoad(taskManager: TaskManager, context: vscode.ExtensionContext): void {
 		this._taskManager = taskManager;
 		const taskmarksJson = PathHelper.getTaskmarksJson(context);
 		Persist._lastSavedTaskmarksJson = taskmarksJson;
 
-		const parsed = parseTaskmarksJson(taskmarksJson);
-		if (parsed === null) {
-			// old version or invalid - start fresh
-			const oldParsed = JSON.parse(taskmarksJson);
-			const taskName = oldParsed.activeTaskName ? oldParsed.activeTaskName : 'default';
-			taskManager.useActiveTask(taskName);
-			Persist.saveTaskmarksJson();
+		const result = loadTaskmarksJson(taskmarksJson);
+
+		if (result.status === 'invalid') {
+			const backupPath = PathHelper.writeBackup('invalid', taskmarksJson);
+			vscode.window.showWarningMessage(`Taskmarks: taskmarks.json could not be read (${result.reason}). Starting empty; the old file was saved as ${backupPath}.`);
+			taskManager.useActiveTask('default');
 			return;
 		}
 
-		const normalized = normalizeFilePaths(parsed, PathHelper.inactivePathChar, PathHelper.activePathChar);
+		if (result.status === 'newer') {
+			Persist._readOnly = true;
+			vscode.window.showWarningMessage(
+				`Taskmarks: taskmarks.json was written by a newer Taskmarks version (file format ${result.fromVersion}, this version knows ${CURRENT_VERSION}). Marks are loaded, but changes will not be saved. Please update the extension.`
+			);
+		} else if (result.fromVersion < CURRENT_VERSION && !PathHelper.taskmarksJsonIsNew) {
+			PathHelper.writeBackup(`v${result.fromVersion}`, taskmarksJson);
+		}
+
+		const normalized = normalizeFilePaths(result.data, PathHelper.inactivePathChar, PathHelper.activePathChar);
 		normalized.persistTasks.forEach((persistTask) => {
 			taskManager.addTask(persistTask);
 		});
@@ -36,6 +46,9 @@ export abstract class Persist {
 	}
 
 	static saveTaskmarksJson(): void {
+		if (Persist._readOnly) {
+			return;
+		}
 		if (!this._taskManager.activeTask) {
 			console.log('no active task? - should never happen!');
 			return;
@@ -48,6 +61,7 @@ export abstract class Persist {
 		PathHelper.checkTaskmarksDataFilePath();
 
 		const persistTaskManager: IPersistTaskManager = {
+			version: CURRENT_VERSION,
 			activeTaskName: this._taskManager.activeTask.name,
 			persistTasks: [],
 		};
@@ -84,7 +98,11 @@ export abstract class Persist {
 			}
 
 			try {
-				const persistedTask = <IPersistTask>JSON.parse(activeTaskString);
+				const persistedTask = upgradeTask(JSON.parse(activeTaskString));
+				if (!persistedTask) {
+					vscode.window.showInformationMessage('The clipboard does not contain a Taskmarks task.');
+					return;
+				}
 
 				this._taskManager.addTask(persistedTask);
 

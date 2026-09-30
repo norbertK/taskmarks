@@ -123,6 +123,10 @@ export class File {
 		}
 	}
 
+	removeMarks(marksToRemove: Mark[]): void {
+		this._marks = this._marks.filter((mark) => !marksToRemove.includes(mark));
+	}
+
 	get hasMarks(): boolean {
 		return this._marks.length > 0;
 	}

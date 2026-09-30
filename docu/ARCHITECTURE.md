@@ -26,6 +26,8 @@ src/
 └── core/                 # Pure modules (no VS Code deps)
     ├── navigation.ts     # Mark navigation logic
     ├── serialization.ts  # JSON format conversion
+    ├── migration.ts      # taskmarks.json versions + upgrade
+    ├── lineAdjustment.ts # Move/remove marks on edits
     └── paths.ts          # Path utilities
 ```
 
@@ -133,29 +135,33 @@ sequenceDiagram
 
 ## Data Flow: Line Change Tracking
 
-When document content changes, mark positions are automatically adjusted:
+When document content changes, mark positions are adjusted from the edit itself. VS Code reports each change as the replaced range (in pre-edit coordinates) plus the inserted text, so no line count has to be remembered between events.
 
 ```mermaid
 flowchart LR
-    A[onDidChangeTextDocument] --> B{Lines changed?}
-    B -->|No| Z[Done]
-    B -->|Yes| C[Calculate diffLine]
-    C --> D[For each mark after change]
-    D --> E[mark.lineNumber += diffLine]
-    E --> F[Persist.saveTaskmarksJson]
-    F --> G[DecoratorHelper.refresh]
+    A[onDidChangeTextDocument] --> B[convert contentChanges to TextChange]
+    B --> C[mapMarkLines: apply changes bottom-up]
+    C --> D{any mark moved or removed?}
+    D -->|No| Z[Done]
+    D -->|Yes| E[set new lineNumbers, File.removeMarks]
+    E --> F[Helper.refresh → DecoratorHelper]
+    F --> G[Persist.saveTaskmarksJson]
 ```
 
-**Code location**: `Helper.initChangeHandler()` (lines 89-130)
+**Code location**: `Helper.initChangeHandler()` calls `mapMarkLines()` from `core/lineAdjustment.ts`.
 
-```typescript
-const diffLine = event.document.lineCount - lastLineCount;
-allMarks.forEach((mark) => {
-    if (mark.lineNumber > startLine) {
-        mark.lineNumber = mark.lineNumber + diffLine;
-    }
-});
-```
+Rules for one change (`mapLineThroughChange`):
+
+| Marked line | Result |
+|-------------|--------|
+| above the change | unchanged |
+| below the change | shifted by (inserted newlines − replaced lines) |
+| strictly inside a multi-line range | removed |
+| first line of the range | kept, unless deleted from column 0 to column 0 of a later line |
+| last line of a multi-line range | kept (moved) only if the edit left it starting a line of its own, else removed (joined) |
+| Enter at column 0 of the marked line | moves down with the text |
+
+Marks that land outside the document or on a line another mark already has are removed. Removal is by `Mark` object, not by line number.
 
 ---
 
@@ -197,6 +203,7 @@ Data is stored in `.vscode/taskmarks.json`:
 
 ```typescript
 interface IPersistTaskManager {
+    version?: number;        // 2 since 1.0.1, missing in older files
     activeTaskName: string;
     persistTasks: IPersistTask[];
 }
@@ -220,6 +227,7 @@ interface IPersistMark {
 **Example:**
 ```json
 {
+  "version": 2,
   "activeTaskName": "feature-auth",
   "persistTasks": [
     {
@@ -237,6 +245,31 @@ interface IPersistMark {
   ]
 }
 ```
+
+### Versions and upgrade
+
+`core/migration.ts` reads every format the extension ever wrote and converts it to the current one:
+
+| Version | Written by | Shape |
+|---------|-----------|-------|
+| 0 | 2018 – 0.8.13 | `tasks[].files[].marks: number[]` |
+| 0 | 0.8.17 | `tasks[].files[].lineNumbers: number[]` |
+| 0 | 0.8.21 | `persistTasks[].persistFiles[].lineNumbers: number[]` |
+| 1 | 0.8.23 – 1.0.0 | `persistTasks[].persistFiles[].persistMarks: {lineNumber, label}[]` |
+| 2 | 1.0.1 | version 1 + `"version": 2` |
+
+What `Persist.initAndLoad` does with the result of `loadTaskmarksJson()`:
+
+```mermaid
+flowchart TD
+    A[loadTaskmarksJson] --> B{status}
+    B -->|invalid| C[backup taskmarks.json.invalid.bak<br/>warn, start with 'default']
+    B -->|newer| D[load known fields<br/>warn, read-only: never save]
+    B -->|ok, older version| E[backup taskmarks.json.v&lt;n&gt;.bak<br/>load; next save writes version 2]
+    B -->|ok, current| F[load]
+```
+
+To add a version 3 (e.g. breakpoints per task): raise `CURRENT_VERSION`, add the new optional fields to the types and to `upgradeTask`, and add a test with a version 2 file.
 
 ---
 
@@ -260,7 +293,7 @@ sequenceDiagram
     H->>P: initAndLoad(taskManager, context)
     P->>PH: getTaskmarksJson()
     PH-->>P: JSON string
-    P->>P: parseTaskmarksJson()
+    P->>P: loadTaskmarksJson() (upgrade old versions)
     P->>P: normalizeFilePaths()
     P->>TM: addTask() for each
     H->>DH: initDecorator(context)
@@ -305,10 +338,25 @@ findPreviousFileWithMarks(files, currentIndex): { filepath, lineNumber } | undef
 ### core/serialization.ts
 
 ```typescript
-parseTaskmarksJson(json: string): IPersistTaskManager | null
 taskToPersistTask(task, fileExistsCheck): IPersistTask
 persistTaskToTask(persistTask): SerializableTask
 normalizeFilePaths(persistTaskManager, fromChar, toChar): IPersistTaskManager
+```
+
+### core/migration.ts
+
+```typescript
+CURRENT_VERSION = 2
+loadTaskmarksJson(json): { status: 'ok' | 'newer', data, fromVersion } | { status: 'invalid', reason }
+upgradeTask(value): IPersistTask | undefined   // also used for clipboard paste
+detectVersion(raw): number
+```
+
+### core/lineAdjustment.ts
+
+```typescript
+mapLineThroughChange(line, change: TextChange): number | undefined
+mapMarkLines(lines, changes: TextChange[], newLineCount): (number | undefined)[]
 ```
 
 ### core/paths.ts

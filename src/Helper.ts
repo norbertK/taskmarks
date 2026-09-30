@@ -4,10 +4,10 @@ import { TaskManager } from './TaskManager';
 import { Persist } from './Persist';
 import { DecoratorHelper } from './DecoratorHelper';
 import { PathHelper } from './PathHelper';
-import { adjustMarkLineNumbers } from './core/lineAdjustment';
+import { mapMarkLines, type TextChange } from './core/lineAdjustment';
+import type { Mark } from './Mark';
 
 export abstract class Helper {
-	private static _activeEditorLineCount: number;
 	private static _activeEditor: vscode.TextEditor | undefined;
 	private static _taskManager: TaskManager;
 	private static _outputChannel: vscode.OutputChannel;
@@ -88,49 +88,49 @@ export abstract class Helper {
 	}
 
 	private static initChangeHandler(context: vscode.ExtensionContext): void {
-		let lastEditorWithChanges: vscode.TextEditor | undefined = undefined;
-		let lastLineCount: number;
-
 		vscode.workspace.onDidChangeTextDocument(
 			(event) => {
 				if (!this._activeEditor || event.document !== this._activeEditor.document) {
 					return;
 				}
-				if (lastEditorWithChanges !== this._activeEditor) {
-					lastEditorWithChanges = this._activeEditor;
-					lastLineCount = this._activeEditorLineCount;
-				}
-				if (!this._taskManager.activeTask || !this._taskManager.activeTask.activeFile) {
+				const activeFile = this._taskManager.activeTask?.activeFile;
+				if (!activeFile || activeFile.marks.length === 0 || event.contentChanges.length === 0) {
 					return;
 				}
-				const allMarks = this._taskManager.activeTask.activeFile.marks;
-				if (allMarks.length === 0) {
-					return;
-				}
-				if (!event.contentChanges || event.contentChanges.length === 0) {
-					return;
-				}
-				const startLine = event.contentChanges[0].range.start.line;
-				if (event.document.lineCount !== lastLineCount) {
-					const diffLine = event.document.lineCount - lastLineCount;
-					const newLineCount = event.document.lineCount;
 
-					// Use the pure function to adjust marks and handle edge cases (issue #45)
-					const { removed } = adjustMarkLineNumbers(allMarks, startLine, diffLine, newLineCount);
+				const changes: TextChange[] = event.contentChanges.map((c) => ({
+					startLine: c.range.start.line,
+					startCharacter: c.range.start.character,
+					endLine: c.range.end.line,
+					endCharacter: c.range.end.character,
+					text: c.text,
+				}));
+				const marks = [...activeFile.marks];
+				const newLines = mapMarkLines(
+					marks.map((mark) => mark.lineNumber),
+					changes,
+					event.document.lineCount
+				);
 
-					// Remove marks that are now invalid (out of bounds or in deleted range)
-					if (removed.length > 0) {
-						const activeFile = this._taskManager.activeTask.activeFile;
-						if (activeFile) {
-							removed.forEach((mark) => {
-								activeFile.toggleTaskMark({ lineNumber: mark.lineNumber, label: '' });
-							});
-						}
+				let changed = false;
+				const marksToRemove: Mark[] = [];
+				marks.forEach((mark, index) => {
+					const newLine = newLines[index];
+					if (newLine === undefined) {
+						marksToRemove.push(mark);
+						changed = true;
+					} else if (newLine !== mark.lineNumber) {
+						mark.lineNumber = newLine;
+						changed = true;
 					}
-
-					Helper.triggerChangeActiveFile();
-					Persist.saveTaskmarksJson();
+				});
+				if (!changed) {
+					return;
 				}
+
+				activeFile.removeMarks(marksToRemove);
+				Helper.refresh();
+				Persist.saveTaskmarksJson();
 			},
 			null,
 			context.subscriptions
@@ -308,7 +308,6 @@ export abstract class Helper {
 		}
 		this._activeEditor = editor;
 		if (editor) {
-			this._activeEditorLineCount = editor.document.lineCount;
 			this._taskManager.activeTask.use(editor.document.uri.fsPath);
 			this.refresh();
 		}

@@ -1,4 +1,5 @@
 export interface IPersistTaskManager {
+	version?: number;
 	activeTaskName: string;
 	persistTasks: IPersistTask[];
 }

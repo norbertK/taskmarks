@@ -9,3 +9,13 @@ vsc-extension-quickstart.md
 **/.eslintrc.json
 **/*.map
 **/*.ts
+coverage/**
+.nyc_output/**
+out-instrumented/**
+out/test/**
+out/main.js
+docu/**
+scripts/**
+.github/**
+eslint.config.js
+*.vsix

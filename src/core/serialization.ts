@@ -4,6 +4,7 @@
  */
 
 import type { IPersistFile, IPersistMark, IPersistTask, IPersistTaskManager } from '../types';
+import { CURRENT_VERSION } from './migration';
 
 export interface SerializableFile {
 	filepath: string;
@@ -75,29 +76,11 @@ export function serializeTaskManager(
 	fileExistsCheck: (filepath: string) => boolean = () => true
 ): string {
 	const persistTaskManager: IPersistTaskManager = {
+		version: CURRENT_VERSION,
 		activeTaskName,
 		persistTasks: tasks.map((t) => taskToPersistTask(t, fileExistsCheck)),
 	};
 	return JSON.stringify(persistTaskManager, null, '  ');
-}
-
-/**
- * Parse JSON string to persist format.
- * Returns null if invalid or old format.
- */
-export function parseTaskmarksJson(json: string): IPersistTaskManager | null {
-	try {
-		const parsed = JSON.parse(json);
-
-		// Check for old format
-		if (parsed.persistTasks === undefined || json.indexOf('"lineNumbers": [') > -1) {
-			return null;
-		}
-
-		return parsed as IPersistTaskManager;
-	} catch {
-		return null;
-	}
 }
 
 /**
@@ -126,6 +109,7 @@ export function normalizeFilePaths(
 export function createDefaultTaskmarksJson(taskName = 'default'): string {
 	return JSON.stringify(
 		{
+			version: CURRENT_VERSION,
 			activeTaskName: taskName,
 			persistTasks: [{ name: taskName, persistFiles: [] }],
 		},

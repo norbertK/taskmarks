@@ -29,16 +29,19 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 - Version 1.0.0
 - Paste (from clipboard) to active task
-- Pure `core/` modules for testability (navigation, serialization, paths, lineAdjustment)
-- Tests for core modules and data structures (181 tests)
+- Pure `core/` modules for testability (navigation, serialization, paths, lineAdjustment, migration)
+- Versioned taskmarks.json - all older formats (back to 2018) are upgraded on load, with a backup of the old file
 
 ## Ideas / Future
 
+- only load ? useful ? tasks
+- remove all vscode references from tests (or better mock them) (UnhandledPromiseRejectionWarning: Unhandled promise rejection. in tests)
+- more tests (Helper, Persist and TaskManager navigation still mostly untested)
 - New command: remove unused (empty) Tasks
 - Disable taskbar display in settings
-- Make demo video
-- Better shortcuts that work outside edit mode
-- Add debug points to task
+- Make demo GIF for the README / Marketplace page
+- Better shortcuts that work outside edit mode (eg 'goto next' or 'Select Active Task' should work always)
+- Add debug points (breakpoints) to task - would be taskmarks.json version 3
 - Comments on tasks (stored in taskmarks.json)
 
 ## Requirements
@@ -47,12 +50,11 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 ## Known Issues
 
-None currently open.
+- [#45](https://github.com/norbertK/taskmarks/issues/45) - if too many lines are deleted, marker at end can not be removed. Fix in 1.0.1, not yet verified in VS Code.
 
 ### Fixed Issues
 
-- [#45](https://github.com/norbertK/taskmarks/issues/45) - markers at end now properly removed when lines deleted (1.0.0)
-- [#22](https://github.com/norbertK/taskmarks/issues/22) - markers now move when lines inserted/deleted (0.9.4, tests added in 1.0.0)
+- [#22](https://github.com/norbertK/taskmarks/issues/22) - markers now move when lines inserted/deleted (0.9.4, tests added in 1.0.1)
 
 ## Release Notes
 

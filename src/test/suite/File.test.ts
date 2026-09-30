@@ -162,6 +162,21 @@ describe('File', () => {
 		});
 	});
 
+	describe('removeMarks', () => {
+		it('removes the given mark objects even if another mark now has the same line number', () => {
+			const file = new File(filePath);
+			file.addMark({ lineNumber: 7, label: 'stale' });
+			file.addMark({ lineNumber: 12, label: 'shifted' });
+			const [stale, shifted] = file.marks;
+			shifted.lineNumber = 7;
+
+			file.removeMarks([stale]);
+
+			expect(file.marks).to.eql([shifted]);
+			expect(file.marks[0].label).to.equal('shifted');
+		});
+	});
+
 	describe('hasMarks', () => {
 		it('should return false if there are no marks', () => {
 			const emptyFile = new File(filePath);

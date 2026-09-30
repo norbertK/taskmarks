@@ -5,6 +5,7 @@ import { dirname, join } from 'path';
 
 import { IPersistTaskManager } from './types';
 import { detectPathCharacters, getFullPath as coreGetFullPath, reducePath as coreReducePath } from './core/paths';
+import { createDefaultTaskmarksJson } from './core/serialization';
 
 export abstract class PathHelper {
 	private static _basePath = '';
@@ -100,27 +101,18 @@ export abstract class PathHelper {
 
 		if (PathHelper._taskmarksDataFilePath === undefined || !fileFound) {
 			this._taskmarksJsonIsNew = true;
-			return '{"activeTaskName": "default", "persistTasks": [{"name": "default", "persistFiles": []}]}';
+			return createDefaultTaskmarksJson();
 		}
-		let taskmarksJson = readFileSync(PathHelper._taskmarksDataFilePath).toString();
+		return readFileSync(PathHelper._taskmarksDataFilePath).toString();
+	}
 
-		// // 'upgrade' taskmarks.json
-		// taskmarksJson = PathHelper.replaceAll(
-		//   taskmarksJson,
-		//   '"marks"',
-		//   '"lineNumbers"'
-		// );
-		// taskmarksJson = PathHelper.replaceAll(
-		//   taskmarksJson,
-		//   '"tasks"',
-		//   '"persistTasks"'
-		// );
-		// taskmarksJson = PathHelper.replaceAll(
-		//   taskmarksJson,
-		//   '"files"',
-		//   '"persistFiles"'
-		// );
-		return taskmarksJson;
+	/** Writes taskmarks.json.<suffix>.bak next to taskmarks.json, keeping an existing backup. Returns the backup path. */
+	static writeBackup(suffix: string, content: string): string {
+		const backupPath = `${PathHelper.taskmarksDataFilePath}.${suffix}.bak`;
+		if (!existsSync(backupPath)) {
+			writeFileSync(backupPath, content);
+		}
+		return backupPath;
 	}
 
 	static replaceAll(theString: string, old: string, newString: string): string {
