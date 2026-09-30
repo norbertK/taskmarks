@@ -19,3 +19,4 @@ scripts/**
 .github/**
 eslint.config.js
 *.vsix
+images/demo.gif

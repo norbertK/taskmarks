@@ -225,7 +225,7 @@ export abstract class Helper {
 			});
 			vscode.window.showQuickPick(taskNames, options).then((oldTaskName) => {
 				if (oldTaskName) {
-					vscode.window.showInputBox().then((newTaskName) => {
+					vscode.window.showInputBox({ prompt: `New name for task '${oldTaskName}'`, value: oldTaskName }).then((newTaskName) => {
 						if (newTaskName) {
 							this._taskManager.renameTask(oldTaskName, newTaskName);
 						}
@@ -244,7 +244,7 @@ export abstract class Helper {
 
 	static async createTask(): Promise<void> {
 		try {
-			vscode.window.showInputBox().then((newTaskName) => {
+			vscode.window.showInputBox({ prompt: 'Name of the new task', placeHolder: 'e.g. bugfix-login' }).then((newTaskName) => {
 				if (newTaskName) {
 					this._taskManager.useActiveTask(newTaskName);
 
@@ -310,7 +310,7 @@ export abstract class Helper {
 
 			const fullName = activeTextEditor.document.fileName;
 			if (enableLabel && !this._taskManager.activeTask.lineHasMark(fullName, activeLine)) {
-				vscode.window.showInputBox().then((newLabel) => {
+				vscode.window.showInputBox({ prompt: 'Label for this bookmark (shown in "Select Bookmark from List")' }).then((newLabel) => {
 					if (newLabel) {
 						this._taskManager.activeTask.toggle(fullName, activeLine, newLabel);
 					}

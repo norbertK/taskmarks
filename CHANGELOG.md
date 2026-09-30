@@ -12,6 +12,7 @@ All notable changes to the "taskmarks" extension will be documented in this file
 
 ### Added
 - Undo (Ctrl+Z) of an edit that removed marks brings the marks back, with their labels. Works for the last 20 such edits per file, as long as no other edit above them happened in between
+- Input boxes for "Create new Task", "Rename Task" and bookmark labels now say what to enter; "Rename Task" starts with the old name filled in
 - taskmarks.json now has a `"version": 2` field
 - All older taskmarks.json formats (2018 `tasks/files/marks`, 0.8.17 `lineNumbers`, 0.8.21 `persistTasks` + `lineNumbers`, 0.8.23 – 1.0.0 `persistMarks`) are upgraded on load instead of being discarded. The old file is kept as `taskmarks.json.v<old version>.bak`
 - An unreadable taskmarks.json is kept as `taskmarks.json.invalid.bak` before starting empty
@@ -19,6 +20,7 @@ All notable changes to the "taskmarks" extension will be documented in this file
 - Paste from clipboard also accepts tasks copied by older versions
 - Pure `core/` modules for testability: `navigation.ts`, `serialization.ts`, `paths.ts`, `lineAdjustment.ts`, `migration.ts`
 - Technical architecture documentation (`docu/ARCHITECTURE.md`)
+- README: demo GIF (first shot), getting started, keyboard shortcuts, settings, where the marks are stored
 
 ## [0.9.6] - 2023-11-27
 
