@@ -116,8 +116,10 @@
 		"watch": "tsc -watch -p ./",
 		"pretest": "npm run compile && npm run lint",
 		"lint": "eslint --fix src --ext ts",
-		"test": "node ./out/test/runTest.js ",
+		"test": "node ./out/test/runTest.js",
+		"test:coverage": "npm run compile && nyc instrument ./out ./out-instrumented && cross-env COVERAGE=true node ./out-instrumented/test/runTest.js && nyc report --reporter=html --reporter=text",
 		"testAll": "npm run compile && nyc --reporter=html mocha --require ./out/test/mocha-setup.js \"./out/test/**/*.test.js\"",
+		"testBoth": "npm run testAll && npm run test",
 		"testFile": "npm run compile && nyc --reporter=html mocha --require ./out/test/mocha-setup.js \"./out/test/**/File.test.js\"",
 		"testRing": "npm run compile && nyc --reporter=html mocha --require ./out/test/mocha-setup.js \"./out/test/**/Ring.test.js\"",
 		"checkForUpgrade": "ncu",
@@ -138,6 +140,7 @@
 		"@typescript-eslint/parser": "^8.0.1",
 		"@vscode/test-electron": "^3.0.0",
 		"chai": "^6.0.1",
+		"cross-env": "^10.1.0",
 		"esbuild": "^0.28.0",
 		"eslint": "^10.0.3",
 		"glob": "^13.0.0",
@@ -154,5 +157,16 @@
 		"type": "git",
 		"url": "https://github.com/norbertK/taskmarks"
 	},
-	"homepage": "https://github.com/norbertK/taskmarks/blob/master/README.md"
+	"homepage": "https://github.com/norbertK/taskmarks/blob/master/README.md",
+	"nyc": {
+		"include": [
+			"out/**/*.js"
+		],
+		"exclude": [
+			"out/test/**",
+			"out-instrumented/**"
+		],
+		"sourceMap": true,
+		"instrument": true
+	}
 }
