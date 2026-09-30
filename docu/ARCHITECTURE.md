@@ -163,6 +163,8 @@ Rules for one change (`mapLineThroughChange`):
 
 Marks that land outside the document or on a line another mark already has are removed. Removal is by `Mark` object, not by line number.
 
+**Undo:** when a single-change edit removes marks, `Helper` keeps a `MarkRemoval` (start position, replaced and inserted line counts, the removed marks) per file, at most 20. On a change with `reason === Undo`, `findUndoneRemoval()` looks for a removal the undo exactly reverses (same start position, line counts swapped) and the marks are added back at their old lines. Redo needs no handling: it is the same delete again. The list lives in memory only.
+
 ---
 
 ## The Ring Structure

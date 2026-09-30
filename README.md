@@ -50,10 +50,11 @@ Or copy a Task and share it with your co-workers. Or create a new one, to tell h
 
 ## Known Issues
 
-- [#45](https://github.com/norbertK/taskmarks/issues/45) - if too many lines are deleted, marker at end can not be removed. Fix in 1.0.1, not yet verified in VS Code.
+None currently open.
 
 ### Fixed Issues
 
+- [#45](https://github.com/norbertK/taskmarks/issues/45) - if too many lines are deleted, marker at end can not be removed (1.0.1)
 - [#22](https://github.com/norbertK/taskmarks/issues/22) - markers now move when lines inserted/deleted (0.9.4, tests added in 1.0.1)
 
 ## Release Notes

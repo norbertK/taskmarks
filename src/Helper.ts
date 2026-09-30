@@ -4,10 +4,12 @@ import { TaskManager } from './TaskManager';
 import { Persist } from './Persist';
 import { DecoratorHelper } from './DecoratorHelper';
 import { PathHelper } from './PathHelper';
-import { mapMarkLines, type TextChange } from './core/lineAdjustment';
+import { createMarkRemoval, findUndoneRemoval, mapMarkLines, type MarkRemoval, type RemovedMark, type TextChange } from './core/lineAdjustment';
 import type { Mark } from './Mark';
 
 export abstract class Helper {
+	private static readonly maxRemembered = 20;
+	private static _markRemovals = new Map<string, MarkRemoval[]>();
 	private static _activeEditor: vscode.TextEditor | undefined;
 	private static _taskManager: TaskManager;
 	private static _outputChannel: vscode.OutputChannel;
@@ -94,7 +96,12 @@ export abstract class Helper {
 					return;
 				}
 				const activeFile = this._taskManager.activeTask?.activeFile;
-				if (!activeFile || activeFile.marks.length === 0 || event.contentChanges.length === 0) {
+				if (!activeFile || event.contentChanges.length === 0) {
+					return;
+				}
+				const isUndo = event.reason === vscode.TextDocumentChangeReason.Undo;
+				const removals = this._markRemovals.get(activeFile.filepath) ?? [];
+				if (activeFile.marks.length === 0 && !(isUndo && removals.length > 0)) {
 					return;
 				}
 
@@ -124,11 +131,29 @@ export abstract class Helper {
 						changed = true;
 					}
 				});
-				if (!changed) {
+
+				if (marksToRemove.length > 0 && !isUndo && changes.length === 1) {
+					removals.push(createMarkRemoval(changes[0], marksToRemove));
+					if (removals.length > Helper.maxRemembered) {
+						removals.shift();
+					}
+					this._markRemovals.set(activeFile.filepath, removals);
+				}
+
+				const restored: RemovedMark[] = [];
+				if (isUndo) {
+					const index = findUndoneRemoval(removals, changes);
+					if (index > -1) {
+						restored.push(...removals.splice(index, 1)[0].marks.filter((mark) => mark.lineNumber < event.document.lineCount));
+					}
+				}
+
+				if (!changed && restored.length === 0) {
 					return;
 				}
 
 				activeFile.removeMarks(marksToRemove);
+				restored.forEach((mark) => activeFile.addMark(mark));
 				Helper.refresh();
 				Persist.saveTaskmarksJson();
 			},

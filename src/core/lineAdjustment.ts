@@ -92,3 +92,51 @@ export function mapMarkLines(lines: number[], changes: TextChange[], newLineCoun
 		return line;
 	});
 }
+
+export interface RemovedMark {
+	lineNumber: number;
+	label: string;
+}
+
+/** Marks removed by one edit, with enough of the edit to recognise its undo. */
+export interface MarkRemoval {
+	startLine: number;
+	startCharacter: number;
+	replacedLines: number;
+	insertedLines: number;
+	marks: RemovedMark[];
+}
+
+export function createMarkRemoval(change: TextChange, marks: RemovedMark[]): MarkRemoval {
+	return {
+		startLine: change.startLine,
+		startCharacter: change.startCharacter,
+		replacedLines: change.endLine - change.startLine,
+		insertedLines: countNewlines(change.text),
+		marks: marks.map(({ lineNumber, label }) => ({ lineNumber, label })),
+	};
+}
+
+/**
+ * Index of the removal that an undo event reverses, or -1.
+ * An undo reverses an edit exactly: at the same start position it replaces the inserted lines with the replaced ones.
+ * Only single-change events are matched; the most recent matching removal wins.
+ */
+export function findUndoneRemoval(removals: MarkRemoval[], undoChanges: TextChange[]): number {
+	if (undoChanges.length !== 1) {
+		return -1;
+	}
+	const undo = undoChanges[0];
+	for (let i = removals.length - 1; i >= 0; i--) {
+		const removal = removals[i];
+		if (
+			undo.startLine === removal.startLine &&
+			undo.startCharacter === removal.startCharacter &&
+			undo.endLine - undo.startLine === removal.insertedLines &&
+			countNewlines(undo.text) === removal.replacedLines
+		) {
+			return i;
+		}
+	}
+	return -1;
+}

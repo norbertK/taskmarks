@@ -1,6 +1,6 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import { mapLineThroughChange, mapMarkLines, type TextChange } from '../../core/lineAdjustment';
+import { createMarkRemoval, findUndoneRemoval, mapLineThroughChange, mapMarkLines, type TextChange } from '../../core/lineAdjustment';
 
 function change(startLine: number, startCharacter: number, endLine: number, endCharacter: number, text: string): TextChange {
 	return { startLine, startCharacter, endLine, endCharacter, text };
@@ -133,6 +133,57 @@ describe('lineAdjustment', () => {
 		it('removes all marks when the whole document is deleted', () => {
 			const deleteAll = change(0, 0, 9, 15, '');
 			expect(mapMarkLines([0, 5, 9], [deleteAll], 1)).to.eql([0, undefined, undefined]);
+		});
+	});
+
+	describe('undo of a delete that removed marks', () => {
+		it('recognises the undo of deleted whole lines', () => {
+			const deleteLines5to9 = change(5, 0, 10, 0, '');
+			const removal = createMarkRemoval(deleteLines5to9, [{ lineNumber: 7, label: 'here' }]);
+			const undo = change(5, 0, 5, 0, 'l5\nl6\nl7\nl8\nl9\n');
+
+			expect(findUndoneRemoval([removal], [undo])).to.equal(0);
+			expect(removal.marks).to.eql([{ lineNumber: 7, label: 'here' }]);
+		});
+
+		it('recognises the undo of joined lines', () => {
+			const removal = createMarkRemoval(change(4, 25, 5, 0, ''), [{ lineNumber: 5, label: '' }]);
+			const undo = change(4, 25, 4, 25, '\n');
+			expect(findUndoneRemoval([removal], [undo])).to.equal(0);
+		});
+
+		it('recognises the undo of lines replaced by a paste', () => {
+			const pasteOverLines5and6 = change(5, 0, 7, 0, 'x\ny\nz\n');
+			const removal = createMarkRemoval(pasteOverLines5and6, [{ lineNumber: 5, label: '' }]);
+			const undo = change(5, 0, 8, 0, 'a\nb\n');
+			expect(findUndoneRemoval([removal], [undo])).to.equal(0);
+		});
+
+		it('ignores an undo at a different position', () => {
+			const removal = createMarkRemoval(change(5, 0, 10, 0, ''), [{ lineNumber: 7, label: '' }]);
+			const undoOfTypingElsewhere = change(20, 3, 20, 6, '');
+			expect(findUndoneRemoval([removal], [undoOfTypingElsewhere])).to.equal(-1);
+		});
+
+		it('ignores an undo at the same position that puts back a different number of lines', () => {
+			const removal = createMarkRemoval(change(5, 0, 10, 0, ''), [{ lineNumber: 7, label: '' }]);
+			expect(findUndoneRemoval([removal], [change(5, 0, 5, 0, 'one line\n')])).to.equal(-1);
+		});
+
+		it('ignores undo events with several changes', () => {
+			const removal = createMarkRemoval(change(5, 0, 10, 0, ''), [{ lineNumber: 7, label: '' }]);
+			const undo = change(5, 0, 5, 0, 'a\nb\nc\nd\ne\n');
+			expect(findUndoneRemoval([removal], [undo, change(30, 0, 30, 0, 'x')])).to.equal(-1);
+		});
+
+		it('picks the most recent matching removal', () => {
+			const older = createMarkRemoval(change(4, 25, 5, 0, ''), [{ lineNumber: 5, label: 'old' }]);
+			const newer = createMarkRemoval(change(4, 25, 5, 0, ''), [{ lineNumber: 5, label: 'new' }]);
+			expect(findUndoneRemoval([older, newer], [change(4, 25, 4, 25, '\n')])).to.equal(1);
+		});
+
+		it('finds nothing when no removals are remembered', () => {
+			expect(findUndoneRemoval([], [change(5, 0, 5, 0, 'a\n')])).to.equal(-1);
 		});
 	});
 });
