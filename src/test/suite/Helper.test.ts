@@ -68,6 +68,173 @@ describe('Helper', () => {
 		});
 	});
 
+	describe('getMarkQuickPickItems', () => {
+		let documents: Record<string, string[]>;
+		let openTextDocument: sinon.SinonSpy;
+		let reportError: sinon.SinonStub;
+		let previousBasePath: string;
+		let task: Task;
+
+		function shown(items: vscode.QuickPickItem[]) {
+			return items.map(({ label, description, detail }) => ({ label, description, detail }));
+		}
+
+		beforeEach(() => {
+			previousBasePath = PathHelper.basePath;
+			PathHelper.basePath = '/workspace';
+			documents = {
+				'/workspace/src/a.ts': ['zero', 'one', 'two', 'three'],
+				'/workspace/src/b.ts': ['first', 'second'],
+			};
+			sinon.replace(vscode.Uri, 'file', sinon.fake((path: string) => ({ fsPath: path })) as any);
+			openTextDocument = sinon.fake((uri: { fsPath: string }) => {
+				const lines = documents[uri.fsPath];
+				if (!lines) {
+					return Promise.reject(new Error('file not found'));
+				}
+				return Promise.resolve({
+					lineCount: lines.length,
+					lineAt: (line: number) => {
+						if (line < 0 || line >= lines.length) {
+							throw new Error('Illegal value for `line`');
+						}
+						return { text: lines[line] };
+					},
+				});
+			});
+			sinon.replace(vscode.workspace, 'openTextDocument', openTextDocument as any);
+			reportError = sinon.stub(Helper, 'reportError');
+
+			task = new Task('list');
+			task.toggle('/workspace/src/a.ts', 1, '');
+		});
+
+		afterEach(() => {
+			sinon.restore();
+			PathHelper.basePath = previousBasePath;
+		});
+
+		it('should show the text of the marked line, its line number as in the editor (from 1) and the file', async () => {
+			const items = await Helper.getMarkQuickPickItems(task);
+			expect(shown(items)).to.deep.equal([{ label: 'one', description: '2', detail: '/src/a.ts' }]);
+		});
+
+		it('should show the line text without its indentation', async () => {
+			documents['/workspace/src/a.ts'][1] = '\t\t  one, indented  ';
+			expect((await Helper.getMarkQuickPickItems(task))[0].label).to.equal('one, indented');
+		});
+
+		it('should show a placeholder for an empty line', async () => {
+			documents['/workspace/src/a.ts'][1] = '\t';
+			expect((await Helper.getMarkQuickPickItems(task))[0].label).to.equal('(empty line)');
+		});
+
+		it('should show a label as it was entered', async () => {
+			task.toggle('/workspace/src/a.ts', 2, '  look here');
+			expect((await Helper.getMarkQuickPickItems(task))[1].label).to.equal('  look here');
+		});
+
+		it('should carry the file path and the mark of each entry', async () => {
+			const [item] = await Helper.getMarkQuickPickItems(task);
+			expect(item.filepath).to.equal('/src/a.ts');
+			expect(item.mark).to.equal(task.files[0].marks[0]);
+		});
+
+		it('should show the label instead of the line text if there is one', async () => {
+			task.toggle('/workspace/src/a.ts', 2, 'look here');
+			const items = await Helper.getMarkQuickPickItems(task);
+			expect(items.map((item) => item.label)).to.deep.equal(['one', 'look here']);
+		});
+
+		it('should list the marks of all files, file by file, and open each file once', async () => {
+			task.toggle('/workspace/src/b.ts', 0, '');
+			task.toggle('/workspace/src/a.ts', 3, '');
+			const items = await Helper.getMarkQuickPickItems(task);
+			expect(shown(items)).to.deep.equal([
+				{ label: 'one', description: '2', detail: '/src/a.ts' },
+				{ label: 'three', description: '4', detail: '/src/a.ts' },
+				{ label: 'first', description: '1', detail: '/src/b.ts' },
+			]);
+			expect(openTextDocument.callCount).to.equal(2);
+		});
+
+		it('should show the new line number and text after the mark has moved', async () => {
+			await Helper.getMarkQuickPickItems(task);
+
+			task.files[0].marks[0].lineNumber = 3;
+
+			expect(shown(await Helper.getMarkQuickPickItems(task))).to.deep.equal([{ label: 'three', description: '4', detail: '/src/a.ts' }]);
+		});
+
+		it('should show the new text after the marked line was edited', async () => {
+			await Helper.getMarkQuickPickItems(task);
+
+			documents['/workspace/src/a.ts'][1] = 'one, edited';
+
+			expect((await Helper.getMarkQuickPickItems(task))[0].label).to.equal('one, edited');
+		});
+
+		it('should leave out a mark behind the last line, without reporting an error', async () => {
+			task.toggle('/workspace/src/a.ts', 4, '');
+			const items = await Helper.getMarkQuickPickItems(task);
+			expect(items.map((item) => item.description)).to.deep.equal(['2']);
+			expect(reportError.called).to.be.false;
+		});
+
+		it('should report a file that could not be read, list the others and try again next time', async () => {
+			task.toggle('/workspace/src/gone.ts', 0, '');
+			task.toggle('/workspace/src/b.ts', 1, '');
+
+			const items = await Helper.getMarkQuickPickItems(task);
+			expect(items.map((item) => item.label)).to.deep.equal(['one', 'second']);
+			expect(reportError.calledOnceWithExactly({ message: 'file not found' })).to.be.true;
+
+			documents['/workspace/src/gone.ts'] = ['back again'];
+
+			expect((await Helper.getMarkQuickPickItems(task)).map((item) => item.label)).to.deep.equal(['one', 'back again', 'second']);
+		});
+	});
+
+	describe('selectMarkFromList', () => {
+		let taskManager: TaskManager;
+		let task: Task;
+		let previousBasePath: string;
+		let openAndShow: sinon.SinonStub;
+
+		beforeEach(() => {
+			previousBasePath = PathHelper.basePath;
+			PathHelper.basePath = '/workspace';
+			taskManager = TaskManager.instance;
+			taskManager.delete('selectMark');
+			task = taskManager.useActiveTask('selectMark');
+			(Helper as any)._taskManager = taskManager;
+			task.toggle('/workspace/src/a.ts', 1, '');
+			task.toggle('/workspace/src/a.ts', 3, 'look here');
+
+			const lines = ['zero', 'one', 'two', 'three'];
+			sinon.replace(vscode.workspace, 'openTextDocument', sinon.fake.resolves({ lineCount: lines.length, lineAt: (line: number) => ({ text: lines[line] }) }) as any);
+			openAndShow = sinon.stub(DecoratorHelper, 'openAndShow');
+		});
+
+		afterEach(() => {
+			sinon.restore();
+			taskManager.delete('selectMark');
+			PathHelper.basePath = previousBasePath;
+		});
+
+		it('should open the file of the chosen mark at its line', async () => {
+			sinon.replace(vscode.window, 'showQuickPick', sinon.fake((items: vscode.QuickPickItem[]) => Promise.resolve(items[1])) as any);
+			await Helper.selectMarkFromList();
+			expect(openAndShow.calledOnceWithExactly('/src/a.ts', 3)).to.be.true;
+		});
+
+		it('should do nothing when the list is dismissed', async () => {
+			sinon.replace(vscode.window, 'showQuickPick', sinon.fake.resolves(undefined) as any);
+			await Helper.selectMarkFromList();
+			expect(openAndShow.called).to.be.false;
+		});
+	});
+
 	describe('toggleMark', () => {
 		const basePath = 'c:\\workspace';
 		const fileInWorkspace = 'c:\\workspace\\src\\a.ts';

@@ -18,9 +18,3 @@ export interface IPersistMark {
 	lineNumber: number;
 	label: string;
 }
-
-export interface PathMark {
-	filepath: string;
-	lineNumber: number;
-	label: string;
-}

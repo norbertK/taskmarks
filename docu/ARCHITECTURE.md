@@ -33,7 +33,7 @@ src/
 **Layers:**
 - **VS Code Integration**: `extension.ts`, `Helper.ts`, `DecoratorHelper.ts`
 - **Business Logic**: `TaskManager.ts`
-- **Data Structures**: `Task.ts`, `File.ts`, `Mark.ts`
+- **Data Structures**: `Task.ts`, `File.ts`, `Mark.ts` (`File` and `Mark` import neither `vscode` nor the helpers; `Task` only uses `PathHelper` to make paths workspace-relative)
 - **Persistence**: `Persist.ts`, `PathHelper.ts`
 - **Pure Core**: `core/*.ts` (testable without VS Code)
 
@@ -85,10 +85,8 @@ classDiagram
     }
     
     class Mark {
-        -_filepath: string
         -_lineNumber: number
         -_label: string
-        +getQuickPickItem(): QuickPickItem
     }
 ```
 
@@ -360,3 +358,4 @@ normalizePath(filepath, fromChar, toChar): string
 4. **Auto-save on document save**: Marks persist automatically
 5. **Line tracking**: Marks adjust when lines are inserted/deleted above them
 6. **Pure core modules**: Business logic separated from VS Code APIs for testability
+7. **UI stays in `Helper`**: the entries of "Select Bookmark from List" are built in `Helper.getMarkQuickPickItems()`, fresh on every call (one `openTextDocument` per file). Each entry carries its `Mark`, so the jump uses the mark's current line instead of text parsed back from the entry

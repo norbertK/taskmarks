@@ -12,8 +12,10 @@ All notable changes to the "taskmarks" extension will be documented in this file
 - Paste from clipboard takes over the label of a bookmark if the bookmark on that line has none yet. Before, the label was dropped
 
 ### Changed
+- "Select Bookmark from List" shows line numbers as the editor does (counted from 1, before from 0) and the line text without its indentation; an empty line is shown as `(empty line)`
 - A task only keeps files that have bookmarks, in the order they got their first one. Before, every opened file was added, so the order in taskmarks.json and for next / previous bookmark depended on the order the files were opened in
 - From a file without bookmarks, next / previous bookmark goes to the first / last file of the task
+- The list entries for "Select Bookmark from List" are built in `Helper`; `Mark`, `File` and `Task` no longer depend on the VS Code API
 - Removed the `Ring` class; a task keeps its files in a plain array and the file to jump to is computed in `core/navigation.ts`
 
 ## [1.0.1] - 2026-09-30

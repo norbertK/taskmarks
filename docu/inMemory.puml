@@ -58,14 +58,13 @@ class File {
 }
 
 class Mark {
- -_label = ''
+ -_label: string
  -_lineNumber: number
 
+ +get label(): string
+ +set label(label: string)
  +get lineNumber(): number
  +set lineNumber(lineNumber: number)
-
- +async setQuickPickItem(filepath: string,
-    lineNumber: number | null): Promise<vscode.QuickPickItem>
 }
 
 TaskManager "1" -- "0..*" Task
@@ -88,11 +87,6 @@ interface IPersistFile {
   lineNumbers: number[];
 }
 interface number {
-}
-
-interface PathMark {
-  filepath: string;
-  lineNumber: number[];
 }
 
 IPersistTaskManager "1" -- "0..*" IPersistTask

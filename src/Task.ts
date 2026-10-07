@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import { File } from './File';
 import { PathHelper } from './PathHelper';
 import type { IPersistTask } from './types';
@@ -29,15 +28,6 @@ export class Task {
 
 	get files(): File[] {
 		return this._files;
-	}
-
-	async getQuickPickItems(): Promise<vscode.QuickPickItem[]> {
-		const quickPickItems: vscode.QuickPickItem[] = [];
-		for (const file of this._files) {
-			const items = await file.getQuickPickItems();
-			quickPickItems.push(...items);
-		}
-		return quickPickItems;
 	}
 
 	mergeFilesWithPersistFiles(persistTaskToMerge: IPersistTask): void {

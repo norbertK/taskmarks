@@ -6,6 +6,7 @@ import { DecoratorHelper } from './DecoratorHelper';
 import { PathHelper } from './PathHelper';
 import { createMarkRemoval, findUndoneRemoval, mapMarkLines, type MarkRemoval, type RemovedMark, type TextChange } from './core/lineAdjustment';
 import type { Mark } from './Mark';
+import type { Task } from './Task';
 
 export abstract class Helper {
 	private static readonly maxRemembered = 20;
@@ -163,6 +164,33 @@ export abstract class Helper {
 		);
 	}
 
+	// one entry per mark of the task: the label (or the text of the marked line, without indentation), the line number and the file
+	// built from the documents on every call, as line numbers and line texts change while a file is edited
+	// a file that can't be read is reported and left out, a mark behind the last line of its file is left out
+	static async getMarkQuickPickItems(task: Task): Promise<MarkQuickPickItem[]> {
+		const quickPickItems: MarkQuickPickItem[] = [];
+		for (const file of task.files) {
+			try {
+				const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(PathHelper.getFullPath(file.filepath)));
+				for (const mark of file.marks) {
+					if (mark.lineNumber < doc.lineCount) {
+						quickPickItems.push({
+							label: mark.label || doc.lineAt(mark.lineNumber).text.trim() || '(empty line)',
+							// shown as in the editor, which counts lines from 1
+							description: (mark.lineNumber + 1).toString(),
+							detail: file.filepath,
+							filepath: file.filepath,
+							mark,
+						});
+					}
+				}
+			} catch (error: unknown) {
+				Helper.reportError({ message: Helper.getErrorMessage(error) });
+			}
+		}
+		return quickPickItems;
+	}
+
 	static async selectMarkFromList(): Promise<void> {
 		if (!this._taskManager.activeTask) {
 			return;
@@ -172,11 +200,10 @@ export abstract class Helper {
 				placeHolder: 'select Bookmark',
 			};
 
-			const quickPickItems = await this._taskManager.activeTask.getQuickPickItems();
+			const quickPickItems = await this.getMarkQuickPickItems(this._taskManager.activeTask);
 			const result = await vscode.window.showQuickPick(quickPickItems, options);
-			if (result && result.detail && result.description) {
-				const lineNumber = Number.parseInt(result.description);
-				DecoratorHelper.openAndShow(result.detail, lineNumber);
+			if (result) {
+				DecoratorHelper.openAndShow(result.filepath, result.mark.lineNumber);
 			}
 		} catch (error: unknown) {
 			const message = Helper.getErrorMessage(error);
@@ -379,6 +406,11 @@ export abstract class Helper {
 	static getErrorStack(error: unknown) {
 		return Helper.toErrorWithMessageAndStack(error).stack;
 	}
+}
+
+export interface MarkQuickPickItem extends vscode.QuickPickItem {
+	filepath: string;
+	mark: Mark;
 }
 
 type ErrorWithMessage = {

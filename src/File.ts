@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import type { IPersistMark } from './types';
 import { Mark } from './Mark';
 
@@ -23,17 +22,6 @@ export class File {
 		});
 	}
 
-	async getQuickPickItems(): Promise<vscode.QuickPickItem[]> {
-		const quickPickItems: vscode.QuickPickItem[] = [];
-		for (const mark of this._marks) {
-			const item = await mark.getQuickPickItem();
-			if (item !== undefined) {
-				quickPickItems.push(item);
-			}
-		}
-		return quickPickItems;
-	}
-
 	get lineNumbers(): number[] {
 		return this._marks.map((mark) => mark.lineNumber);
 	}
@@ -48,7 +36,7 @@ export class File {
 		for (const { lineNumber, label } of persistMarks) {
 			const existing = this._marks.find((mark) => mark.lineNumber === lineNumber);
 			if (!existing) {
-				this._marks.push(new Mark(this._filepath, lineNumber, label));
+				this._marks.push(new Mark(lineNumber, label));
 			} else if (!existing.label && label) {
 				existing.label = label;
 			}
