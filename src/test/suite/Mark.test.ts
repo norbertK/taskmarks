@@ -3,6 +3,7 @@ import { expect } from 'chai';
 
 import assert = require('assert');
 import { Mark } from '../../Mark';
+import { Helper } from '../../Helper';
 import * as sinon from 'sinon';
 import { vscode } from '../mock/vscode.mock';
 
@@ -23,22 +24,19 @@ describe('Mark', () => {
 		expect(mark.lineNumber).to.equal(20);
 	});
 
-	it('should return undefined quickPickItem before initialization', () => {
-		const mark = new Mark('test.ts', 10, 'label');
-		expect(mark.quickPickItem).to.be.undefined;
-	});
-
-	it('should call myFunction once', () => {
-		const myFunction = sinon.spy();
-		myFunction();
-		sinon.assert.calledOnce(myFunction);
-	});
-
 	describe('getQuickPickItem', () => {
 		let lines: string[];
 
 		function fakeDocument() {
-			return { lineCount: lines.length, lineAt: (line: number) => ({ text: lines[line] }) };
+			return {
+				lineCount: lines.length,
+				lineAt: (line: number) => {
+					if (line < 0 || line >= lines.length) {
+						throw new Error('Illegal value for `line`');
+					}
+					return { text: lines[line] };
+				},
+			};
 		}
 
 		beforeEach(() => {
@@ -78,59 +76,25 @@ describe('Mark', () => {
 			expect((await mark.getQuickPickItem())?.label).to.equal('one, edited');
 		});
 
+		it('should return nothing for a mark behind the last line, without reporting an error', async () => {
+			const reportError = sinon.stub(Helper, 'reportError');
+			const mark = new Mark('/src/a.ts', lines.length, '');
+			expect(await mark.getQuickPickItem()).to.be.undefined;
+			expect(reportError.called).to.be.false;
+		});
+
 		it('should try again after the file could not be read', async () => {
 			sinon.restore();
 			sinon.replace(vscode.workspace, 'openTextDocument', sinon.fake(() => Promise.reject(new Error('file not found'))) as any);
+			const reportError = sinon.stub(Helper, 'reportError');
 			const mark = new Mark('/src/a.ts', 1, '');
 			expect(await mark.getQuickPickItem()).to.be.undefined;
+			expect(reportError.calledOnceWithExactly({ message: 'file not found' })).to.be.true;
 
 			sinon.restore();
 			sinon.replace(vscode.workspace, 'openTextDocument', sinon.fake(() => Promise.resolve(fakeDocument())) as any);
 
 			expect((await mark.getQuickPickItem())?.label).to.equal('one');
 		});
-	});
-
-	// todo
-	// test('setQuickPickItem', async () => {
-	// 	const filepath = 'src/test.ts';
-	// 	const lineNumber = 5;
-	// 	const label = 'My mark';
-	// 	const mark = new Mark(filepath, lineNumber, label);
-	// 	// await mark.setQuickPickItem(filepath, lineNumber, label);
-	// 	assert.strictEqual(mark.quickPickItem?.label, label);
-	// 	assert.strictEqual(mark.quickPickItem?.detail, `${filepath}:${lineNumber}`);
-	// 	assert.strictEqual(mark.quickPickItem?.description, '');
-	// });
-});
-
-describe('My Extension', () => {
-	it('should do something', async () => {
-		// Use the fake vscode methods here
-		vscode.commands.executeCommand('myCommand');
-		expect(vscode.window.showInformationMessage.calledWith('Hello, World!'));
-	});
-
-	it('Test something that requires vscode', async () => {
-		// Create a mock of the workspace module
-		const mockWorkspace = {
-			openTextDocument: async (path: string) => {
-				const text = 'Hello, World!';
-				return {
-					getText: () => text,
-					lineCount: text.split('\n').length,
-					uri: vscode.Uri.file(path),
-				};
-			},
-		};
-		// mockVscode.workspace = mockWorkspace as any;
-
-		// Call your extension function that requires vscode.workspace.openTextDocument
-		const doc = await mockWorkspace.openTextDocument('/path/to/document.txt');
-
-		// Make your assertions
-		assert.equal(doc.lineCount, 1);
-		assert.equal(doc.getText(), 'Hello, World!');
-		// assert.equal(doc.uri, '/path/to/document.txt');
 	});
 });

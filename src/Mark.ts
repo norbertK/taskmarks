@@ -4,12 +4,9 @@ import { PathHelper } from './PathHelper';
 import { PathMark } from './types';
 
 export class Mark implements PathMark {
-	private _label = '';
-	private _lineNumber = -1;
+	private _label: string;
+	private _lineNumber: number;
 	private _filepath: string;
-
-	private _quickPickItem: vscode.QuickPickItem | undefined;
-	private _quickPickItemInitialized = false;
 
 	constructor(filepath: string, lineNumber: number, label: string) {
 		this._label = label;
@@ -17,20 +14,15 @@ export class Mark implements PathMark {
 		this._filepath = filepath;
 	}
 
-	public async getQuickPickItem(): Promise<vscode.QuickPickItem | undefined> {
-		if (this._quickPickItemInitialized) {
-			return this._quickPickItem;
-		}
-		this._quickPickItemInitialized = true;
-
+	// built from the document on every call: the line number and the text of the line change while the file is edited
+	// undefined if the file can't be read or no longer has that line
+	async getQuickPickItem(): Promise<vscode.QuickPickItem | undefined> {
 		try {
 			const fullPath = PathHelper.getFullPath(this._filepath);
-			const uri = vscode.Uri.file(fullPath);
-			const doc = await vscode.workspace.openTextDocument(uri);
-			if (doc && this._lineNumber <= doc.lineCount) {
-				const lineText = doc.lineAt(this._lineNumber).text;
-				this._quickPickItem = {
-					label: this._label ? this._label : lineText,
+			const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(fullPath));
+			if (this._lineNumber < doc.lineCount) {
+				return {
+					label: this._label || doc.lineAt(this._lineNumber).text,
 					description: this._lineNumber.toString(),
 					detail: this._filepath,
 				};
@@ -39,11 +31,7 @@ export class Mark implements PathMark {
 			const message = Helper.getErrorMessage(error);
 			Helper.reportError({ message });
 		}
-		return this._quickPickItem;
-	}
-
-	public get quickPickItem(): vscode.QuickPickItem | undefined {
-		return this._quickPickItem;
+		return undefined;
 	}
 
 	get filepath(): string {
