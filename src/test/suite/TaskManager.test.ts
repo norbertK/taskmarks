@@ -179,6 +179,42 @@ describe('TaskManager', () => {
 		});
 	});
 
+	describe('#replaceTasks', () => {
+		const replaced = ['replace-old', 'replace-a', 'replace-b', 'default'];
+
+		afterEach(() => {
+			replaced.forEach((name) => taskManager.delete(name));
+		});
+
+		it('should replace all tasks and activate the given one', () => {
+			const oldTask = taskManager.useActiveTask('replace-old');
+			oldTask.toggle('/old.ts', 1, '');
+
+			taskManager.replaceTasks(
+				[
+					{ name: 'replace-a', persistFiles: [{ filepath: '/a.ts', persistMarks: [{ lineNumber: 2, label: 'a' }] }] },
+					{ name: 'replace-b', persistFiles: [] },
+				],
+				'replace-b'
+			);
+
+			expect(taskManager.taskNames).to.deep.equal(['replace-a', 'replace-b']);
+			expect(taskManager.activeTask.name).to.equal('replace-b');
+			expect(taskManager.allTasks[0].getFile('/a.ts')?.allPersistMarks).to.deep.equal([{ lineNumber: 2, label: 'a' }]);
+			expect(taskManager.allTasks).to.not.include(oldTask);
+		});
+
+		it('should create new task objects, also for a task with the same name', () => {
+			const oldTask = taskManager.useActiveTask('replace-a');
+			oldTask.toggle('/old.ts', 1, '');
+
+			taskManager.replaceTasks([{ name: 'replace-a', persistFiles: [] }], 'replace-a');
+
+			expect(taskManager.activeTask).to.not.equal(oldTask);
+			expect(taskManager.activeTask.hasMarks).to.be.false;
+		});
+	});
+
 	describe('#taskNames', () => {
 		it('should return array of task names', () => {
 			taskManager.useActiveTask('task-a');

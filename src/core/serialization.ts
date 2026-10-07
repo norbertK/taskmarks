@@ -111,6 +111,29 @@ export function normalizeTaskFilePaths(persistTask: IPersistTask, fromChar: stri
 }
 
 /**
+ * The path separator the file paths of a taskmarks.json are written with: the one more paths use.
+ * undefined if no path has a separator (or both are used equally often) - the caller picks one.
+ */
+export function detectFileSeparator(persistTaskManager: IPersistTaskManager): '/' | '\\' | undefined {
+	let slashes = 0;
+	let backslashes = 0;
+	for (const task of persistTaskManager.persistTasks) {
+		for (const file of task.persistFiles) {
+			if (file.filepath.includes('/')) {
+				slashes++;
+			}
+			if (file.filepath.includes('\\')) {
+				backslashes++;
+			}
+		}
+	}
+	if (slashes === backslashes) {
+		return undefined;
+	}
+	return slashes > backslashes ? '/' : '\\';
+}
+
+/**
  * Create default taskmarks JSON for a new file.
  */
 export function createDefaultTaskmarksJson(taskName = 'default'): string {

@@ -178,7 +178,7 @@ There is no stored cursor: the position is always derived from `activeFile`. If 
 
 ## Persistence Format
 
-Data is stored in `.vscode/taskmarks.json`:
+Data is stored in `.vscode/taskmarks.json` (or, with `taskmarks.useGlobalTaskmarksJson` and no such file, in `taskmarks.json` in VS Code's storage folder for the workspace, `context.storageUri`):
 
 ```typescript
 interface IPersistTaskManager {
@@ -193,7 +193,7 @@ interface IPersistTask {
 }
 
 interface IPersistFile {
-    filepath: string;        // relative to workspace
+    filepath: string;        // relative to workspace, with \ or / (see "Path separators")
     persistMarks: IPersistMark[];
 }
 
@@ -248,6 +248,29 @@ flowchart TD
     B -->|ok, current| F[load]
 ```
 
+### Path separators
+
+In memory, file paths have the separator of the system VS Code runs on (`normalizeFilePaths` on load). In the file they keep the separator the file already uses (`detectFileSeparator`, the one more paths have; `Persist._fileSeparator`), and a new file is written with `/`. Otherwise a team on Windows and macOS / Linux would rewrite every path with every save. This is not a new format version: every version since 0.8 reads both separators.
+
+### Marks of files that don't exist
+
+Saving does not check whether a marked file exists. The file may exist for a teammate or on another branch, and taskmarks.json is shared. Stale entries stay until the marks are removed by hand.
+
+### Changes from outside (pull, checkout, editing the file)
+
+`Helper.initTaskmarksFileWatcher()` watches taskmarks.json and calls `Persist.reloadIfChangedOnDisk()` 300 ms after the last change:
+
+| The file on disk | Result |
+|------------------|--------|
+| is what was last loaded or saved (own write), or is gone | nothing |
+| can be read, no unsaved changes | the tasks are **replaced** by the file's (`TaskManager.replaceTasks`), not merged: a merge could not remove marks. The own active task stays active if it still exists |
+| can be read, but there are unsaved changes | ask: "Load the file" / "Keep my bookmarks" (saves over the file). Dismissed: nothing, the next save writes |
+| can't be read (e.g. conflict markers) | keep the tasks, warn, and save nothing (`Persist._fileUnreadable`) until the file can be read again or the user picks "Overwrite with my bookmarks" (backup `taskmarks.json.invalid.bak` first) |
+
+Unsaved changes are rare, because every change is saved at once: they exist after a failed write or while saving was held back. They are detected by comparing the serialized tasks with `Persist._syncedTaskmarksJson`, the serialization at the last load or save.
+
+After a reload all `Task`, `File` and `Mark` objects are new. `Helper.taskmarksFileChanged()` therefore uses the active editor's file again and clears the remembered mark removals (undo).
+
 To add a version 3 (e.g. breakpoints per task): raise `CURRENT_VERSION`, add the new optional fields to the types and to `upgradeTask`, and add a test with a version 2 file.
 
 ---
@@ -274,11 +297,12 @@ sequenceDiagram
     PH-->>P: JSON string
     P->>P: loadTaskmarksJson() (upgrade old versions)
     P->>P: normalizeFilePaths()
-    P->>TM: addTask() for each
+    P->>TM: replaceTasks()
     H->>DH: initDecorator(context)
     H->>H: initActiveEditorChangeHandler()
     H->>H: initSaveHandler()
     H->>H: initChangeHandler()
+    H->>H: initTaskmarksFileWatcher()
     Ext->>VSCode: register all commands
 ```
 
@@ -321,6 +345,7 @@ taskToPersistTask(task, fileExistsCheck): IPersistTask   // Persist passes no ch
 normalizeTaskFilePaths(persistTask, fromChar, toChar): IPersistTask   // used for clipboard paste
 persistTaskToTask(persistTask): SerializableTask
 normalizeFilePaths(persistTaskManager, fromChar, toChar): IPersistTaskManager
+detectFileSeparator(persistTaskManager): '/' | '\\' | undefined
 ```
 
 ### core/migration.ts

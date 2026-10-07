@@ -10,6 +10,9 @@ All notable changes to the "taskmarks" extension will be documented in this file
 - "Delete Task" on the active `default` task did not remove it: its bookmarks stayed visible, but the task was no longer saved, so bookmarks set afterwards were lost with the next reload. It is now replaced by a new, empty `default` task
 - "Rename Task" to the name of another task created two tasks with the same name, of which only one could be selected. Such a rename is now refused with a message
 - A renamed task was only written to taskmarks.json with the next save
+- taskmarks.json is loaded again when it changes on disk (git pull, checkout, edited by hand). Before, the changes were ignored and overwritten with the next save
+- A team on Windows and macOS / Linux no longer rewrites all paths in taskmarks.json with every save: the file keeps the path separator it has, a new file is written with `/`
+- `taskmarks.useGlobalTaskmarksJson` kept the bookmarks of all workspaces in one file, although the paths in it are relative to the workspace. Each workspace now has its own file in VS Code's storage; the content of the old file is taken over when a workspace is opened for the first time
 - Saving no longer removes the bookmarks of files that don't exist on disk. Before, the bookmarks a teammate set in a file that is missing in your checkout (another branch, not pulled yet) were deleted from the shared taskmarks.json with your next save
 - "Paste Task from Clipboard": the pasted bookmarks show up in the open editor right away, a message confirms the paste, text that is not a task gets a plain "does not contain a Taskmarks task" message, and a task copied on a system with the other path separator (Windows / macOS, Linux) finds its files
 - If taskmarks.json can't be written (locked, read-only), the error goes to the "Taskmarks Errors" output and the next save tries again
@@ -19,6 +22,8 @@ All notable changes to the "taskmarks" extension will be documented in this file
 
 ### Changed
 - "Select Bookmark from List" shows line numbers as the editor does (counted from 1, before from 0) and the line text without its indentation; an empty line is shown as `(empty line)`
+- If taskmarks.json can't be read after it was changed outside of VS Code (e.g. conflict markers after a pull), the bookmarks stay as they are and nothing is saved until the file can be read again; the warning offers to overwrite the file (a backup is written first)
+- A taskmarks.json without a `default` task no longer gets an empty one added
 - A task only keeps files that have bookmarks, in the order they got their first one. Before, every opened file was added, so the order in taskmarks.json and for next / previous bookmark depended on the order the files were opened in
 - From a file without bookmarks, next / previous bookmark goes to the first / last file of the task
 - The list entries for "Select Bookmark from List" are built in `Helper`; `Mark`, `File` and `Task` no longer depend on the VS Code API

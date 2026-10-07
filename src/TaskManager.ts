@@ -59,6 +59,13 @@ export class TaskManager {
 		return task;
 	}
 
+	// replaces all tasks, e.g. after taskmarks.json was loaded. The task objects are new: files have to be used again
+	replaceTasks(persistTasks: IPersistTask[], activeTaskName: string): void {
+		this._allTasks = [];
+		persistTasks.forEach((persistTask) => this.addTask(persistTask));
+		this.useActiveTask(activeTaskName);
+	}
+
 	addTask(iPersistTask: IPersistTask): void {
 		const task = this._addTaskByNameIfMissing(iPersistTask.name);
 		task.mergeFilesWithPersistFiles(iPersistTask);

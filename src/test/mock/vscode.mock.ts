@@ -32,6 +32,7 @@ export const vscode = {
 		},
 	},
 	Range: sinon.fake(),
+	RelativePattern: sinon.fake(),
 	Uri: mockUri as any,
 	Diagnostic: sinon.fake(),
 	DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2, Hint: 3 },
@@ -48,6 +49,12 @@ export const vscode = {
 		getConfiguration: sinon.fake(),
 		onDidChangeWorkspaceFolders: sinon.fake(),
 		onDidSaveTextDocument: sinon.fake(),
+		createFileSystemWatcher: sinon.fake(() => ({
+			onDidChange: sinon.fake(),
+			onDidCreate: sinon.fake(),
+			onDidDelete: sinon.fake(),
+			dispose: sinon.fake(),
+		})),
 		openTextDocument: sinon.fake.resolves({}),
 	},
 	window: {

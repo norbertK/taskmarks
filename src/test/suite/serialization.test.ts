@@ -6,6 +6,7 @@ import {
 	serializeTaskManager,
 	normalizeFilePaths,
 	normalizeTaskFilePaths,
+	detectFileSeparator,
 	createDefaultTaskmarksJson,
 } from '../../core/serialization';
 
@@ -129,6 +130,30 @@ describe('Serialization (pure)', () => {
 			const result = serializeTaskManager('default', []);
 			expect(result).to.include('\n');
 			expect(result).to.include('  ');
+		});
+	});
+
+	describe('detectFileSeparator', () => {
+		function withPaths(...filepaths: string[]) {
+			return { activeTaskName: 't', persistTasks: [{ name: 't', persistFiles: filepaths.map((filepath) => ({ filepath, persistMarks: [] })) }] };
+		}
+
+		it('should detect /', () => {
+			expect(detectFileSeparator(withPaths('/src/a.ts', '/b.ts'))).to.equal('/');
+		});
+
+		it('should detect \\', () => {
+			expect(detectFileSeparator(withPaths('\\src\\a.ts'))).to.equal('\\');
+		});
+
+		it('should take the separator that more paths use', () => {
+			expect(detectFileSeparator(withPaths('\\src\\a.ts', '/src/b.ts', '/src/c.ts'))).to.equal('/');
+		});
+
+		it('should return undefined without paths, without separators and for a tie', () => {
+			expect(detectFileSeparator(withPaths())).to.be.undefined;
+			expect(detectFileSeparator(withPaths('a.ts'))).to.be.undefined;
+			expect(detectFileSeparator(withPaths('\\a.ts', '/b.ts'))).to.be.undefined;
 		});
 	});
 

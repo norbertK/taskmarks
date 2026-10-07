@@ -1,20 +1,36 @@
 import * as vscode from 'vscode';
 
-import type { IPersistTask } from './types';
+import type { IPersistTask, IPersistTaskManager } from './types';
 import { PathHelper } from './PathHelper';
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
-import { normalizeFilePaths, normalizeTaskFilePaths, serializeTaskManager, taskToPersistTask, type SerializableTask } from './core/serialization';
+import {
+	detectFileSeparator,
+	normalizeFilePaths,
+	normalizeTaskFilePaths,
+	serializeTaskManager,
+	taskToPersistTask,
+	type SerializableTask,
+} from './core/serialization';
 import { CURRENT_VERSION, loadTaskmarksJson, upgradeTask } from './core/migration';
 
 export abstract class Persist {
 	private static _taskManager: TaskManager;
 	private static _lastSavedTaskmarksJson: string;
 	private static _readOnly = false;
+	// the file was changed outside of VS Code and can't be read: nothing is saved over it
+	private static _fileUnreadable = false;
+	// the tasks, serialized, when they were last loaded or saved - they have unsaved changes if they serialize differently now
+	private static _syncedTaskmarksJson = '';
+	// the path separator of the paths in taskmarks.json. In memory the paths have the separator of this system,
+	// but the file keeps the one it has, or a team on Windows and macOS / Linux would rewrite all paths with every save
+	private static _fileSeparator = '/';
 
 	static initAndLoad(taskManager: TaskManager, context: vscode.ExtensionContext): void {
 		this._taskManager = taskManager;
 		Persist._readOnly = false;
+		Persist._fileUnreadable = false;
+		Persist._fileSeparator = '/';
 		const taskmarksJson = PathHelper.getTaskmarksJson(context);
 		Persist._lastSavedTaskmarksJson = taskmarksJson;
 
@@ -24,26 +40,89 @@ export abstract class Persist {
 			const backupPath = PathHelper.writeBackup('invalid', taskmarksJson);
 			vscode.window.showWarningMessage(`Taskmarks: taskmarks.json could not be read (${result.reason}). Starting empty; the old file was saved as ${backupPath}.`);
 			taskManager.useActiveTask('default');
+			Persist._syncedTaskmarksJson = Persist.serialize();
 			return;
 		}
 
-		if (result.status === 'newer') {
-			Persist._readOnly = true;
-			vscode.window.showWarningMessage(
-				`Taskmarks: taskmarks.json was written by a newer Taskmarks version (file format ${result.fromVersion}, this version knows ${CURRENT_VERSION}). Marks are loaded, but changes will not be saved. Please update the extension.`
+		Persist.useLoaded(result.status, result.fromVersion, result.data, taskmarksJson, result.data.activeTaskName);
+	}
+
+	// Call when taskmarks.json may have been changed by someone else (a git pull, an editor).
+	// true if the tasks were replaced by the ones from the file - the caller has to refresh the editor.
+	static async reloadIfChangedOnDisk(): Promise<boolean> {
+		const taskmarksJson = PathHelper.readTaskmarksJson();
+		// a deleted file is written again with the next save; our own writes are known
+		if (taskmarksJson === undefined || taskmarksJson === Persist._lastSavedTaskmarksJson) {
+			return false;
+		}
+
+		const result = loadTaskmarksJson(taskmarksJson);
+
+		if (result.status === 'invalid') {
+			// e.g. conflict markers after a pull: keep the tasks, and don't destroy what someone has to repair
+			Persist._lastSavedTaskmarksJson = taskmarksJson;
+			Persist._fileUnreadable = true;
+			const overwrite = 'Overwrite with my bookmarks';
+			const choice = await vscode.window.showWarningMessage(
+				`Taskmarks: taskmarks.json was changed outside of VS Code and can't be read (${result.reason}). Your bookmarks stay as they are, but they are not saved until the file can be read again.`,
+				overwrite
 			);
-		} else if (result.fromVersion < CURRENT_VERSION && !PathHelper.taskmarksJsonIsNew) {
-			PathHelper.writeBackup(`v${result.fromVersion}`, taskmarksJson);
+			if (choice === overwrite && Persist._fileUnreadable && Persist._lastSavedTaskmarksJson === taskmarksJson) {
+				PathHelper.writeBackup('invalid', taskmarksJson);
+				Persist._fileUnreadable = false;
+				Persist.saveTaskmarksJson();
+			}
+			return false;
 		}
 
-		const normalized = normalizeFilePaths(result.data, PathHelper.inactivePathChar, PathHelper.activePathChar);
-		normalized.persistTasks.forEach((persistTask) => {
-			taskManager.addTask(persistTask);
-		});
-
-		if (taskManager.activeTask.name !== normalized.activeTaskName) {
-			taskManager.useActiveTask(normalized.activeTaskName);
+		const hadUnsavedChanges = !Persist._readOnly && Persist.serialize() !== Persist._syncedTaskmarksJson;
+		Persist._fileUnreadable = false;
+		if (hadUnsavedChanges) {
+			// only after a save that failed or was held back - normally every change is saved at once
+			const load = 'Load the file';
+			const keep = 'Keep my bookmarks';
+			const choice = await vscode.window.showWarningMessage(
+				'Taskmarks: taskmarks.json was changed outside of VS Code, but there are bookmarks that are not saved yet.',
+				load,
+				keep
+			);
+			if (choice === keep) {
+				Persist.saveTaskmarksJson();
+			}
+			if (choice !== load) {
+				return false;
+			}
 		}
+
+		// the file of a team carries the active task of whoever saved last - stay in the own one, if it still exists
+		const ownActiveTaskName = this._taskManager.activeTask.name;
+		const activeTaskName = result.data.persistTasks.some((task) => task.name === ownActiveTaskName) ? ownActiveTaskName : result.data.activeTaskName;
+		Persist._lastSavedTaskmarksJson = taskmarksJson;
+		Persist.useLoaded(result.status, result.fromVersion, result.data, taskmarksJson, activeTaskName);
+		return true;
+	}
+
+	private static useLoaded(status: 'ok' | 'newer', fromVersion: number, data: IPersistTaskManager, taskmarksJson: string, activeTaskName: string): void {
+		Persist._readOnly = status === 'newer';
+		if (status === 'newer') {
+			vscode.window.showWarningMessage(
+				`Taskmarks: taskmarks.json was written by a newer Taskmarks version (file format ${fromVersion}, this version knows ${CURRENT_VERSION}). Marks are loaded, but changes will not be saved. Please update the extension.`
+			);
+		} else if (fromVersion < CURRENT_VERSION && !PathHelper.taskmarksJsonIsNew) {
+			PathHelper.writeBackup(`v${fromVersion}`, taskmarksJson);
+		}
+
+		Persist._fileSeparator = detectFileSeparator(data) ?? '/';
+		const normalized = normalizeFilePaths(data, PathHelper.inactivePathChar, PathHelper.activePathChar);
+		this._taskManager.replaceTasks(normalized.persistTasks, activeTaskName);
+		Persist._syncedTaskmarksJson = Persist.serialize();
+	}
+
+	private static serialize(): string {
+		return serializeTaskManager(
+			this._taskManager.activeTask.name,
+			this._taskManager.allTasks.map((task) => Persist.toSerializableTask(task, Persist._fileSeparator))
+		);
 	}
 
 	// throws if the file can't be written - the next call tries again
@@ -56,16 +135,14 @@ export abstract class Persist {
 			return;
 		}
 
-		const taskmarksJsonToBeSaved = serializeTaskManager(
-			activeTask.name,
-			this._taskManager.allTasks.map((task) => Persist.toSerializableTask(task))
-		);
-		if (Persist._lastSavedTaskmarksJson === taskmarksJsonToBeSaved) {
+		const taskmarksJsonToBeSaved = Persist.serialize();
+		if (Persist._lastSavedTaskmarksJson === taskmarksJsonToBeSaved || Persist._fileUnreadable) {
 			return;
 		}
 		PathHelper.checkTaskmarksDataFilePath();
 		PathHelper.saveTaskmarks(taskmarksJsonToBeSaved);
 		Persist._lastSavedTaskmarksJson = taskmarksJsonToBeSaved;
+		Persist._syncedTaskmarksJson = taskmarksJsonToBeSaved;
 	}
 
 	static copyToClipboard(): void {
@@ -103,10 +180,14 @@ export abstract class Persist {
 		return taskToPersistTask(Persist.toSerializableTask(task));
 	}
 
-	private static toSerializableTask(task: Task): SerializableTask {
+	// with a separator the paths are written with it, without they keep the separator of this system
+	private static toSerializableTask(task: Task, separator?: string): SerializableTask {
 		return {
 			name: task.name,
-			files: task.files.map((file) => ({ filepath: file.filepath, marks: file.allPersistMarks })),
+			files: task.files.map((file) => ({
+				filepath: separator ? file.filepath.replaceAll(PathHelper.activePathChar, separator) : file.filepath,
+				marks: file.allPersistMarks,
+			})),
 		};
 	}
 

@@ -35,7 +35,7 @@
 				"taskmarks.useGlobalTaskmarksJson": {
 					"type": "boolean",
 					"default": false,
-					"description": "Use one central Taskmarks.json"
+					"description": "Keep taskmarks.json in VS Code's storage for this workspace instead of .vscode/taskmarks.json (a .vscode/taskmarks.json that already exists is still used)."
 				}
 			}
 		},

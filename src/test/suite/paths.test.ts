@@ -5,8 +5,6 @@ import {
 	getFullPath,
 	reducePath,
 	isInsideBasePath,
-	replaceAll,
-	normalizePath,
 } from '../../core/paths';
 
 describe('Paths (pure)', () => {
@@ -86,40 +84,20 @@ describe('Paths (pure)', () => {
 			expect(reducePath('/workspace', '/other/path')).to.equal('/other/path');
 		});
 
-		it('should handle exact match', () => {
-			expect(reducePath('/workspace', '/workspace')).to.equal('');
+		it('should return basePath itself unchanged', () => {
+			expect(reducePath('/workspace', '/workspace')).to.equal('/workspace');
+		});
+
+		it('should not reduce a sibling folder that starts with the same name', () => {
+			expect(reducePath('/workspace', '/workspace2/src/file.ts')).to.equal('/workspace2/src/file.ts');
+		});
+
+		it('should keep the leading separator for a basePath with a trailing separator', () => {
+			expect(reducePath('c:\\', 'c:\\src\\file.ts')).to.equal('\\src\\file.ts');
 		});
 
 		it('should handle Windows paths', () => {
 			expect(reducePath('C:\\workspace', 'C:\\workspace\\src\\file.ts')).to.equal('\\src\\file.ts');
-		});
-	});
-
-	describe('replaceAll', () => {
-		it('should replace all occurrences', () => {
-			expect(replaceAll('a/b/c/d', '/', '\\')).to.equal('a\\b\\c\\d');
-		});
-
-		it('should handle no matches', () => {
-			expect(replaceAll('hello', 'x', 'y')).to.equal('hello');
-		});
-
-		it('should handle empty string', () => {
-			expect(replaceAll('', 'a', 'b')).to.equal('');
-		});
-	});
-
-	describe('normalizePath', () => {
-		it('should convert Unix to Windows', () => {
-			expect(normalizePath('/src/file.ts', '/', '\\')).to.equal('\\src\\file.ts');
-		});
-
-		it('should convert Windows to Unix', () => {
-			expect(normalizePath('\\src\\file.ts', '\\', '/')).to.equal('/src/file.ts');
-		});
-
-		it('should handle mixed paths', () => {
-			expect(normalizePath('/src\\file.ts', '\\', '/')).to.equal('/src/file.ts');
 		});
 	});
 });

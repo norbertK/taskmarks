@@ -235,6 +235,63 @@ describe('Helper', () => {
 		});
 	});
 
+	describe('taskmarksFileChanged', () => {
+		let taskManager: TaskManager;
+		let refresh: sinon.SinonStub;
+		let reportError: sinon.SinonStub;
+		let previousBasePath: string;
+		const editor = { selection: { active: { line: 0 } }, document: { fileName: '/workspace/src/a.ts', uri: { fsPath: '/workspace/src/a.ts' } } } as unknown as vscode.TextEditor;
+
+		beforeEach(() => {
+			previousBasePath = PathHelper.basePath;
+			PathHelper.basePath = '/workspace';
+			taskManager = TaskManager.instance;
+			(Helper as any)._taskManager = taskManager;
+			taskManager.useActiveTask('file-changed').toggle('/workspace/src/a.ts', 3, '');
+			sinon.stub(vscode.window, 'activeTextEditor').get(() => editor);
+			(Helper as any)._activeEditor = editor;
+			(Helper as any)._markRemovals.set('/src/a.ts', [{ startLine: 1, startCharacter: 0, replacedLines: 1, insertedLines: 0, marks: [] }]);
+			refresh = sinon.stub(DecoratorHelper, 'refresh');
+			reportError = sinon.stub(Helper, 'reportError');
+		});
+
+		afterEach(() => {
+			sinon.restore();
+			(Helper as any)._activeEditor = undefined;
+			(Helper as any)._markRemovals.clear();
+			taskManager.delete('file-changed');
+			PathHelper.basePath = previousBasePath;
+		});
+
+		it('should show the marks of the reloaded tasks in the active editor and forget the removed marks', async () => {
+			sinon.stub(Persist, 'reloadIfChangedOnDisk').callsFake(() => {
+				taskManager.replaceTasks([{ name: 'file-changed', persistFiles: [{ filepath: '/src/a.ts', persistMarks: [{ lineNumber: 8, label: '' }] }] }], 'file-changed');
+				return Promise.resolve(true);
+			});
+
+			await Helper.taskmarksFileChanged();
+
+			expect(refresh.calledOnceWithExactly(editor, [8])).to.be.true;
+			expect(taskManager.activeTask.activeFile).to.equal(taskManager.activeTask.getFile('/src/a.ts'));
+			expect((Helper as any)._markRemovals.size).to.equal(0);
+		});
+
+		it('should do nothing when the tasks were not reloaded', async () => {
+			sinon.stub(Persist, 'reloadIfChangedOnDisk').resolves(false);
+
+			await Helper.taskmarksFileChanged();
+
+			expect(refresh.called).to.be.false;
+			expect((Helper as any)._markRemovals.size).to.equal(1);
+		});
+
+		it('should report an error instead of throwing', async () => {
+			sinon.stub(Persist, 'reloadIfChangedOnDisk').rejects(new Error('disk is gone'));
+			await Helper.taskmarksFileChanged();
+			expect(reportError.calledOnceWithExactly({ message: 'disk is gone' })).to.be.true;
+		});
+	});
+
 	describe('pasteFromClipboard', () => {
 		let refresh: sinon.SinonStub;
 		let saveTaskmarksJson: sinon.SinonStub;

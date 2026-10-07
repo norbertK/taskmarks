@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { basename, dirname } from 'path';
 
 import { TaskManager } from './TaskManager';
 import { Persist } from './Persist';
@@ -55,6 +56,7 @@ export abstract class Helper {
 			Helper.initActiveEditorChangeHandler();
 			Helper.initSaveHandler();
 			Helper.initChangeHandler(context);
+			Helper.initTaskmarksFileWatcher(context);
 		} catch (error: unknown) {
 			const message = Helper.getErrorMessage(error);
 			const stack = Helper.getErrorStack(error);
@@ -79,6 +81,36 @@ export abstract class Helper {
 		vscode.window.onDidChangeActiveTextEditor((editor) => {
 			this.changeActiveFile(editor);
 		}, null);
+	}
+
+	// taskmarks.json is shared in a team: it changes with a pull, a checkout or an edit by hand
+	private static initTaskmarksFileWatcher(context: vscode.ExtensionContext): void {
+		const file = PathHelper.taskmarksDataFilePath;
+		const folder = dirname(file);
+		// the base of the pattern has to exist, the folder of the file (.vscode) may not yet
+		const pattern = new vscode.RelativePattern(vscode.Uri.file(dirname(folder)), `${basename(folder)}/${basename(file)}`);
+		const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+		let timer: NodeJS.Timeout | undefined;
+		// wait until the file is written completely, git and editors may write in several steps
+		const changed = () => {
+			clearTimeout(timer);
+			timer = setTimeout(() => Helper.taskmarksFileChanged(), 300);
+		};
+		watcher.onDidChange(changed);
+		watcher.onDidCreate(changed);
+		context.subscriptions.push(watcher);
+	}
+
+	static async taskmarksFileChanged(): Promise<void> {
+		try {
+			if (await Persist.reloadIfChangedOnDisk()) {
+				// the tasks and their files are new objects: forget the removed marks of the old ones, use the active file again
+				this._markRemovals.clear();
+				Helper.triggerChangeActiveFile();
+			}
+		} catch (error: unknown) {
+			Helper.reportError({ message: Helper.getErrorMessage(error) });
+		}
 	}
 
 	private static initSaveHandler(): void {

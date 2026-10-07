@@ -26,16 +26,6 @@ export function getFullPath(basePath: string, filepath: string): string {
 }
 
 /**
- * Reduce a full path by removing the basePath prefix.
- */
-export function reducePath(basePath: string, filepath: string): string {
-	if (filepath.startsWith(basePath)) {
-		return filepath.substring(basePath.length);
-	}
-	return filepath;
-}
-
-/**
  * Check whether a full path lies inside basePath (and is not basePath itself).
  * Only such paths can be stored relative to basePath.
  */
@@ -49,15 +39,9 @@ export function isInsideBasePath(basePath: string, filepath: string): boolean {
 }
 
 /**
- * Replace all occurrences of a substring.
+ * Reduce a full path to a path relative to basePath (with a leading separator).
+ * A path outside basePath is returned unchanged.
  */
-export function replaceAll(str: string, search: string, replacement: string): string {
-	return str.replaceAll(search, replacement);
-}
-
-/**
- * Normalize path separators in a filepath.
- */
-export function normalizePath(filepath: string, fromChar: string, toChar: string): string {
-	return filepath.replaceAll(fromChar, toChar);
+export function reducePath(basePath: string, filepath: string): string {
+	return isInsideBasePath(basePath, filepath) ? filepath.substring(basePath.replace(/[\\/]$/, '').length) : filepath;
 }
