@@ -186,4 +186,14 @@ describe('lineAdjustment', () => {
 			expect(findUndoneRemoval([], [change(5, 0, 5, 0, 'a\n')])).to.equal(-1);
 		});
 	});
+
+	describe('mapMarkLines with two changes on one line', () => {
+		it('applies the change further right first, whatever order the changes come in', () => {
+			// two cursors on the marked line 2: Enter at its start and Enter in the middle. The mark stays with the start of the line.
+			const atStart = change(2, 0, 2, 0, '\n');
+			const inTheMiddle = change(2, 3, 2, 3, '\n');
+			expect(mapMarkLines([2, 5], [atStart, inTheMiddle], 12)).to.deep.equal([3, 7]);
+			expect(mapMarkLines([2, 5], [inTheMiddle, atStart], 12)).to.deep.equal([3, 7]);
+		});
+	});
 });

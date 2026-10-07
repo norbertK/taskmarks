@@ -133,6 +133,25 @@ describe('MarkTracker', () => {
 			expect(other.getFile('/src/a.ts')?.lineNumbers).to.deep.equal([3]);
 		});
 
+		it('should remember only the last 20 removals of a file', () => {
+			// 21 marked lines are deleted one by one, from the bottom up, so the lines above keep their numbers
+			for (let line = 100; line <= 120; line++) {
+				active.toggle(fileA, line, '');
+			}
+			for (let line = 120; line >= 100; line--) {
+				changed(event(fileA, 1000, [change(line, line + 1, '')]));
+			}
+			expect(active.files.length).to.equal(0);
+			const undoDeletionOf = (line: number) => event(fileA, 1000, [change(line, line, 'the line\n')], { undo: true });
+
+			// the first deletion is forgotten, the second one and the last one are not
+			expect(changed(undoDeletionOf(120))).to.be.false;
+			expect(changed(undoDeletionOf(100))).to.be.true;
+			expect(changed(undoDeletionOf(119))).to.be.true;
+
+			expect(active.getFile('/src/a.ts')?.lineNumbers).to.deep.equal([100, 119]);
+		});
+
 		it('should keep the same file object for the active file when its marks come back', () => {
 			const activeFile = active.use(fileA);
 			active.toggle(fileA, 3, '');

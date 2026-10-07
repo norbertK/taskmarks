@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import { join, sep } from 'path';
 import { PathHelper } from '../../PathHelper';
 
 describe('PathHelper', () => {
@@ -61,6 +61,7 @@ describe('PathHelper', () => {
 		let globalStorage: string;
 		let context: vscode.ExtensionContext;
 		let useGlobalTaskmarksJson: boolean;
+		let previousBasePath: string;
 
 		function resetLocation(): void {
 			(PathHelper as any)._taskmarksDataFilePath = undefined;
@@ -74,6 +75,7 @@ describe('PathHelper', () => {
 		}
 
 		beforeEach(() => {
+			previousBasePath = PathHelper.basePath;
 			root = mkdtempSync(join(tmpdir(), 'taskmarks-test-'));
 			workspaceFolder = join(root, 'project');
 			localFile = join(workspaceFolder, '.vscode', 'taskmarks.json');
@@ -92,12 +94,26 @@ describe('PathHelper', () => {
 		afterEach(() => {
 			sinon.restore();
 			resetLocation();
+			PathHelper.basePath = previousBasePath;
 			rmSync(root, { recursive: true, force: true });
 		});
 
 		it('should use .vscode/taskmarks.json in the workspace folder by default', () => {
 			PathHelper.initTaskmarksDataFilePath(context);
 			expect(PathHelper.taskmarksDataFilePath).to.equal(localFile);
+		});
+
+		it('should know the path separator of this system and the other one', () => {
+			PathHelper.initTaskmarksDataFilePath(context);
+			expect(PathHelper.activePathChar).to.equal(sep);
+			expect(PathHelper.inactivePathChar).to.equal(sep === '/' ? '\\' : '/');
+		});
+
+		it('should say whether a file of the workspace exists', () => {
+			PathHelper.basePath = workspaceFolder;
+			write(join(workspaceFolder, 'src', 'a.ts'), '');
+			expect(PathHelper.fileExists(sep + 'src' + sep + 'a.ts')).to.be.true;
+			expect(PathHelper.fileExists(sep + 'src' + sep + 'only-on-another-branch.ts')).to.be.false;
 		});
 
 		it('should fail without a workspace folder', () => {

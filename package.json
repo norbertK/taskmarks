@@ -152,6 +152,18 @@
 		"ts-node": "^10.9.1",
 		"typescript": "^7.0.2"
 	},
+	"nyc": {
+		"all": true,
+		"include": [
+			"out/**/*.js",
+			"src/**/*.ts"
+		],
+		"exclude": [
+			"out/test/**",
+			"out/main.js",
+			"src/test/**"
+		]
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/norbertK/taskmarks"

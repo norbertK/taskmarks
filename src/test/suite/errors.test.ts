@@ -60,4 +60,12 @@ describe('Errors (pure)', () => {
 			expect(stack).to.be.undefined;
 		});
 	});
+
+	describe('values that can not be written as JSON', () => {
+		it('should fall back to the text of the value', () => {
+			const circular: Record<string, unknown> = {};
+			circular.self = circular;
+			expect(getErrorMessage(circular)).to.equal('[object Object]');
+		});
+	});
 });

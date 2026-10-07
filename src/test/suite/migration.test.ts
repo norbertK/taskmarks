@@ -187,4 +187,29 @@ describe('migration', () => {
 			expect(upgradeTask({ persistFiles: [] })).to.be.undefined;
 		});
 	});
+
+	describe('line numbers that can not be lines', () => {
+		it('drops negative and fractional line numbers of an old file', () => {
+			const result = loadTaskmarksJson(JSON.stringify({ activeTaskName: 'default', tasks: [{ name: 'default', files: [{ filepath: '\\a.ts', marks: [3, -1, 1.5] }] }] }));
+			expect(result.status).to.equal('ok');
+			expect((result as any).data.persistTasks[0].persistFiles[0].persistMarks).to.deep.equal([{ lineNumber: 3, label: '' }]);
+		});
+
+		it('drops negative and fractional line numbers of labelled marks', () => {
+			const task = upgradeTask({
+				name: 't',
+				persistFiles: [
+					{
+						filepath: '\\a.ts',
+						persistMarks: [
+							{ lineNumber: 3, label: 'ok' },
+							{ lineNumber: -1, label: 'negative' },
+							{ lineNumber: 1.5, label: 'fraction' },
+						],
+					},
+				],
+			});
+			expect(task?.persistFiles[0].persistMarks).to.deep.equal([{ lineNumber: 3, label: 'ok' }]);
+		});
+	});
 });

@@ -2,17 +2,11 @@ import * as vscode from 'vscode';
 import { PathHelper } from './PathHelper';
 
 export abstract class DecoratorHelper {
-	private static _iconPath: string;
 	private static _vscTextEditorDecorationType: vscode.TextEditorDecorationType;
 
-	static get iconPath(): string {
-		return this._iconPath;
-	}
-
 	static initDecorator(context: vscode.ExtensionContext): void {
-		this._iconPath = context.asAbsolutePath('images/bookmark.svg');
 		this._vscTextEditorDecorationType = vscode.window.createTextEditorDecorationType({
-			gutterIconPath: this._iconPath,
+			gutterIconPath: context.asAbsolutePath('images/bookmark.svg'),
 			overviewRulerLane: vscode.OverviewRulerLane.Full,
 			overviewRulerColor: 'rgba(196, 196, 0, 0.8)',
 		});

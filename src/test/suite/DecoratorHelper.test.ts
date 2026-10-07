@@ -87,4 +87,26 @@ describe('DecoratorHelper', () => {
 			expect(showWarningMessage.calledOnceWithExactly('Taskmarks: /src/a.ts could not be opened (file is locked).')).to.be.true;
 		});
 	});
+
+	describe('initDecorator', () => {
+		it('should create the gutter icon from the image of the extension and register it for disposal', () => {
+			const previousDecorationType = (DecoratorHelper as any)._vscTextEditorDecorationType;
+			const decorationType = { dispose: sinon.fake() };
+			const createTextEditorDecorationType = sinon.fake.returns(decorationType);
+			sinon.replace(vscode.window, 'createTextEditorDecorationType', createTextEditorDecorationType as any);
+			const subscriptions: unknown[] = [];
+			const context = { asAbsolutePath: (path: string) => '/extension/' + path, subscriptions } as unknown as vscode.ExtensionContext;
+
+			DecoratorHelper.initDecorator(context);
+
+			expect(createTextEditorDecorationType.calledOnce).to.be.true;
+			expect(createTextEditorDecorationType.firstCall.args[0].gutterIconPath).to.equal('/extension/images/bookmark.svg');
+			expect(subscriptions).to.deep.equal([decorationType]);
+
+			const editor = fakeEditor();
+			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, [1]);
+			expect(editor.setDecorations.firstCall.args[0]).to.equal(decorationType);
+			(DecoratorHelper as any)._vscTextEditorDecorationType = previousDecorationType;
+		});
+	});
 });

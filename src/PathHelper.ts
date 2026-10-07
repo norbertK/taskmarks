@@ -41,9 +41,6 @@ export abstract class PathHelper {
 	}
 
 	static initTaskmarksDataFilePath(context: vscode.ExtensionContext): void {
-		if (this._taskmarksDataFilePath) {
-			return;
-		}
 		const workspaceFolders = vscode.workspace.workspaceFolders;
 		if (workspaceFolders === undefined || workspaceFolders.length === 0) {
 			throw new Error('Error loading vscode.workspace! Stop!');
@@ -70,12 +67,8 @@ export abstract class PathHelper {
 	}
 
 	static checkTaskmarksDataFilePath(): void {
-		const taskmarksDataFilePath = PathHelper.taskmarksDataFilePath;
-		if (!taskmarksDataFilePath) {
-			throw new Error('missing location of Taskmarks.json');
-		}
 		// recursive: VS Code doesn't create the storage folder of a workspace
-		mkdirSync(dirname(taskmarksDataFilePath), { recursive: true });
+		mkdirSync(dirname(PathHelper.taskmarksDataFilePath), { recursive: true });
 	}
 
 	// filepath is relative to the workspace folder, as stored in a File

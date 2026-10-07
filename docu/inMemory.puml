@@ -132,10 +132,8 @@ abstract class Persist{
 }
 
 abstract class DecoratorHelper{
-    -{static}_iconPath: string
     -{static}_vscTextEditorDecorationType: vscode.TextEditorDecorationType
     +{static}initDecorator(context: vscode.ExtensionContext): void
-    +{static}get iconPath(): string
     +{static}refresh(activeEditor: vscode.TextEditor, marks: number[]): void
     +{static}showLine(line: number): void
     +{static}openAndShow(filepath: string, mark: number): void

@@ -785,4 +785,51 @@ describe('Commands', () => {
 			expect(reportError.calledOnceWithExactly({ message: 'no clipboard' })).to.be.true;
 		});
 	});
+
+	describe('copyToClipboard', () => {
+		afterEach(() => {
+			sinon.restore();
+		});
+
+		it('should copy the active task', () => {
+			const copyToClipboard = sinon.stub(Persist, 'copyToClipboard');
+			Commands.copyToClipboard();
+			expect(copyToClipboard.calledOnce).to.be.true;
+		});
+	});
+
+	describe('errors', () => {
+		const commands: [string, () => Promise<void>][] = [
+			['toggleMark', () => Commands.toggleMark()],
+			['nextMark', () => Commands.nextMark()],
+			['previousMark', () => Commands.previousMark()],
+			['selectMarkFromList', () => Commands.selectMarkFromList()],
+			['selectTask', () => Commands.selectTask()],
+			['renameTask', () => Commands.renameTask()],
+			['createTask', () => Commands.createTask()],
+			['deleteTask', () => Commands.deleteTask()],
+		];
+		let reportError: sinon.SinonStub;
+
+		beforeEach(() => {
+			// every command gets as far as asking for the tasks, and that fails
+			sinon.stub(vscode.window, 'activeTextEditor').get(() => ({ selection: { active: { line: 0 } }, document: { fileName: '/workspace/a.ts' } }));
+			sinon.replace(vscode.window, 'showInputBox', sinon.fake.resolves('a name') as any);
+			sinon.stub(Helper, 'taskManager').get(() => {
+				throw new Error('no tasks');
+			});
+			reportError = sinon.stub(Helper, 'reportError');
+		});
+
+		afterEach(() => {
+			sinon.restore();
+		});
+
+		commands.forEach(([name, command]) => {
+			it(`should report an error in ${name} instead of throwing`, async () => {
+				await command();
+				expect(reportError.calledOnceWithExactly({ message: 'no tasks' })).to.be.true;
+			});
+		});
+	});
 });
