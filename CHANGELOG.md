@@ -10,6 +10,9 @@ All notable changes to the "taskmarks" extension will be documented in this file
 - "Delete Task" on the active `default` task did not remove it: its bookmarks stayed visible, but the task was no longer saved, so bookmarks set afterwards were lost with the next reload. It is now replaced by a new, empty `default` task
 - "Rename Task" to the name of another task created two tasks with the same name, of which only one could be selected. Such a rename is now refused with a message
 - A renamed task was only written to taskmarks.json with the next save
+- Saving no longer removes the bookmarks of files that don't exist on disk. Before, the bookmarks a teammate set in a file that is missing in your checkout (another branch, not pulled yet) were deleted from the shared taskmarks.json with your next save
+- "Paste Task from Clipboard": the pasted bookmarks show up in the open editor right away, a message confirms the paste, text that is not a task gets a plain "does not contain a Taskmarks task" message, and a task copied on a system with the other path separator (Windows / macOS, Linux) finds its files
+- If taskmarks.json can't be written (locked, read-only), the error goes to the "Taskmarks Errors" output and the next save tries again
 - A bookmark in a file outside the workspace folder was lost with the next reload. Such a bookmark is no longer set; a message says why
 - Removing the last bookmark of a file and setting one again no longer moves the file to the end of its task in taskmarks.json
 - Paste from clipboard takes over the label of a bookmark if the bookmark on that line has none yet. Before, the label was dropped

@@ -25,6 +25,12 @@ export const vscode = {
 		onDidTerminateDebugSession: sinon.fake(),
 		startDebugging: sinon.fake(),
 	},
+	env: {
+		clipboard: {
+			readText: sinon.fake.resolves(''),
+			writeText: sinon.fake.resolves(undefined),
+		},
+	},
 	Range: sinon.fake(),
 	Uri: mockUri as any,
 	Diagnostic: sinon.fake(),

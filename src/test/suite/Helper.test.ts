@@ -235,6 +235,50 @@ describe('Helper', () => {
 		});
 	});
 
+	describe('pasteFromClipboard', () => {
+		let refresh: sinon.SinonStub;
+		let saveTaskmarksJson: sinon.SinonStub;
+		let reportError: sinon.SinonStub;
+
+		beforeEach(() => {
+			refresh = sinon.stub(Helper, 'refresh');
+			saveTaskmarksJson = sinon.stub(Persist, 'saveTaskmarksJson');
+			reportError = sinon.stub(Helper, 'reportError');
+		});
+
+		afterEach(() => {
+			sinon.restore();
+		});
+
+		it('should refresh the editor and save after a task was pasted', async () => {
+			const paste = sinon.stub(Persist, 'pasteFromClipboard').resolves(true);
+			await Helper.pasteFromClipboard();
+			expect(refresh.calledOnce).to.be.true;
+			expect(saveTaskmarksJson.calledOnce).to.be.true;
+			expect(refresh.calledAfter(paste)).to.be.true;
+		});
+
+		it('should neither refresh nor save when nothing was pasted', async () => {
+			sinon.stub(Persist, 'pasteFromClipboard').resolves(false);
+			await Helper.pasteFromClipboard();
+			expect(refresh.called).to.be.false;
+			expect(saveTaskmarksJson.called).to.be.false;
+		});
+
+		it('should report a file that could not be saved instead of throwing', async () => {
+			sinon.stub(Persist, 'pasteFromClipboard').resolves(true);
+			saveTaskmarksJson.throws(new Error('file is locked'));
+			await Helper.pasteFromClipboard();
+			expect(reportError.calledOnceWithExactly({ message: 'taskmarks.json could not be saved: file is locked' })).to.be.true;
+		});
+
+		it('should report a clipboard that could not be read', async () => {
+			sinon.stub(Persist, 'pasteFromClipboard').rejects(new Error('no clipboard'));
+			await Helper.pasteFromClipboard();
+			expect(reportError.calledOnceWithExactly({ message: 'no clipboard' })).to.be.true;
+		});
+	});
+
 	describe('renameTask', () => {
 		let taskManager: TaskManager;
 		let saveTaskmarksJson: sinon.SinonStub;

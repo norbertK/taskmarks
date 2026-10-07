@@ -5,6 +5,7 @@ import {
 	persistTaskToTask,
 	serializeTaskManager,
 	normalizeFilePaths,
+	normalizeTaskFilePaths,
 	createDefaultTaskmarksJson,
 } from '../../core/serialization';
 
@@ -128,6 +129,15 @@ describe('Serialization (pure)', () => {
 			const result = serializeTaskManager('default', []);
 			expect(result).to.include('\n');
 			expect(result).to.include('  ');
+		});
+	});
+
+	describe('normalizeTaskFilePaths', () => {
+		it('should convert the separators in the paths of one task and leave the task itself unchanged', () => {
+			const task = { name: 't', persistFiles: [{ filepath: '\\src\\a.ts', persistMarks: [{ lineNumber: 1, label: '' }] }] };
+			const result = normalizeTaskFilePaths(task, '\\', '/');
+			expect(result).to.deep.equal({ name: 't', persistFiles: [{ filepath: '/src/a.ts', persistMarks: [{ lineNumber: 1, label: '' }] }] });
+			expect(task.persistFiles[0].filepath).to.equal('\\src\\a.ts');
 		});
 	});
 

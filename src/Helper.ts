@@ -86,7 +86,7 @@ export abstract class Helper {
 			if (!this._taskManager.activeTask) {
 				return;
 			}
-			Persist.saveTaskmarksJson();
+			Helper.save();
 		});
 	}
 
@@ -157,7 +157,7 @@ export abstract class Helper {
 				restored.forEach((mark) => activeFile.addMark(mark));
 				this._taskManager.activeTask.syncFile(activeFile);
 				Helper.refresh();
-				Persist.saveTaskmarksJson();
+				Helper.save();
 			},
 			null,
 			context.subscriptions
@@ -212,6 +212,31 @@ export abstract class Helper {
 		}
 	}
 
+	// a failed write is reported, not thrown: most callers are event handlers, and the next save tries again
+	private static save(): void {
+		try {
+			Persist.saveTaskmarksJson();
+		} catch (error: unknown) {
+			Helper.reportError({ message: `taskmarks.json could not be saved: ${Helper.getErrorMessage(error)}` });
+		}
+	}
+
+	static copyToClipboard(): void {
+		Persist.copyToClipboard();
+	}
+
+	static async pasteFromClipboard(): Promise<void> {
+		try {
+			if (await Persist.pasteFromClipboard()) {
+				// the pasted task may have brought marks for the file in the active editor
+				Helper.refresh();
+				Helper.save();
+			}
+		} catch (error: unknown) {
+			Helper.reportError({ message: Helper.getErrorMessage(error) });
+		}
+	}
+
 	static async selectTask(): Promise<void> {
 		try {
 			const options: vscode.QuickPickOptions = {
@@ -230,7 +255,7 @@ export abstract class Helper {
 				}
 
 				Helper.triggerChangeActiveFile();
-				Persist.saveTaskmarksJson();
+				Helper.save();
 			});
 		} catch (error: unknown) {
 			const message = Helper.getErrorMessage(error);
@@ -264,7 +289,7 @@ export abstract class Helper {
 						return;
 					}
 					// save here, not after showInputBox() was called - then the new name is not known yet
-					Persist.saveTaskmarksJson();
+					Helper.save();
 				});
 			});
 		} catch (error: unknown) {
@@ -281,7 +306,7 @@ export abstract class Helper {
 					this._taskManager.useActiveTask(newTaskName);
 
 					Helper.triggerChangeActiveFile();
-					Persist.saveTaskmarksJson();
+					Helper.save();
 				}
 			});
 		} catch (error: unknown) {
@@ -303,7 +328,7 @@ export abstract class Helper {
 					}
 
 					Helper.triggerChangeActiveFile();
-					Persist.saveTaskmarksJson();
+					Helper.save();
 				});
 		} catch (error: unknown) {
 			const message = Helper.getErrorMessage(error);
@@ -351,12 +376,12 @@ export abstract class Helper {
 					if (newLabel) {
 						this._taskManager.activeTask.toggle(fullName, activeLine, newLabel);
 					}
-					Persist.saveTaskmarksJson();
+					Helper.save();
 					Helper.triggerChangeActiveFile();
 				});
 			} else {
 				this._taskManager.activeTask.toggle(activeTextEditor.document.fileName, activeLine, '');
-				Persist.saveTaskmarksJson();
+				Helper.save();
 				Helper.triggerChangeActiveFile();
 			}
 		} catch (error: unknown) {

@@ -1,217 +1,352 @@
+import * as vscode from 'vscode';
+import { describe, it, beforeEach, afterEach } from 'mocha';
+import { expect } from 'chai';
+import * as sinon from 'sinon';
+
 import { TaskManager } from '../../TaskManager';
 import { Persist } from '../../Persist';
 import { PathHelper } from '../../PathHelper';
-import { Task } from '../../Task';
-import { IPersistFile, IPersistTask, IPersistTaskManager } from '../../types';
-import * as sinon from 'sinon';
+import type { IPersistTask } from '../../types';
 
-import * as vscode from 'vscode';
-import { expect } from 'chai';
+describe('Persist', () => {
+	const context = {} as vscode.ExtensionContext;
+	const fileA = '/src/a.ts';
+	const fullPathA = '/workspace/src/a.ts';
 
-const basePath = 'c:\\temp';
-const markPath = '\\src\\Mark.ts';
-const fullMarkPath = 'c:\\temp\\src\\Mark.ts';
+	let taskManager: TaskManager;
+	let previousBasePath: string;
 
-// jest.mock('../PathHelper');
+	// the faked taskmarks.json: its content, whether it exists, what was written to it
+	let fileContent: string;
+	let isNew: boolean;
+	let saveTaskmarks: sinon.SinonStub;
+	let writeBackup: sinon.SinonStub;
+	let fileExists: sinon.SinonStub;
 
-// const taskManager = TaskManager.instance;
+	let showWarningMessage: sinon.SinonSpy;
+	let showInformationMessage: sinon.SinonSpy;
+	let clipboardText: string;
 
-// const { persistTasks, activeTaskName }: IPersistTaskManager =
-//   JSON.parse(taskmarksJson);
+	function taskmarksJson(activeTaskName: string, persistTasks: IPersistTask[], version: number | 'none' = 2): string {
+		return JSON.stringify({ ...(version === 'none' ? {} : { version }), activeTaskName, persistTasks }, null, '  ');
+	}
 
-// describe('Persist Tests', () => {
-//   let mockFileExists = jest.fn();
-//   let mockSaveTaskmarks = jest.fn();
-//   let mockStaticMethod = jest.fn();
-//   let mockCheckTaskmarksDataFilePath = jest.fn();
+	function taskWithMark(name: string, filepath: string, lineNumber: number, label = ''): IPersistTask {
+		return { name, persistFiles: [{ filepath, persistMarks: [{ lineNumber, label }] }] };
+	}
 
-//   beforeEach(() => {
-//     PathHelper.fileExists = mockFileExists;
-//     PathHelper.saveTaskmarks = mockSaveTaskmarks;
-//     PathHelper.checkTaskmarksDataFilePath = mockCheckTaskmarksDataFilePath;
-//     PathHelper.getTaskmarksJson = mockStaticMethod;
-//   });
+	function load(json: string): void {
+		fileContent = json;
+		isNew = false;
+		Persist.initAndLoad(taskManager, context);
+	}
 
-//   test('initAndLoad', () => {
-//     mockStaticMethod.mockReturnValue(taskmarksJson);
+	function loadWithoutFile(): void {
+		fileContent = taskmarksJson('default', [{ name: 'default', persistFiles: [] }]);
+		isNew = true;
+		Persist.initAndLoad(taskManager, context);
+	}
 
-//     Persist.initAndLoad(taskManager);
+	function lastSaved(): { version: number; activeTaskName: string; persistTasks: IPersistTask[] } {
+		return JSON.parse(saveTaskmarks.lastCall.args[0]);
+	}
 
-//     expect(taskManager.activeTask.name).toEqual(activeTaskName);
-//     expect(mockStaticMethod).toHaveBeenCalled();
-//   });
+	function clipboardRead(): Promise<void> {
+		return new Promise((resolve) => setImmediate(resolve));
+	}
 
-//   it('saveTasks', () => {
-//     mockFileExists.mockReturnValue(true);
-//     Persist.saveTaskmarksJson();
+	beforeEach(() => {
+		taskManager = TaskManager.instance;
+		[...taskManager.taskNames].forEach((name) => taskManager.delete(name));
+		previousBasePath = PathHelper.basePath;
+		PathHelper.basePath = '/workspace';
+		(Persist as any)._readOnly = false;
 
-//     const persistTaskManager: IPersistTaskManager = {
-//       activeTaskName: taskManager.activeTask.name,
-//       persistTasks: [],
-//     };
+		sinon.stub(PathHelper, 'getTaskmarksJson').callsFake(() => fileContent);
+		sinon.stub(PathHelper, 'taskmarksJsonIsNew').get(() => isNew);
+		sinon.stub(PathHelper, 'activePathChar').get(() => '/');
+		sinon.stub(PathHelper, 'inactivePathChar').get(() => '\\');
+		sinon.stub(PathHelper, 'checkTaskmarksDataFilePath');
+		saveTaskmarks = sinon.stub(PathHelper, 'saveTaskmarks').callsFake(() => {
+			isNew = false;
+		});
+		writeBackup = sinon.stub(PathHelper, 'writeBackup').returns('taskmarks.json.bak');
+		fileExists = sinon.stub(PathHelper, 'fileExists').returns(true);
 
-//     taskManager.allTasks.forEach((task) => {
-//       const persistTask: IPersistTask = copyTaskToPersistTask(task);
-//       persistTaskManager.persistTasks.push(persistTask);
-//     });
+		showWarningMessage = sinon.fake();
+		sinon.replace(vscode.window, 'showWarningMessage', showWarningMessage as any);
+		showInformationMessage = sinon.fake();
+		sinon.replace(vscode.window, 'showInformationMessage', showInformationMessage as any);
 
-//     expect(mockSaveTaskmarks).toBeCalledWith(persistTaskManager);
-//   });
+		clipboardText = '';
+		sinon.stub(Persist, 'readClipboard').callsFake(() => Promise.resolve(clipboardText));
+		sinon.stub(Persist, 'writeClipboard').callsFake((text: string) => {
+			clipboardText = text;
+			return Promise.resolve();
+		});
+	});
 
-//   // it('a longer path', () => {
-//   //   expect(PathHelper.getFullPath(markPath)).toBe(fullMarkPath);
-//   // });
-// });
+	afterEach(() => {
+		sinon.restore();
+		(Persist as any)._readOnly = false;
+		[...taskManager.taskNames].forEach((name) => taskManager.delete(name));
+		PathHelper.basePath = previousBasePath;
+	});
 
-// function copyTaskToPersistTask(task: Task): IPersistTask {
-//   const persistTask: IPersistTask = {
-//     name: task.name,
-//     persistFiles: [],
-//   };
+	describe('initAndLoad', () => {
+		it('should load the tasks with their marks and labels and make the stored task the active one', () => {
+			load(taskmarksJson('second', [taskWithMark('first', fileA, 3, 'look here'), taskWithMark('second', '/src/b.ts', 7)]));
 
-//   task.files.forEach((file) => {
-//     if (file && file.marks && file.marks.length > 0) {
-//       const persistFile: IPersistFile = {
-//         filepath: file.filepath,
-//         persistMarks: file.allPersistMarks,
-//       };
-//       persistTask.persistFiles.push(persistFile);
-//     }
-//   });
-//   return persistTask;
-// }
+			expect(taskManager.taskNames).to.include.members(['first', 'second']);
+			expect(taskManager.activeTask.name).to.equal('second');
+			const first = taskManager.allTasks.find((task) => task.name === 'first');
+			expect(first?.getFile(fileA)?.allPersistMarks).to.deep.equal([{ lineNumber: 3, label: 'look here' }]);
+			expect(showWarningMessage.called).to.be.false;
+		});
 
-// suite('Persist Tests', () => {
-// 	const taskManager = TaskManager.instance;
+		it('should convert the paths to the separator of this system', () => {
+			load(taskmarksJson('default', [taskWithMark('default', '\\src\\a.ts', 3)]));
+			expect(taskManager.activeTask.getFile(fileA)?.hasMark(3)).to.be.true;
+		});
 
-// 	const taskName = 'test task';
-// 	const task = new Task(taskName);
-// 	taskManager.addTask(Persist.copyTaskToPersistTask(task));
+		it('should not write a backup for a file in the current format', () => {
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3)]));
+			expect(writeBackup.called).to.be.false;
+		});
 
-// 	test('initAndLoad should correctly load persisted tasks', () => {
-// 		const oldTaskmarksJson = PathHelper.getTaskmarksJson();
-// 		const persistTaskManager: IPersistTaskManager = {
-// 			activeTaskName: taskName,
-// 			persistTasks: [
-// 				{
-// 					name: 'persisted task',
-// 					persistFiles: [
-// 						{
-// 							filepath: 'path/to/file',
-// 							persistMarks: [
-// 								{ lineNumber: 1, label: 'label1' },
-// 								{ lineNumber: 2, label: 'label2' }
-// 							]
-// 						}
-// 					]
-// 				}
-// 			]
-// 		};
-// 		// const persistTaskManagerJson = JSON.stringify(persistTaskManager);
-// 		// export interface IPersistMark {
-// 		// 	lineNumber: number;
-// 		// 	label: string;
-// 		//   }
+		it('should back up a file in an older format before it is upgraded', () => {
+			const oldJson = taskmarksJson('default', [taskWithMark('default', fileA, 3)], 'none');
+			load(oldJson);
 
-// 		// const persistTaskManager: IPersistTaskManager = {
-// 		// 	activeTaskName: this._taskManager.activeTask.name,
-// 		// 	persistTasks: [],
-// 		// };
-// 		PathHelper.saveTaskmarks(persistTaskManager);
+			expect(writeBackup.calledOnceWithExactly('v1', oldJson)).to.be.true;
+			expect(taskManager.activeTask.getFile(fileA)?.hasMark(3)).to.be.true;
+		});
 
-// 		Persist.initAndLoad(taskManager);
+		it('should load the oldest format (tasks / files / marks)', () => {
+			const oldJson = JSON.stringify({ activeTaskName: 'default', tasks: [{ name: 'default', files: [{ filepath: fileA, marks: [3, 9] }] }] });
+			load(oldJson);
 
-// 		expect(taskManager.allTasks.length).to.equal(2);
-// 		const persistedTask = taskManager.allTasks[1];
-// 		expect(persistedTask.name).to.equal('persisted task');
-// 		expect(persistedTask.files.length).to.equal(1);
-// 		const file = persistedTask.files[0];
-// 		expect(file.filepath).to.equal('path/to/file');
-// 		expect(file.lineNumbers.length).to.equal(2);
-// 		// expect(file.getMarksForLine(1).length).to.equal(1);
-// 		// expect(file.getMarksForLine(1)[0].name).to.equal('mark1');
-// 		// expect(file.getMarksForLine(2).length).to.equal(1);
-// 		// expect(file.getMarksForLine(2)[0].name).to.equal('mark2');
+			expect(writeBackup.calledOnceWithExactly('v0', oldJson)).to.be.true;
+			expect(taskManager.activeTask.getFile(fileA)?.lineNumbers).to.deep.equal([3, 9]);
+		});
 
-// 		// PathHelper.saveTaskmarks(oldTaskmarksJson);
-// 	});
+		it('should not write a backup when there is no file yet', () => {
+			loadWithoutFile();
+			expect(writeBackup.called).to.be.false;
+			expect(taskManager.activeTask.name).to.equal('default');
+		});
 
-// 	test('saveTaskmarksJson should correctly save taskmarks', () => {
-// 		Persist.initAndLoad(taskManager);
+		it('should back up an invalid file, warn and start with an empty default task', () => {
+			load('{ this is not json');
 
-// 		Persist.copyTaskToPersistTask(task);
-// 		Persist.saveTaskmarksJson();
+			expect(writeBackup.calledOnceWithExactly('invalid', '{ this is not json')).to.be.true;
+			expect(showWarningMessage.calledOnce).to.be.true;
+			expect(taskManager.activeTask.name).to.equal('default');
+			expect(taskManager.activeTask.hasMarks).to.be.false;
+		});
 
-// 		const taskmarksJson = PathHelper.getTaskmarksJson();
-// 		const persistTaskManager = JSON.parse(taskmarksJson);
-// 		expect(persistTaskManager.activeTaskName).to.equal(taskName);
-// 		expect(persistTaskManager.persistTasks.length).to.equal(1);
-// 		const persistTask = persistTaskManager.persistTasks[0];
-// 		expect(persistTask.name).to.equal(taskName);
-// 		expect(persistTask.persistFiles.length).to.equal(0);
-// 	});
+		it('should load a file of a newer format, warn and never save over it', () => {
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3)], 99));
 
-// 	test('copyToClipboard should correctly copy active task to clipboard', () => {
-// 		const writeTextStub = sinon.stub(vscode.env.clipboard, 'writeText');
-// 		Persist.copyToClipboard();
-// 		expect(writeTextStub.calledOnce).to.be.true;
-// 		const activeTaskString = writeTextStub.args[0][0];
-// 		expect(activeTaskString).to.exist;
-// 		const persistedTask = JSON.parse(activeTaskString);
-// 		expect(persistedTask.name).to.equal(taskName);
-// 		expect(persistedTask.persistFiles.length).to.equal(0);
-// 		writeTextStub.restore();
-// 	});
-// });
+			expect(showWarningMessage.calledOnce).to.be.true;
+			expect(writeBackup.called).to.be.false;
+			expect(taskManager.activeTask.getFile(fileA)?.hasMark(3)).to.be.true;
 
-// describe('Persist', () => {
-//   let taskManager: TaskManager;
+			taskManager.activeTask.toggle(fullPathA, 5, '');
+			Persist.saveTaskmarksJson();
+			expect(saveTaskmarks.called).to.be.false;
+		});
 
-//   beforeEach(() => {
-// 	const taskManager = TaskManager.instance;
-//   });
+		it('should save again after a newer file was replaced by a readable one', () => {
+			load(taskmarksJson('default', [], 99));
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3)]));
 
-//   describe('initAndLoad', () => {
-//     it('should load taskmarks from JSON if file exists', () => {
-//       const taskmarksJson = '{"activeTaskName": "testTask", "persistTasks": []}';
-//       const readFileSyncStub = sinon.stub().returns(taskmarksJson);
-//       const existsSyncStub = sinon.stub().returns(true);
-//       const initTaskmarksDataFilePathStub = sinon.stub();
-//       const replaceAllStub = sinon.stub().returns(taskmarksJson);
-//       const pathHelperMock = {
-//         initTaskmarksDataFilePath: initTaskmarksDataFilePathStub,
-//         replaceAll: replaceAllStub,
-//       };
-//       const persistTask = { name: 'testTask', persistFiles: [] };
-//       const persistTaskManager = {
-//         activeTaskName: 'testTask',
-//         persistTasks: [persistTask],
-//       };
-//       const expectedTaskManager = TaskManager.instance;
+			taskManager.activeTask.toggle(fullPathA, 5, '');
+			Persist.saveTaskmarksJson();
+			expect(saveTaskmarks.calledOnce).to.be.true;
+		});
+	});
 
-//       expectedTaskManager.addTask(persistTask);
+	describe('saveTaskmarksJson', () => {
+		it('should write all tasks in the current format', () => {
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3, 'look here')]));
+			taskManager.useActiveTask('other').toggle('/workspace/src/b.ts', 7, '');
 
-//       const persist :  Persist={};
-//       const getTaskmarksJsonStub = sinon.stub(persist, 'getTaskmarksJson')
-//         .returns(taskmarksJson);
-//       const pathHelperReplaceAllStub = sinon.stub(Persist, 'PathHelper').get(() => pathHelperMock);
-//       const readFileSyncOrig = Persist.readFileSync;
-//       const existsSyncOrig = Persist.existsSync;
-//       Persist.readFileSync = readFileSyncStub;
-//       Persist.existsSync = existsSyncStub;
+			Persist.saveTaskmarksJson();
 
-//       Persist.initAndLoad(taskManager);
+			expect(lastSaved()).to.deep.equal({
+				version: 2,
+				activeTaskName: 'other',
+				persistTasks: [taskWithMark('default', fileA, 3, 'look here'), taskWithMark('other', '/src/b.ts', 7)],
+			});
+		});
 
-//       expect(getTaskmarksJsonStub.calledOnce).to.be.true;
-//       expect(initTaskmarksDataFilePathStub.calledOnce).to.be.true;
-//       expect(replaceAllStub.calledThrice).to.be.true;
-//       expect(readFileSyncStub.calledOnceWithExactly(Persist.PathHelper._taskmarksDataFilePath)).to.be.true;
-//       expect(existsSyncStub.calledOnceWithExactly(Persist.PathHelper._taskmarksDataFilePath)).to.be.true;
-//       expect(taskManager.tasks).to.eql(expectedTaskManager.tasks);
+		it('should write the marks of a file sorted by line', () => {
+			loadWithoutFile();
+			taskManager.activeTask.toggle(fullPathA, 9, '');
+			taskManager.activeTask.toggle(fullPathA, 3, '');
 
-//       Persist.readFileSync = readFileSyncOrig;
-//       Persist.existsSync = existsSyncOrig;
-//       pathHelperReplaceAllStub.restore();
-//     });
-//   });
-// });
+			Persist.saveTaskmarksJson();
+
+			expect(lastSaved().persistTasks[0].persistFiles[0].persistMarks.map((mark) => mark.lineNumber)).to.deep.equal([3, 9]);
+		});
+
+		it('should not write when nothing has changed since the file was loaded', () => {
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3)]));
+			Persist.saveTaskmarksJson();
+			expect(saveTaskmarks.called).to.be.false;
+		});
+
+		it('should not write again when nothing has changed since the last save', () => {
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3)]));
+			taskManager.activeTask.toggle(fullPathA, 5, '');
+
+			Persist.saveTaskmarksJson();
+			Persist.saveTaskmarksJson();
+
+			expect(saveTaskmarks.calledOnce).to.be.true;
+		});
+
+		it('should upgrade a file in an older format with the first save', () => {
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3)], 'none'));
+			Persist.saveTaskmarksJson();
+			expect(lastSaved().version).to.equal(2);
+		});
+
+		it('should not create a file while the default task is active and has no marks', () => {
+			loadWithoutFile();
+			Persist.saveTaskmarksJson();
+			expect(saveTaskmarks.called).to.be.false;
+		});
+
+		it('should create the file with the first mark', () => {
+			loadWithoutFile();
+			taskManager.activeTask.toggle(fullPathA, 3, '');
+			Persist.saveTaskmarksJson();
+			expect(lastSaved().persistTasks).to.deep.equal([taskWithMark('default', fileA, 3)]);
+		});
+
+		it('should create the file when another task than default is active', () => {
+			loadWithoutFile();
+			taskManager.useActiveTask('other');
+			Persist.saveTaskmarksJson();
+			expect(lastSaved().activeTaskName).to.equal('other');
+		});
+
+		it('should keep the marks of a file that does not exist here', () => {
+			load(taskmarksJson('default', [taskWithMark('default', '/src/only-on-another-branch.ts', 3, 'from a teammate')]));
+			fileExists.returns(false);
+			taskManager.activeTask.toggle(fullPathA, 5, '');
+
+			Persist.saveTaskmarksJson();
+
+			expect(lastSaved().persistTasks[0].persistFiles).to.deep.equal([
+				{ filepath: '/src/only-on-another-branch.ts', persistMarks: [{ lineNumber: 3, label: 'from a teammate' }] },
+				{ filepath: fileA, persistMarks: [{ lineNumber: 5, label: '' }] },
+			]);
+		});
+
+		it('should try again with the next save after the file could not be written', () => {
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3)]));
+			taskManager.activeTask.toggle(fullPathA, 5, '');
+			saveTaskmarks.onFirstCall().throws(new Error('file is locked'));
+
+			expect(() => Persist.saveTaskmarksJson()).to.throw('file is locked');
+			Persist.saveTaskmarksJson();
+
+			expect(saveTaskmarks.calledTwice).to.be.true;
+		});
+	});
+
+	describe('copyToClipboard', () => {
+		it('should put the active task on the clipboard', () => {
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3, 'look here')]));
+			Persist.copyToClipboard();
+			expect(JSON.parse(clipboardText)).to.deep.equal(taskWithMark('default', fileA, 3, 'look here'));
+		});
+
+		it('should also copy the marks of a file that does not exist here', () => {
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3)]));
+			fileExists.returns(false);
+			Persist.copyToClipboard();
+			expect(JSON.parse(clipboardText)).to.deep.equal(taskWithMark('default', fileA, 3));
+		});
+	});
+
+	describe('pasteFromClipboard', () => {
+		beforeEach(() => {
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3)]));
+		});
+
+		it('should add the task from the clipboard and say so', async () => {
+			clipboardText = JSON.stringify(taskWithMark('pasted', '/src/b.ts', 7, 'look here'));
+
+			const pasted = await Persist.pasteFromClipboard();
+			await clipboardRead();
+
+			expect(pasted).to.be.true;
+			const task = taskManager.allTasks.find((task) => task.name === 'pasted');
+			expect(task?.getFile('/src/b.ts')?.allPersistMarks).to.deep.equal([{ lineNumber: 7, label: 'look here' }]);
+			expect(taskManager.activeTask.name).to.equal('default');
+			expect(showInformationMessage.calledOnceWithExactly("Taskmarks: task 'pasted' pasted from the clipboard.")).to.be.true;
+		});
+
+		it('should merge the marks into a task with the same name', async () => {
+			clipboardText = JSON.stringify(taskWithMark('default', fileA, 9));
+
+			await Persist.pasteFromClipboard();
+			await clipboardRead();
+
+			expect(taskManager.activeTask.getFile(fileA)?.lineNumbers).to.deep.equal([3, 9]);
+		});
+
+		it('should accept a task copied by an older version', async () => {
+			clipboardText = JSON.stringify({ name: 'old', files: [{ filepath: fileA, lineNumbers: [4] }] });
+
+			await Persist.pasteFromClipboard();
+			await clipboardRead();
+
+			expect(taskManager.allTasks.find((task) => task.name === 'old')?.getFile(fileA)?.hasMark(4)).to.be.true;
+		});
+
+		it('should convert the paths to the separator of this system', async () => {
+			clipboardText = JSON.stringify(taskWithMark('pasted', '\\src\\b.ts', 7));
+
+			await Persist.pasteFromClipboard();
+			await clipboardRead();
+
+			expect(taskManager.allTasks.find((task) => task.name === 'pasted')?.getFile('/src/b.ts')?.hasMark(7)).to.be.true;
+		});
+
+		it('should say that the clipboard is empty', async () => {
+			clipboardText = '';
+
+			const pasted = await Persist.pasteFromClipboard();
+			await clipboardRead();
+
+			expect(pasted).to.be.false;
+			expect(showInformationMessage.calledOnceWithExactly('Taskmarks: the clipboard does not contain a Taskmarks task.')).to.be.true;
+		});
+
+		it('should say that text which is not JSON is not a task', async () => {
+			clipboardText = 'just some text';
+
+			const pasted = await Persist.pasteFromClipboard();
+			await clipboardRead();
+
+			expect(pasted).to.be.false;
+			expect(showInformationMessage.calledOnceWithExactly('Taskmarks: the clipboard does not contain a Taskmarks task.')).to.be.true;
+		});
+
+		it('should say that JSON which is not a task is not a task', async () => {
+			clipboardText = JSON.stringify({ some: 'thing' });
+
+			const pasted = await Persist.pasteFromClipboard();
+			await clipboardRead();
+
+			expect(pasted).to.be.false;
+			expect(showInformationMessage.calledOnceWithExactly('Taskmarks: the clipboard does not contain a Taskmarks task.')).to.be.true;
+			expect(taskManager.taskNames).to.deep.equal(['default']);
+		});
+	});
+});

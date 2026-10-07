@@ -296,8 +296,8 @@ sequenceDiagram
 | `renameTask` | - | `Helper.renameTask()` |
 | `deleteTask` | - | `Helper.deleteTask()` |
 | `selectMarkFromList` | - | `Helper.selectMarkFromList()` |
-| `copyToClipboard` | - | `Persist.copyToClipboard()` |
-| `pasteFromClipboard` | - | `Persist.pasteFromClipboard()` |
+| `copyToClipboard` | - | `Helper.copyToClipboard()` |
+| `pasteFromClipboard` | - | `Helper.pasteFromClipboard()` |
 
 ---
 
@@ -317,7 +317,8 @@ findPreviousFileWithMarks(files, currentIndex): { filepath, lineNumber } | undef
 ### core/serialization.ts
 
 ```typescript
-taskToPersistTask(task, fileExistsCheck): IPersistTask
+taskToPersistTask(task, fileExistsCheck): IPersistTask   // Persist passes no check: files missing on disk are kept
+normalizeTaskFilePaths(persistTask, fromChar, toChar): IPersistTask   // used for clipboard paste
 persistTaskToTask(persistTask): SerializableTask
 normalizeFilePaths(persistTaskManager, fromChar, toChar): IPersistTaskManager
 ```

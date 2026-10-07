@@ -93,12 +93,19 @@ export function normalizeFilePaths(
 ): IPersistTaskManager {
 	return {
 		...persistTaskManager,
-		persistTasks: persistTaskManager.persistTasks.map((task) => ({
-			...task,
-			persistFiles: task.persistFiles.map((file) => ({
-				...file,
-				filepath: file.filepath.replaceAll(fromChar, toChar),
-			})),
+		persistTasks: persistTaskManager.persistTasks.map((task) => normalizeTaskFilePaths(task, fromChar, toChar)),
+	};
+}
+
+/**
+ * Normalize file paths of a single task (convert path separators).
+ */
+export function normalizeTaskFilePaths(persistTask: IPersistTask, fromChar: string, toChar: string): IPersistTask {
+	return {
+		...persistTask,
+		persistFiles: persistTask.persistFiles.map((file) => ({
+			...file,
+			filepath: file.filepath.replaceAll(fromChar, toChar),
 		})),
 	};
 }

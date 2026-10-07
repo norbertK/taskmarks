@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 
-import type { IPersistFile, IPersistMark, IPersistTask, IPersistTaskManager } from './types';
+import type { IPersistTask } from './types';
 import { PathHelper } from './PathHelper';
 import { TaskManager } from './TaskManager';
 import { Task } from './Task';
-import { normalizeFilePaths, taskToPersistTask, type SerializableTask } from './core/serialization';
+import { normalizeFilePaths, normalizeTaskFilePaths, serializeTaskManager, taskToPersistTask, type SerializableTask } from './core/serialization';
 import { CURRENT_VERSION, loadTaskmarksJson, upgradeTask } from './core/migration';
 
 export abstract class Persist {
@@ -14,6 +14,7 @@ export abstract class Persist {
 
 	static initAndLoad(taskManager: TaskManager, context: vscode.ExtensionContext): void {
 		this._taskManager = taskManager;
+		Persist._readOnly = false;
 		const taskmarksJson = PathHelper.getTaskmarksJson(context);
 		Persist._lastSavedTaskmarksJson = taskmarksJson;
 
@@ -45,84 +46,76 @@ export abstract class Persist {
 		}
 	}
 
+	// throws if the file can't be written - the next call tries again
 	static saveTaskmarksJson(): void {
 		if (Persist._readOnly) {
 			return;
 		}
-		if (!this._taskManager.activeTask) {
-			console.log('no active task? - should never happen!');
+		const activeTask = this._taskManager.activeTask;
+		if (PathHelper.taskmarksJsonIsNew && activeTask.name === 'default' && !activeTask.hasMarks) {
 			return;
 		}
-		if (PathHelper.taskmarksJsonIsNew) {
-			if (this._taskManager.activeTask.name === 'default' && !this._taskManager.activeTask.hasMarks) {
-				return;
-			}
+
+		const taskmarksJsonToBeSaved = serializeTaskManager(
+			activeTask.name,
+			this._taskManager.allTasks.map((task) => Persist.toSerializableTask(task))
+		);
+		if (Persist._lastSavedTaskmarksJson === taskmarksJsonToBeSaved) {
+			return;
 		}
 		PathHelper.checkTaskmarksDataFilePath();
-
-		const persistTaskManager: IPersistTaskManager = {
-			version: CURRENT_VERSION,
-			activeTaskName: this._taskManager.activeTask.name,
-			persistTasks: [],
-		};
-		this._taskManager.allTasks.forEach((task) => {
-			const persistTask: IPersistTask = this.copyTaskToPersistTask(task);
-			persistTaskManager.persistTasks.push(persistTask);
-		});
-
-		const taskmarksJsonToBeSaved = JSON.stringify(persistTaskManager, null, '  ');
-		if (Persist._lastSavedTaskmarksJson !== taskmarksJsonToBeSaved) {
-			Persist._lastSavedTaskmarksJson = taskmarksJsonToBeSaved;
-			PathHelper.saveTaskmarks(taskmarksJsonToBeSaved);
-		}
+		PathHelper.saveTaskmarks(taskmarksJsonToBeSaved);
+		Persist._lastSavedTaskmarksJson = taskmarksJsonToBeSaved;
 	}
 
 	static copyToClipboard(): void {
-		if (!this._taskManager.activeTask) {
-			throw new Error('no active task');
+		const activeTaskString = JSON.stringify(this.copyTaskToPersistTask(this._taskManager.activeTask));
+		Persist.writeClipboard(activeTaskString);
+	}
+
+	// merges the task on the clipboard into the task with the same name (a new task, if there is none)
+	// true if a task was pasted - the caller has to save and to refresh the editor
+	static async pasteFromClipboard(): Promise<boolean> {
+		const clip = await Persist.readClipboard();
+		const persistedTask = Persist.parseTask(clip);
+		if (!persistedTask) {
+			vscode.window.showInformationMessage('Taskmarks: the clipboard does not contain a Taskmarks task.');
+			return false;
 		}
-		const persistTaskVersionOfActiveTask = this.copyTaskToPersistTask(this._taskManager.activeTask);
 
-		const activeTaskString = JSON.stringify(persistTaskVersionOfActiveTask);
-
-		vscode.env.clipboard.writeText(activeTaskString);
+		// the task may have been copied on a system with the other path separator
+		this._taskManager.addTask(normalizeTaskFilePaths(persistedTask, PathHelper.inactivePathChar, PathHelper.activePathChar));
+		vscode.window.showInformationMessage(`Taskmarks: task '${persistedTask.name}' pasted from the clipboard.`);
+		return true;
 	}
 
-	static pasteFromClipboard(): void {
-		vscode.env.clipboard.readText().then((clip) => {
-			let activeTaskString = clip;
-
-			if (!activeTaskString) {
-				vscode.window.showInformationMessage('Could not paste Task from Clipboard.');
-				return;
-			}
-
-			try {
-				const persistedTask = upgradeTask(JSON.parse(activeTaskString));
-				if (!persistedTask) {
-					vscode.window.showInformationMessage('The clipboard does not contain a Taskmarks task.');
-					return;
-				}
-
-				this._taskManager.addTask(persistedTask);
-
-				this.saveTaskmarksJson();
-			} catch (error) {
-				vscode.window.showInformationMessage('PasteFromClipboard failed with ' + error);
-			}
-		});
+	// own methods, because vscode.env.clipboard is read-only in a real VS Code and can't be replaced in tests
+	static readClipboard(): Thenable<string> {
+		return vscode.env.clipboard.readText();
 	}
 
+	static writeClipboard(text: string): Thenable<void> {
+		return vscode.env.clipboard.writeText(text);
+	}
+
+	// marks of files that don't exist here are kept: the file may exist for a teammate or on another branch
 	static copyTaskToPersistTask(task: Task): IPersistTask {
-		const serializableTask: SerializableTask = {
+		return taskToPersistTask(Persist.toSerializableTask(task));
+	}
+
+	private static toSerializableTask(task: Task): SerializableTask {
+		return {
 			name: task.name,
-			files: task.files
-				.filter((file) => file && file.filepath && file.lineNumbers)
-				.map((file) => ({
-					filepath: file.filepath,
-					marks: file.allPersistMarks,
-				})),
+			files: task.files.map((file) => ({ filepath: file.filepath, marks: file.allPersistMarks })),
 		};
-		return taskToPersistTask(serializableTask, PathHelper.fileExists);
+	}
+
+	// a task in any known format (it may have been copied by an older version), undefined for anything else
+	private static parseTask(text: string): IPersistTask | undefined {
+		try {
+			return upgradeTask(JSON.parse(text));
+		} catch {
+			return undefined;
+		}
 	}
 }

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { Helper } from './Helper';
-import { Persist } from './Persist';
 
 export function activate(context: vscode.ExtensionContext) {
 	const outputChannel = vscode.window.createOutputChannel('Taskmarks Errors');
@@ -41,13 +40,12 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(toggleMarkDisposable);
 
 	let copyToClipboardDisposable = vscode.commands.registerCommand('taskmarks.copyToClipboard', () => {
-		Persist.copyToClipboard();
+		Helper.copyToClipboard();
 	});
 	context.subscriptions.push(copyToClipboardDisposable);
 
 	let pasteFromClipboardDisposable = vscode.commands.registerCommand('taskmarks.pasteFromClipboard', () => {
-		Persist.pasteFromClipboard();
-		Helper.refresh();
+		Helper.pasteFromClipboard();
 	});
 	context.subscriptions.push(pasteFromClipboardDisposable);
 

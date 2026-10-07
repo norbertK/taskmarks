@@ -27,7 +27,7 @@ Packaging: `npm run "build package"` (vsce). The `esbuild*` scripts produce `out
 
 ## Layout
 
-- `src/extension.ts`: registers the commands. Every handler delegates to `Helper` (or `Persist` for the clipboard commands).
+- `src/extension.ts`: registers the commands. Every handler delegates to `Helper`.
 - `src/Helper.ts`: wires VS Code events (active editor, save, text change incl. undo restore of removed marks) and the command UIs.
 - `src/TaskManager.ts` (singleton) → `Task` → `File[]` → `Mark`: the in-memory model.
 - `src/Persist.ts`, `src/PathHelper.ts`: load/save `taskmarks.json`, backups, path handling, the global-storage option.
