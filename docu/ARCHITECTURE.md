@@ -247,7 +247,7 @@ interface IPersistMark {
 | 0 | 0.8.17 | `tasks[].files[].lineNumbers: number[]` |
 | 0 | 0.8.21 | `persistTasks[].persistFiles[].lineNumbers: number[]` |
 | 1 | 0.8.23 – 1.0.0 | `persistTasks[].persistFiles[].persistMarks: {lineNumber, label}[]` |
-| 2 | 1.0.1 | version 1 + `"version": 2` |
+| 2 | 1.0.1 – 1.1.0 | version 1 + `"version": 2` |
 
 What `Persist.initAndLoad` does with the result of `loadTaskmarksJson()`:
 

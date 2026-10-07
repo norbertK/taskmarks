@@ -2,7 +2,7 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
-## [Unreleased]
+## [1.1.0] - 2026-10-07
 
 ### Fixed
 - Next / previous bookmark across files now continues from the file in the active editor. Before, it continued from the file that was added to the task last, so it could jump to the wrong file or back to the start of the current one
