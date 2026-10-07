@@ -72,6 +72,8 @@ describe('Helper', () => {
 		let documents: Record<string, string[]>;
 		let openTextDocument: sinon.SinonSpy;
 		let reportError: sinon.SinonStub;
+		// files with marks that are not on disk, e.g. marked by a teammate on another branch
+		let missingFiles: string[];
 		let previousBasePath: string;
 		let task: Task;
 
@@ -104,6 +106,8 @@ describe('Helper', () => {
 			});
 			sinon.replace(vscode.workspace, 'openTextDocument', openTextDocument as any);
 			reportError = sinon.stub(Helper, 'reportError');
+			missingFiles = [];
+			sinon.stub(PathHelper, 'fileExists').callsFake((filepath: string) => !missingFiles.includes(filepath));
 
 			task = new Task('list');
 			task.toggle('/workspace/src/a.ts', 1, '');
@@ -181,6 +185,18 @@ describe('Helper', () => {
 			expect(reportError.called).to.be.false;
 		});
 
+		it('should leave out a file that does not exist, without reporting an error', async () => {
+			task.toggle('/workspace/src/only-on-another-branch.ts', 0, '');
+			task.toggle('/workspace/src/b.ts', 1, '');
+			missingFiles = ['/src/only-on-another-branch.ts'];
+
+			const items = await Helper.getMarkQuickPickItems(task);
+
+			expect(items.map((item) => item.label)).to.deep.equal(['one', 'second']);
+			expect(reportError.called).to.be.false;
+			expect(openTextDocument.callCount).to.equal(2);
+		});
+
 		it('should report a file that could not be read, list the others and try again next time', async () => {
 			task.toggle('/workspace/src/gone.ts', 0, '');
 			task.toggle('/workspace/src/b.ts', 1, '');
@@ -214,6 +230,7 @@ describe('Helper', () => {
 			const lines = ['zero', 'one', 'two', 'three'];
 			sinon.replace(vscode.workspace, 'openTextDocument', sinon.fake.resolves({ lineCount: lines.length, lineAt: (line: number) => ({ text: lines[line] }) }) as any);
 			openAndShow = sinon.stub(DecoratorHelper, 'openAndShow');
+			sinon.stub(PathHelper, 'fileExists').returns(true);
 		});
 
 		afterEach(() => {
@@ -249,21 +266,23 @@ describe('Helper', () => {
 			(Helper as any)._taskManager = taskManager;
 			taskManager.useActiveTask('file-changed').toggle('/workspace/src/a.ts', 3, '');
 			sinon.stub(vscode.window, 'activeTextEditor').get(() => editor);
-			(Helper as any)._activeEditor = editor;
-			(Helper as any)._markRemovals.set('/src/a.ts', [{ startLine: 1, startCharacter: 0, replacedLines: 1, insertedLines: 0, marks: [] }]);
+			sinon.stub(vscode.window, 'visibleTextEditors').get(() => [editor]);
+			(Helper as any)._markRemovals.set(
+				taskManager.activeTask,
+				new Map([['/src/a.ts', [{ startLine: 1, startCharacter: 0, replacedLines: 1, insertedLines: 0, marks: [] }]]])
+			);
 			refresh = sinon.stub(DecoratorHelper, 'refresh');
 			reportError = sinon.stub(Helper, 'reportError');
 		});
 
 		afterEach(() => {
 			sinon.restore();
-			(Helper as any)._activeEditor = undefined;
 			(Helper as any)._markRemovals.clear();
 			taskManager.delete('file-changed');
 			PathHelper.basePath = previousBasePath;
 		});
 
-		it('should show the marks of the reloaded tasks in the active editor and forget the removed marks', async () => {
+		it('should show the marks of the reloaded tasks in the editor and forget the removed marks', async () => {
 			sinon.stub(Persist, 'reloadIfChangedOnDisk').callsFake(() => {
 				taskManager.replaceTasks([{ name: 'file-changed', persistFiles: [{ filepath: '/src/a.ts', persistMarks: [{ lineNumber: 8, label: '' }] }] }], 'file-changed');
 				return Promise.resolve(true);
@@ -289,6 +308,353 @@ describe('Helper', () => {
 			sinon.stub(Persist, 'reloadIfChangedOnDisk').rejects(new Error('disk is gone'));
 			await Helper.taskmarksFileChanged();
 			expect(reportError.calledOnceWithExactly({ message: 'disk is gone' })).to.be.true;
+		});
+	});
+
+	describe('documentChanged', () => {
+		const fileA = '/workspace/src/a.ts';
+		let taskManager: TaskManager;
+		let active: Task;
+		let other: Task;
+		let previousBasePath: string;
+		let saveTaskmarksJson: sinon.SinonStub;
+		let refresh: sinon.SinonStub;
+
+		function change(startLine: number, endLine: number, text: string) {
+			return { range: { start: { line: startLine, character: 0 }, end: { line: endLine, character: 0 } }, text };
+		}
+
+		function event(fsPath: string, lineCount: number, changes: ReturnType<typeof change>[], options: { undo?: boolean; scheme?: string } = {}) {
+			return {
+				document: { uri: { fsPath, scheme: options.scheme ?? 'file' }, lineCount },
+				contentChanges: changes,
+				reason: options.undo ? vscode.TextDocumentChangeReason.Undo : undefined,
+			} as unknown as vscode.TextDocumentChangeEvent;
+		}
+
+		// lines 2, 3 and 4 of a file with 100 lines are deleted, and the deletion is undone
+		const deleteLines = () => event(fileA, 97, [change(2, 5, '')]);
+		const undoDeleteLines = () => event(fileA, 100, [change(2, 2, 'two\nthree\nfour\n')], { undo: true });
+
+		beforeEach(() => {
+			previousBasePath = PathHelper.basePath;
+			PathHelper.basePath = '/workspace';
+			taskManager = TaskManager.instance;
+			(Helper as any)._taskManager = taskManager;
+			(Helper as any)._markRemovals.clear();
+			other = taskManager.useActiveTask('doc-other');
+			active = taskManager.useActiveTask('doc-active');
+			saveTaskmarksJson = sinon.stub(Persist, 'saveTaskmarksJson');
+			refresh = sinon.stub(Helper, 'refresh');
+		});
+
+		afterEach(() => {
+			sinon.restore();
+			(Helper as any)._markRemovals.clear();
+			taskManager.delete('doc-active');
+			taskManager.delete('doc-other');
+			PathHelper.basePath = previousBasePath;
+		});
+
+		it('should move the marks of the document in every task, not only in the active one', () => {
+			active.toggle(fileA, 3, '');
+			active.toggle(fileA, 10, '');
+			other.toggle(fileA, 3, 'in the other task');
+
+			Helper.documentChanged(event(fileA, 101, [change(0, 0, 'a new first line\n')]));
+
+			expect(active.getFile('/src/a.ts')?.lineNumbers).to.deep.equal([4, 11]);
+			expect(other.getFile('/src/a.ts')?.allPersistMarks).to.deep.equal([{ lineNumber: 4, label: 'in the other task' }]);
+		});
+
+		it('should move the marks of a document that is not in the active editor', () => {
+			active.toggle(fileA, 3, '');
+			active.use('/workspace/src/b.ts');
+
+			Helper.documentChanged(event(fileA, 101, [change(0, 0, 'a new first line\n')]));
+
+			expect(active.getFile('/src/a.ts')?.lineNumbers).to.deep.equal([4]);
+		});
+
+		it('should refresh the editors and save once when marks have moved', () => {
+			active.toggle(fileA, 3, '');
+			other.toggle(fileA, 3, '');
+
+			Helper.documentChanged(event(fileA, 101, [change(0, 0, 'a new first line\n')]));
+
+			expect(refresh.calledOnce).to.be.true;
+			expect(saveTaskmarksJson.calledOnce).to.be.true;
+		});
+
+		it('should neither refresh nor save for a document without marks or a change below the marks', () => {
+			active.toggle(fileA, 3, '');
+
+			Helper.documentChanged(event('/workspace/src/b.ts', 101, [change(0, 0, 'a new first line\n')]));
+			Helper.documentChanged(event(fileA, 101, [change(50, 50, 'a new line far below\n')]));
+
+			expect(active.getFile('/src/a.ts')?.lineNumbers).to.deep.equal([3]);
+			expect(refresh.called).to.be.false;
+			expect(saveTaskmarksJson.called).to.be.false;
+		});
+
+		it('should ignore documents that are not files', () => {
+			active.toggle(fileA, 3, '');
+			Helper.documentChanged(event(fileA, 101, [change(0, 0, 'a new first line\n')], { scheme: 'git' }));
+			expect(active.getFile('/src/a.ts')?.lineNumbers).to.deep.equal([3]);
+		});
+
+		it('should remove the marks on deleted lines in every task and take a file without marks out of its task', () => {
+			active.toggle(fileA, 3, '');
+			active.toggle(fileA, 10, '');
+			other.toggle(fileA, 3, '');
+
+			Helper.documentChanged(deleteLines());
+
+			expect(active.getFile('/src/a.ts')?.lineNumbers).to.deep.equal([7]);
+			expect(other.files.length).to.equal(0);
+		});
+
+		it('should bring the marks back in every task when the deletion is undone, also into a task that had lost the file', () => {
+			active.toggle(fileA, 3, 'mine');
+			active.toggle(fileA, 10, '');
+			other.toggle(fileA, 3, 'in the other task');
+			Helper.documentChanged(deleteLines());
+
+			Helper.documentChanged(undoDeleteLines());
+
+			expect(active.getFile('/src/a.ts')?.allPersistMarks).to.deep.equal([
+				{ lineNumber: 3, label: 'mine' },
+				{ lineNumber: 10, label: '' },
+			]);
+			expect(other.getFile('/src/a.ts')?.allPersistMarks).to.deep.equal([{ lineNumber: 3, label: 'in the other task' }]);
+		});
+
+		it('should bring a mark back only in the task that had it', () => {
+			active.toggle(fileA, 10, '');
+			other.toggle(fileA, 3, '');
+			Helper.documentChanged(deleteLines());
+
+			Helper.documentChanged(undoDeleteLines());
+
+			expect(active.getFile('/src/a.ts')?.lineNumbers).to.deep.equal([10]);
+			expect(other.getFile('/src/a.ts')?.lineNumbers).to.deep.equal([3]);
+		});
+
+		it('should keep the same file object for the active file when its marks come back', () => {
+			const activeFile = active.use(fileA);
+			active.toggle(fileA, 3, '');
+			Helper.documentChanged(deleteLines());
+			expect(active.files.length).to.equal(0);
+
+			Helper.documentChanged(undoDeleteLines());
+
+			expect(active.files).to.deep.equal([activeFile]);
+		});
+	});
+
+	describe('refresh', () => {
+		let taskManager: TaskManager;
+		let previousBasePath: string;
+		let decorate: sinon.SinonStub;
+
+		function editorFor(fsPath: string): vscode.TextEditor {
+			return { document: { fileName: fsPath, uri: { fsPath } } } as unknown as vscode.TextEditor;
+		}
+
+		beforeEach(() => {
+			previousBasePath = PathHelper.basePath;
+			PathHelper.basePath = '/workspace';
+			taskManager = TaskManager.instance;
+			(Helper as any)._taskManager = taskManager;
+			taskManager.useActiveTask('refresh-other').toggle('/workspace/src/b.ts', 7, '');
+			const active = taskManager.useActiveTask('refresh-active');
+			active.toggle('/workspace/src/a.ts', 3, '');
+			active.toggle('/workspace/src/a.ts', 9, '');
+			decorate = sinon.stub(DecoratorHelper, 'refresh');
+		});
+
+		afterEach(() => {
+			sinon.restore();
+			taskManager.delete('refresh-active');
+			taskManager.delete('refresh-other');
+			PathHelper.basePath = previousBasePath;
+		});
+
+		it('should show the marks in every visible editor, not only in the active one', () => {
+			const left = editorFor('/workspace/src/a.ts');
+			const right = editorFor('/workspace/src/a.ts');
+			sinon.stub(vscode.window, 'visibleTextEditors').get(() => [left, right]);
+
+			Helper.refresh();
+
+			expect(decorate.calledTwice).to.be.true;
+			expect(decorate.calledWithExactly(left, [3, 9])).to.be.true;
+			expect(decorate.calledWithExactly(right, [3, 9])).to.be.true;
+		});
+
+		it('should clear an editor whose file has no marks in the active task', () => {
+			const withMarks = editorFor('/workspace/src/a.ts');
+			const marksOnlyInOtherTask = editorFor('/workspace/src/b.ts');
+			sinon.stub(vscode.window, 'visibleTextEditors').get(() => [withMarks, marksOnlyInOtherTask]);
+
+			Helper.refresh();
+
+			expect(decorate.calledWithExactly(withMarks, [3, 9])).to.be.true;
+			expect(decorate.calledWithExactly(marksOnlyInOtherTask, [])).to.be.true;
+		});
+
+		it('should do nothing without a visible editor', () => {
+			sinon.stub(vscode.window, 'visibleTextEditors').get(() => []);
+			Helper.refresh();
+			expect(decorate.called).to.be.false;
+		});
+	});
+
+	describe('task commands', () => {
+		let taskManager: TaskManager;
+		let previousBasePath: string;
+		let saveTaskmarksJson: sinon.SinonStub;
+		let refresh: sinon.SinonStub;
+		let reportError: sinon.SinonStub;
+		let showWarningMessage: sinon.SinonSpy;
+		let showQuickPick: sinon.SinonSpy;
+		// what the user picks from a list, types into an input box, clicks in a question - undefined: cancelled
+		let picked: string | undefined;
+		let typed: string | undefined;
+		let clicked: string | undefined;
+		const names = ['cmd-a', 'cmd-b', 'cmd-new'];
+
+		beforeEach(() => {
+			previousBasePath = PathHelper.basePath;
+			PathHelper.basePath = '/workspace';
+			taskManager = TaskManager.instance;
+			(Helper as any)._taskManager = taskManager;
+			taskManager.useActiveTask('cmd-b');
+			taskManager.useActiveTask('cmd-a');
+
+			picked = undefined;
+			typed = undefined;
+			clicked = undefined;
+			showQuickPick = sinon.fake(() => Promise.resolve(picked));
+			sinon.replace(vscode.window, 'showQuickPick', showQuickPick as any);
+			sinon.replace(vscode.window, 'showInputBox', sinon.fake(() => Promise.resolve(typed)) as any);
+			showWarningMessage = sinon.fake(() => Promise.resolve(clicked));
+			sinon.replace(vscode.window, 'showWarningMessage', showWarningMessage as any);
+			saveTaskmarksJson = sinon.stub(Persist, 'saveTaskmarksJson');
+			refresh = sinon.stub(Helper, 'refresh');
+			reportError = sinon.stub(Helper, 'reportError');
+		});
+
+		afterEach(() => {
+			sinon.restore();
+			names.forEach((name) => taskManager.delete(name));
+			PathHelper.basePath = previousBasePath;
+		});
+
+		describe('selectTask', () => {
+			it('should offer the active task first', async () => {
+				await Helper.selectTask();
+				expect(showQuickPick.firstCall.args[0][0]).to.equal('cmd-a');
+				expect(showQuickPick.firstCall.args[0]).to.include('cmd-b');
+			});
+
+			it('should make the picked task the active one, show its marks and save', async () => {
+				picked = 'cmd-b';
+				await Helper.selectTask();
+				expect(taskManager.activeTask.name).to.equal('cmd-b');
+				expect(refresh.calledOnce).to.be.true;
+				expect(saveTaskmarksJson.calledOnce).to.be.true;
+			});
+
+			it('should do nothing when the list is dismissed', async () => {
+				await Helper.selectTask();
+				expect(taskManager.activeTask.name).to.equal('cmd-a');
+				expect(refresh.called).to.be.false;
+				expect(saveTaskmarksJson.called).to.be.false;
+			});
+
+			it('should report an error instead of throwing', async () => {
+				sinon.restore();
+				reportError = sinon.stub(Helper, 'reportError');
+				sinon.replace(vscode.window, 'showQuickPick', sinon.fake.rejects(new Error('no list')) as any);
+				await Helper.selectTask();
+				expect(reportError.calledOnceWithExactly({ message: 'no list' })).to.be.true;
+			});
+		});
+
+		describe('createTask', () => {
+			it('should create the task, make it the active one and save', async () => {
+				typed = 'cmd-new';
+				await Helper.createTask();
+				expect(taskManager.activeTask.name).to.equal('cmd-new');
+				expect(taskManager.taskNames).to.include('cmd-new');
+				expect(saveTaskmarksJson.calledOnce).to.be.true;
+			});
+
+			it('should do nothing when the input is cancelled or empty', async () => {
+				await Helper.createTask();
+				typed = '';
+				await Helper.createTask();
+				expect(taskManager.activeTask.name).to.equal('cmd-a');
+				expect(saveTaskmarksJson.called).to.be.false;
+			});
+		});
+
+		describe('deleteTask', () => {
+			it('should delete a task without bookmarks without asking', async () => {
+				picked = 'cmd-b';
+				await Helper.deleteTask();
+				expect(taskManager.taskNames).to.not.include('cmd-b');
+				expect(showWarningMessage.called).to.be.false;
+				expect(saveTaskmarksJson.calledOnce).to.be.true;
+			});
+
+			it('should ask before deleting a task with bookmarks and say how many are lost', async () => {
+				const task = taskManager.allTasks.find((task) => task.name === 'cmd-b')!;
+				task.toggle('/workspace/src/a.ts', 1, '');
+				task.toggle('/workspace/src/a.ts', 2, '');
+				task.toggle('/workspace/src/b.ts', 3, '');
+				picked = 'cmd-b';
+
+				await Helper.deleteTask();
+
+				expect(showWarningMessage.calledOnceWithExactly("Delete task 'cmd-b' with its 3 bookmarks?", { modal: true }, 'Delete')).to.be.true;
+			});
+
+			it('should keep the task when the question is not answered with Delete', async () => {
+				taskManager.allTasks.find((task) => task.name === 'cmd-b')!.toggle('/workspace/src/a.ts', 1, '');
+				picked = 'cmd-b';
+
+				await Helper.deleteTask();
+
+				expect(showWarningMessage.calledOnceWithExactly("Delete task 'cmd-b' with its bookmark?", { modal: true }, 'Delete')).to.be.true;
+				expect(taskManager.taskNames).to.include('cmd-b');
+				expect(saveTaskmarksJson.called).to.be.false;
+			});
+
+			it('should delete the task when the question is answered with Delete', async () => {
+				taskManager.allTasks.find((task) => task.name === 'cmd-b')!.toggle('/workspace/src/a.ts', 1, '');
+				picked = 'cmd-b';
+				clicked = 'Delete';
+
+				await Helper.deleteTask();
+
+				expect(taskManager.taskNames).to.not.include('cmd-b');
+				expect(saveTaskmarksJson.calledOnce).to.be.true;
+			});
+
+			it('should switch to the default task when the active task is deleted', async () => {
+				picked = 'cmd-a';
+				await Helper.deleteTask();
+				expect(taskManager.activeTask.name).to.equal('default');
+				expect(refresh.calledOnce).to.be.true;
+			});
+
+			it('should do nothing when the list is dismissed', async () => {
+				await Helper.deleteTask();
+				expect(taskManager.taskNames).to.include.members(['cmd-a', 'cmd-b']);
+				expect(saveTaskmarksJson.called).to.be.false;
+			});
 		});
 	});
 
@@ -451,11 +817,11 @@ describe('Helper', () => {
 			taskManager.delete('toggleMark');
 			task = taskManager.useActiveTask('toggleMark');
 			(Helper as any)._taskManager = taskManager;
-			(Helper as any)._activeEditor = undefined;
 
 			// in a real VS Code (npm test) activeTextEditor has only a getter, so it can't be assigned
 			activeEditor = undefined;
 			sinon.stub(vscode.window, 'activeTextEditor').get(() => activeEditor);
+			sinon.stub(vscode.window, 'visibleTextEditors').get(() => (activeEditor ? [activeEditor] : []));
 
 			saveTaskmarksJson = sinon.stub(Persist, 'saveTaskmarksJson');
 			refresh = sinon.stub(DecoratorHelper, 'refresh');
@@ -469,7 +835,6 @@ describe('Helper', () => {
 
 		afterEach(() => {
 			sinon.restore();
-			(Helper as any)._activeEditor = undefined;
 			taskManager.delete('toggleMark');
 			PathHelper.basePath = previousBasePath;
 		});
@@ -545,6 +910,15 @@ describe('Helper', () => {
 			await inputBoxAnswered();
 			expect(showInputBox.calledOnce).to.be.true;
 			expect(task.getFile(reducedPath)?.allPersistMarks).to.deep.equal([{ lineNumber: 4, label: 'look here' }]);
+			expect(saveTaskmarksJson.calledOnce).to.be.true;
+		});
+
+		it('should set a mark without label when the label input is left empty', async () => {
+			setEnableLabel(true, '');
+			setActiveEditor(fakeEditor(fileInWorkspace, 4));
+			await Helper.toggleMark();
+			await inputBoxAnswered();
+			expect(task.getFile(reducedPath)?.allPersistMarks).to.deep.equal([{ lineNumber: 4, label: '' }]);
 			expect(saveTaskmarksJson.calledOnce).to.be.true;
 		});
 

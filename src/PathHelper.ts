@@ -78,6 +78,11 @@ export abstract class PathHelper {
 		mkdirSync(dirname(taskmarksDataFilePath), { recursive: true });
 	}
 
+	// filepath is relative to the workspace folder, as stored in a File
+	static fileExists(filepath: string): boolean {
+		return existsSync(PathHelper.getFullPath(filepath));
+	}
+
 	static saveTaskmarks(taskmarksJsonToBeSaved: string) {
 		writeFileSync(PathHelper.taskmarksDataFilePath, taskmarksJsonToBeSaved);
 		this._taskmarksJsonIsNew = false;

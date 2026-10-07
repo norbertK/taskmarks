@@ -11,14 +11,13 @@ import type { Task } from './Task';
 
 export abstract class Helper {
 	private static readonly maxRemembered = 20;
-	private static _markRemovals = new Map<string, MarkRemoval[]>();
-	private static _activeEditor: vscode.TextEditor | undefined;
+	// the marks removed by edits, for undo: per task and file path (the File itself leaves the task with its last mark)
+	private static _markRemovals = new Map<Task, Map<string, MarkRemoval[]>>();
 	private static _taskManager: TaskManager;
 	private static _outputChannel: vscode.OutputChannel;
 
 	static reportError = ({ message, stack }: { message: string; stack?: string }) => {
 		if (Helper.outputChannel) {
-			// send the error to our logging service...
 			Helper.outputChannel.appendLine(message);
 			if (stack) {
 				Helper.outputChannel.appendLine(stack);
@@ -29,9 +28,6 @@ export abstract class Helper {
 		}
 	};
 
-	static get activeEditor(): vscode.TextEditor | undefined {
-		return this._activeEditor;
-	}
 	static get outputChannel(): vscode.OutputChannel {
 		return this._outputChannel;
 	}
@@ -53,8 +49,8 @@ export abstract class Helper {
 
 			DecoratorHelper.initDecorator(context);
 
-			Helper.initActiveEditorChangeHandler();
-			Helper.initSaveHandler();
+			Helper.initEditorChangeHandlers(context);
+			Helper.initSaveHandler(context);
 			Helper.initChangeHandler(context);
 			Helper.initTaskmarksFileWatcher(context);
 		} catch (error: unknown) {
@@ -65,22 +61,16 @@ export abstract class Helper {
 		}
 	}
 
+	// call when the active task or its files are other objects than before (task selected, created, deleted, tasks reloaded)
 	private static triggerChangeActiveFile(): void {
-		this._activeEditor = undefined;
-		const activeTextEditor = vscode.window.activeTextEditor;
-		if (activeTextEditor) {
-			this.changeActiveFile(activeTextEditor);
-		}
+		this.changeActiveFile(vscode.window.activeTextEditor);
 	}
 
-	private static initActiveEditorChangeHandler(): void {
-		const activeTextEditor = vscode.window.activeTextEditor;
-		if (activeTextEditor) {
-			this.changeActiveFile(activeTextEditor);
-		}
-		vscode.window.onDidChangeActiveTextEditor((editor) => {
-			this.changeActiveFile(editor);
-		}, null);
+	private static initEditorChangeHandlers(context: vscode.ExtensionContext): void {
+		this.changeActiveFile(vscode.window.activeTextEditor);
+		vscode.window.onDidChangeActiveTextEditor((editor) => this.changeActiveFile(editor), null, context.subscriptions);
+		// an editor that becomes visible without becoming the active one (split view) needs its marks as well
+		vscode.window.onDidChangeVisibleTextEditors(() => this.refresh(), null, context.subscriptions);
 	}
 
 	// taskmarks.json is shared in a team: it changes with a pull, a checkout or an edit by hand
@@ -113,95 +103,114 @@ export abstract class Helper {
 		}
 	}
 
-	private static initSaveHandler(): void {
-		vscode.workspace.onDidSaveTextDocument(() => {
-			if (!this._taskManager.activeTask) {
-				return;
-			}
-			Helper.save();
-		});
+	private static initSaveHandler(context: vscode.ExtensionContext): void {
+		// every change of the marks is saved at once - this is for what is still open then: the upgrade of an old file, a write that failed
+		vscode.workspace.onDidSaveTextDocument(() => Helper.save(), null, context.subscriptions);
 	}
 
 	private static initChangeHandler(context: vscode.ExtensionContext): void {
-		vscode.workspace.onDidChangeTextDocument(
-			(event) => {
-				if (!this._activeEditor || event.document !== this._activeEditor.document) {
-					return;
-				}
-				const activeFile = this._taskManager.activeTask?.activeFile;
-				if (!activeFile || event.contentChanges.length === 0) {
-					return;
-				}
-				const isUndo = event.reason === vscode.TextDocumentChangeReason.Undo;
-				const removals = this._markRemovals.get(activeFile.filepath) ?? [];
-				if (activeFile.marks.length === 0 && !(isUndo && removals.length > 0)) {
-					return;
-				}
+		vscode.workspace.onDidChangeTextDocument((event) => Helper.documentChanged(event), null, context.subscriptions);
+	}
 
-				const changes: TextChange[] = event.contentChanges.map((c) => ({
-					startLine: c.range.start.line,
-					startCharacter: c.range.start.character,
-					endLine: c.range.end.line,
-					endCharacter: c.range.end.character,
-					text: c.text,
-				}));
-				const marks = [...activeFile.marks];
-				const newLines = mapMarkLines(
-					marks.map((mark) => mark.lineNumber),
-					changes,
-					event.document.lineCount
-				);
+	// Moves and removes the marks of the changed document - in every task, and whether or not the document is in the active editor:
+	// VS Code reports the changes of every open document (typing, rename and replace in files, format on save, a reload from disk).
+	// A file that is changed while it is not open in VS Code is not reported; its marks keep their line numbers.
+	static documentChanged(event: vscode.TextDocumentChangeEvent): void {
+		try {
+			if (event.contentChanges.length === 0 || event.document.uri.scheme !== 'file') {
+				return;
+			}
+			const filepath = PathHelper.reducePath(event.document.uri.fsPath);
+			const isUndo = event.reason === vscode.TextDocumentChangeReason.Undo;
+			const changes: TextChange[] = event.contentChanges.map((c) => ({
+				startLine: c.range.start.line,
+				startCharacter: c.range.start.character,
+				endLine: c.range.end.line,
+				endCharacter: c.range.end.character,
+				text: c.text,
+			}));
 
-				let changed = false;
-				const marksToRemove: Mark[] = [];
-				marks.forEach((mark, index) => {
-					const newLine = newLines[index];
-					if (newLine === undefined) {
-						marksToRemove.push(mark);
-						changed = true;
-					} else if (newLine !== mark.lineNumber) {
-						mark.lineNumber = newLine;
-						changed = true;
-					}
-				});
-
-				if (marksToRemove.length > 0 && !isUndo && changes.length === 1) {
-					removals.push(createMarkRemoval(changes[0], marksToRemove));
-					if (removals.length > Helper.maxRemembered) {
-						removals.shift();
-					}
-					this._markRemovals.set(activeFile.filepath, removals);
-				}
-
-				const restored: RemovedMark[] = [];
-				if (isUndo) {
-					const index = findUndoneRemoval(removals, changes);
-					if (index > -1) {
-						restored.push(...removals.splice(index, 1)[0].marks.filter((mark) => mark.lineNumber < event.document.lineCount));
-					}
-				}
-
-				if (!changed && restored.length === 0) {
-					return;
-				}
-
-				activeFile.removeMarks(marksToRemove);
-				restored.forEach((mark) => activeFile.addMark(mark));
-				this._taskManager.activeTask.syncFile(activeFile);
+			let changed = false;
+			for (const task of this._taskManager.allTasks) {
+				changed = Helper.adjustMarks(task, filepath, changes, event.document.lineCount, isUndo) || changed;
+			}
+			if (changed) {
 				Helper.refresh();
 				Helper.save();
-			},
-			null,
-			context.subscriptions
+			}
+		} catch (error: unknown) {
+			Helper.reportError({ message: Helper.getErrorMessage(error) });
+		}
+	}
+
+	// true if marks of the task were moved, removed or (on undo) restored
+	private static adjustMarks(task: Task, filepath: string, changes: TextChange[], lineCount: number, isUndo: boolean): boolean {
+		const removals = this._markRemovals.get(task)?.get(filepath) ?? [];
+		const file = task.getFile(filepath);
+		if (!file && !(isUndo && removals.length > 0)) {
+			return false;
+		}
+
+		const marks = file ? [...file.marks] : [];
+		const newLines = mapMarkLines(
+			marks.map((mark) => mark.lineNumber),
+			changes,
+			lineCount
 		);
+
+		let changed = false;
+		const marksToRemove: Mark[] = [];
+		marks.forEach((mark, index) => {
+			const newLine = newLines[index];
+			if (newLine === undefined) {
+				marksToRemove.push(mark);
+				changed = true;
+			} else if (newLine !== mark.lineNumber) {
+				mark.lineNumber = newLine;
+				changed = true;
+			}
+		});
+
+		if (marksToRemove.length > 0 && !isUndo && changes.length === 1) {
+			removals.push(createMarkRemoval(changes[0], marksToRemove));
+			if (removals.length > Helper.maxRemembered) {
+				removals.shift();
+			}
+			const removalsOfTask = this._markRemovals.get(task) ?? new Map<string, MarkRemoval[]>();
+			removalsOfTask.set(filepath, removals);
+			this._markRemovals.set(task, removalsOfTask);
+		}
+
+		const restored: RemovedMark[] = [];
+		if (isUndo) {
+			const index = findUndoneRemoval(removals, changes);
+			if (index > -1) {
+				restored.push(...removals.splice(index, 1)[0].marks.filter((mark) => mark.lineNumber < lineCount));
+			}
+		}
+
+		if (!changed && restored.length === 0) {
+			return false;
+		}
+
+		// a file that lost its last mark is no longer part of the task, but may get marks back by undo
+		const fileToChange = file ?? task.getOrCreateFile(filepath);
+		fileToChange.removeMarks(marksToRemove);
+		restored.forEach((mark) => fileToChange.addMark(mark));
+		task.syncFile(fileToChange);
+		return true;
 	}
 
 	// one entry per mark of the task: the label (or the text of the marked line, without indentation), the line number and the file
 	// built from the documents on every call, as line numbers and line texts change while a file is edited
-	// a file that can't be read is reported and left out, a mark behind the last line of its file is left out
+	// left out: files that don't exist, files that can't be read (reported), marks behind the last line of their file
 	static async getMarkQuickPickItems(task: Task): Promise<MarkQuickPickItem[]> {
 		const quickPickItems: MarkQuickPickItem[] = [];
 		for (const file of task.files) {
+			// not an error: taskmarks.json keeps the marks of files that don't exist here (a teammate's file, another branch)
+			if (!PathHelper.fileExists(file.filepath)) {
+				continue;
+			}
 			try {
 				const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(PathHelper.getFullPath(file.filepath)));
 				for (const mark of file.marks) {
@@ -224,9 +233,6 @@ export abstract class Helper {
 	}
 
 	static async selectMarkFromList(): Promise<void> {
-		if (!this._taskManager.activeTask) {
-			return;
-		}
 		try {
 			const options: vscode.QuickPickOptions = {
 				placeHolder: 'select Bookmark',
@@ -235,12 +241,10 @@ export abstract class Helper {
 			const quickPickItems = await this.getMarkQuickPickItems(this._taskManager.activeTask);
 			const result = await vscode.window.showQuickPick(quickPickItems, options);
 			if (result) {
-				DecoratorHelper.openAndShow(result.filepath, result.mark.lineNumber);
+				await DecoratorHelper.openAndShow(result.filepath, result.mark.lineNumber);
 			}
 		} catch (error: unknown) {
-			const message = Helper.getErrorMessage(error);
-			Helper.reportError({ message });
-			throw error;
+			Helper.reportError({ message: Helper.getErrorMessage(error) });
 		}
 	}
 
@@ -260,7 +264,7 @@ export abstract class Helper {
 	static async pasteFromClipboard(): Promise<void> {
 		try {
 			if (await Persist.pasteFromClipboard()) {
-				// the pasted task may have brought marks for the file in the active editor
+				// the pasted task may have brought marks for the files in the visible editors
 				Helper.refresh();
 				Helper.save();
 			}
@@ -269,103 +273,82 @@ export abstract class Helper {
 		}
 	}
 
+	// the active task first: it is the one preselected in a list
+	private static taskNamesActiveFirst(): string[] {
+		const activeTaskName = this._taskManager.activeTask.name;
+		return [activeTaskName, ...this._taskManager.taskNames.filter((taskName) => taskName !== activeTaskName)];
+	}
+
 	static async selectTask(): Promise<void> {
 		try {
-			const options: vscode.QuickPickOptions = {
-				placeHolder: 'select Task ',
-			};
-			const taskNames: string[] = [];
-			taskNames.push(this._taskManager.activeTask.name);
-			this._taskManager.taskNames.forEach((tn) => {
-				if (tn !== this._taskManager.activeTask.name) {
-					taskNames.push(tn);
-				}
-			});
-			vscode.window.showQuickPick(taskNames, options).then((taskName) => {
-				if (taskName) {
-					this._taskManager.useActiveTask(taskName);
-				}
-
-				Helper.triggerChangeActiveFile();
-				Helper.save();
-			});
+			const taskName = await vscode.window.showQuickPick(Helper.taskNamesActiveFirst(), { placeHolder: 'select Task ' });
+			if (!taskName) {
+				return;
+			}
+			this._taskManager.useActiveTask(taskName);
+			Helper.triggerChangeActiveFile();
+			Helper.save();
 		} catch (error: unknown) {
-			const message = Helper.getErrorMessage(error);
-			Helper.reportError({ message });
-			throw error;
+			Helper.reportError({ message: Helper.getErrorMessage(error) });
 		}
 	}
 
 	static async renameTask(): Promise<void> {
 		try {
-			const options: vscode.QuickPickOptions = {
-				placeHolder: 'rename Task ',
-			};
-			const taskNames: string[] = [];
-			taskNames.push(this._taskManager.activeTask.name);
-			this._taskManager.taskNames.forEach((tn) => {
-				if (tn !== this._taskManager.activeTask.name) {
-					taskNames.push(tn);
-				}
-			});
-			vscode.window.showQuickPick(taskNames, options).then((oldTaskName) => {
-				if (!oldTaskName) {
-					return;
-				}
-				vscode.window.showInputBox({ prompt: `New name for task '${oldTaskName}'`, value: oldTaskName }).then((newTaskName) => {
-					if (!newTaskName) {
-						return;
-					}
-					if (!this._taskManager.renameTask(oldTaskName, newTaskName)) {
-						vscode.window.showInformationMessage(`Taskmarks: there is already a task named '${newTaskName}'.`);
-						return;
-					}
-					// save here, not after showInputBox() was called - then the new name is not known yet
-					Helper.save();
-				});
-			});
+			const oldTaskName = await vscode.window.showQuickPick(Helper.taskNamesActiveFirst(), { placeHolder: 'rename Task ' });
+			if (!oldTaskName) {
+				return;
+			}
+			const newTaskName = await vscode.window.showInputBox({ prompt: `New name for task '${oldTaskName}'`, value: oldTaskName });
+			if (!newTaskName) {
+				return;
+			}
+			if (!this._taskManager.renameTask(oldTaskName, newTaskName)) {
+				vscode.window.showInformationMessage(`Taskmarks: there is already a task named '${newTaskName}'.`);
+				return;
+			}
+			Helper.save();
 		} catch (error: unknown) {
-			const message = Helper.getErrorMessage(error);
-			Helper.reportError({ message });
-			throw error;
+			Helper.reportError({ message: Helper.getErrorMessage(error) });
 		}
 	}
 
 	static async createTask(): Promise<void> {
 		try {
-			vscode.window.showInputBox({ prompt: 'Name of the new task', placeHolder: 'e.g. bugfix-login' }).then((newTaskName) => {
-				if (newTaskName) {
-					this._taskManager.useActiveTask(newTaskName);
-
-					Helper.triggerChangeActiveFile();
-					Helper.save();
-				}
-			});
+			const newTaskName = await vscode.window.showInputBox({ prompt: 'Name of the new task', placeHolder: 'e.g. bugfix-login' });
+			if (!newTaskName) {
+				return;
+			}
+			this._taskManager.useActiveTask(newTaskName);
+			Helper.triggerChangeActiveFile();
+			Helper.save();
 		} catch (error: unknown) {
-			const message = Helper.getErrorMessage(error);
-			Helper.reportError({ message });
-			throw error;
+			Helper.reportError({ message: Helper.getErrorMessage(error) });
 		}
 	}
 
-	static deleteTask(): void {
+	static async deleteTask(): Promise<void> {
 		try {
-			vscode.window
-				.showQuickPick(this._taskManager.taskNames, {
-					placeHolder: 'delete Task ',
-				})
-				.then((taskName) => {
-					if (taskName) {
-						this._taskManager.delete(taskName);
-					}
-
-					Helper.triggerChangeActiveFile();
-					Helper.save();
-				});
+			const taskName = await vscode.window.showQuickPick(this._taskManager.taskNames, { placeHolder: 'delete Task ' });
+			if (!taskName) {
+				return;
+			}
+			// a deleted task can't be brought back, so ask before bookmarks are lost
+			const task = this._taskManager.allTasks.find((task) => task.name === taskName);
+			const markCount = task ? task.files.reduce((count, file) => count + file.marks.length, 0) : 0;
+			if (markCount > 0) {
+				const deleteIt = 'Delete';
+				const bookmarks = markCount === 1 ? 'its bookmark' : `its ${markCount} bookmarks`;
+				const answer = await vscode.window.showWarningMessage(`Delete task '${taskName}' with ${bookmarks}?`, { modal: true }, deleteIt);
+				if (answer !== deleteIt) {
+					return;
+				}
+			}
+			this._taskManager.delete(taskName);
+			Helper.triggerChangeActiveFile();
+			Helper.save();
 		} catch (error: unknown) {
-			const message = Helper.getErrorMessage(error);
-			Helper.reportError({ message });
-			throw error;
+			Helper.reportError({ message: Helper.getErrorMessage(error) });
 		}
 	}
 
@@ -390,11 +373,10 @@ export abstract class Helper {
 	static async toggleMark(): Promise<void> {
 		try {
 			const activeTextEditor = vscode.window.activeTextEditor;
-			const enableLabel = vscode.workspace.getConfiguration().get<boolean>('taskmarks.enableLabel');
-
-			if (!activeTextEditor || !this._taskManager.activeTask) {
+			if (!activeTextEditor) {
 				return;
 			}
+			const activeTask = this._taskManager.activeTask;
 			const activeLine = activeTextEditor.selection.active.line;
 
 			const fullName = activeTextEditor.document.fileName;
@@ -403,42 +385,43 @@ export abstract class Helper {
 				vscode.window.showInformationMessage('Taskmarks: bookmarks can only be set in files inside the workspace folder.');
 				return;
 			}
-			if (enableLabel && !this._taskManager.activeTask.lineHasMark(fullName, activeLine)) {
-				vscode.window.showInputBox({ prompt: 'Label for this bookmark (shown in "Select Bookmark from List")' }).then((newLabel) => {
-					if (newLabel) {
-						this._taskManager.activeTask.toggle(fullName, activeLine, newLabel);
-					}
-					Helper.save();
-					Helper.triggerChangeActiveFile();
+
+			let label = '';
+			const enableLabel = vscode.workspace.getConfiguration().get<boolean>('taskmarks.enableLabel');
+			if (enableLabel && !activeTask.lineHasMark(fullName, activeLine)) {
+				const answer = await vscode.window.showInputBox({
+					prompt: 'Label for this bookmark (shown in "Select Bookmark from List"). Leave empty for a bookmark without label.',
 				});
-			} else {
-				this._taskManager.activeTask.toggle(activeTextEditor.document.fileName, activeLine, '');
-				Helper.save();
-				Helper.triggerChangeActiveFile();
+				// Escape cancels, Enter on the empty box sets a bookmark without label
+				if (answer === undefined) {
+					return;
+				}
+				label = answer;
 			}
+
+			activeTask.toggle(fullName, activeLine, label);
+			Helper.save();
+			Helper.triggerChangeActiveFile();
 		} catch (error: unknown) {
 			Helper.reportError({ message: Helper.getErrorMessage(error) });
 		}
 	}
 
+	// the active file is where next / previous bookmark start from
 	static changeActiveFile(editor: vscode.TextEditor | undefined): void {
-		if (this._activeEditor === editor || !this._taskManager.activeTask) {
-			return;
-		}
-		this._activeEditor = editor;
 		if (editor) {
 			this._taskManager.activeTask.use(editor.document.uri.fsPath);
-			this.refresh();
 		}
+		this.refresh();
 	}
 
+	// shows the marks of the active task in every visible editor (split view shows several files, or one file twice)
 	static refresh(): void {
-		if (this._activeEditor) {
-			const activeFile = this._taskManager.activeTask.activeFile;
-
-			if (activeFile) {
-				DecoratorHelper.refresh(this._activeEditor, activeFile.lineNumbers);
-			}
+		const activeTask = this._taskManager.activeTask;
+		for (const editor of vscode.window.visibleTextEditors) {
+			const file = activeTask.getFile(PathHelper.reducePath(editor.document.uri.fsPath));
+			// an editor without marks gets an empty list: it may still show the marks of another task
+			DecoratorHelper.refresh(editor, file ? file.lineNumbers : []);
 		}
 	}
 

@@ -134,12 +134,14 @@ flowchart LR
     B --> C[mapMarkLines: apply changes bottom-up]
     C --> D{any mark moved or removed?}
     D -->|No| Z[Done]
-    D -->|Yes| E[set new lineNumbers, File.removeMarks]
-    E --> F[Helper.refresh → DecoratorHelper]
+    D -->|Yes| E[set new lineNumbers, File.removeMarks, Task.syncFile]
+    E --> F[Helper.refresh → DecoratorHelper, all visible editors]
     F --> G[Persist.saveTaskmarksJson]
 ```
 
-**Code location**: `Helper.initChangeHandler()` calls `mapMarkLines()` from `core/lineAdjustment.ts`.
+**Code location**: `Helper.documentChanged()` calls `mapMarkLines()` from `core/lineAdjustment.ts`, once per task (`Helper.adjustMarks()`).
+
+**Which changes are seen:** VS Code reports the changes of every open document, so the marks of a file are adjusted in **every task** and whether or not the file is in the active editor: typing, rename and replace across files, format on save, and the reload of an open file that changed on disk (reported as one change that replaces the lines that differ, so marks strictly inside that block are removed). A file that changes while it is **not open** in VS Code (a pull or checkout of a closed file, another program) is not reported at all. Its marks keep their line numbers; fixing that would need the text of the marked line in taskmarks.json, i.e. a new format version.
 
 Rules for one change (`mapLineThroughChange`):
 
@@ -154,7 +156,7 @@ Rules for one change (`mapLineThroughChange`):
 
 Marks that land outside the document or on a line another mark already has are removed. Removal is by `Mark` object, not by line number.
 
-**Undo:** when a single-change edit removes marks, `Helper` keeps a `MarkRemoval` (start position, replaced and inserted line counts, the removed marks) per file, at most 20. On a change with `reason === Undo`, `findUndoneRemoval()` looks for a removal the undo exactly reverses (same start position, line counts swapped) and the marks are added back at their old lines. Redo needs no handling: it is the same delete again. The list lives in memory only.
+**Undo:** when a single-change edit removes marks, `Helper` keeps a `MarkRemoval` (start position, replaced and inserted line counts, the removed marks) per task and file path, at most 20 each. The path is the key, not the `File`: a file that loses its last mark leaves its task, and `Task.getOrCreateFile()` brings it back for the restored marks. On a change with `reason === Undo`, `findUndoneRemoval()` looks for a removal the undo exactly reverses (same start position, line counts swapped) and the marks are added back at their old lines. Redo needs no handling: it is the same delete again. The list lives in memory only.
 
 ---
 
@@ -162,7 +164,7 @@ Marks that land outside the document or on a line another mark already has are r
 
 `Task.files` is a plain `File[]` and holds only files that have marks, in the order they got their first mark. `Task.syncFile(file)` keeps it that way: it adds a file with its first mark and removes it with its last. `toggle()` and `mergeFilesWithPersistFiles()` call it themselves; code that changes a file's marks directly (the change handler in `Helper`) has to call it.
 
-`Task.activeFile` is the file in the active editor, set by `use()` on every editor change. While it has no marks it is not part of `files`. When it gets a mark, the same `File` object is added, so the editor and the task never work on two objects for one path.
+`Task.activeFile` is the file in the active editor, set by `use()` on every editor change. It is only the starting point for next / previous: the gutter icons are set for every visible editor (`Helper.refresh()`), and edits are tracked for every open document. While it has no marks it is not part of `files`. When it gets a mark, the same `File` object is added, so the editor and the task never work on two objects for one path.
 
 There is no stored cursor: the position is always derived from `activeFile`. If the active file has no marks, navigation starts at the first (next) or last (previous) file of the task.
 
@@ -256,6 +258,8 @@ In memory, file paths have the separator of the system VS Code runs on (`normali
 
 Saving does not check whether a marked file exists. The file may exist for a teammate or on another branch, and taskmarks.json is shared. Stale entries stay until the marks are removed by hand.
 
+Such files stay in `Task.files`, so everything that opens files has to leave them out (`PathHelper.fileExists`): next / previous across files (`TaskManager._filesOnDisk`) and the bookmark list (`Helper.getMarkQuickPickItems`).
+
 ### Changes from outside (pull, checkout, editing the file)
 
 `Helper.initTaskmarksFileWatcher()` watches taskmarks.json and calls `Persist.reloadIfChangedOnDisk()` 300 ms after the last change:
@@ -299,7 +303,7 @@ sequenceDiagram
     P->>P: normalizeFilePaths()
     P->>TM: replaceTasks()
     H->>DH: initDecorator(context)
-    H->>H: initActiveEditorChangeHandler()
+    H->>H: initEditorChangeHandlers()
     H->>H: initSaveHandler()
     H->>H: initChangeHandler()
     H->>H: initTaskmarksFileWatcher()
@@ -385,3 +389,4 @@ normalizePath(filepath, fromChar, toChar): string
 5. **Line tracking**: Marks adjust when lines are inserted/deleted above them
 6. **Pure core modules**: Business logic separated from VS Code APIs for testability
 7. **UI stays in `Helper`**: the entries of "Select Bookmark from List" are built in `Helper.getMarkQuickPickItems()`, fresh on every call (one `openTextDocument` per file). Each entry carries its `Mark`, so the jump uses the mark's current line instead of text parsed back from the entry
+8. **Commands await and report**: every command in `Helper` is `async`, awaits its prompts and reports errors with `Helper.reportError` instead of throwing. Cancelling a prompt changes and saves nothing; "Delete Task" asks before bookmarks are lost

@@ -1,5 +1,7 @@
 import { Task } from './Task';
 import { DecoratorHelper } from './DecoratorHelper';
+import { PathHelper } from './PathHelper';
+import type { File } from './File';
 import * as vscode from 'vscode';
 import type { IPersistTask } from './types';
 import { findNextFileWithMarks, findNextMark, findPreviousFileWithMarks, findPreviousMark } from './core/navigation';
@@ -113,23 +115,31 @@ export class TaskManager {
 	}
 
 	nextDocument(): void {
-		const target = findNextFileWithMarks(this.activeTask.files, this._activeFileIndex());
+		const files = this._filesOnDisk();
+		const target = findNextFileWithMarks(files, this._activeFileIndex(files));
 		if (target) {
 			DecoratorHelper.openAndShow(target.filepath, target.lineNumber);
 		}
 	}
 
 	previousDocument(): void {
-		const target = findPreviousFileWithMarks(this.activeTask.files, this._activeFileIndex());
+		const files = this._filesOnDisk();
+		const target = findPreviousFileWithMarks(files, this._activeFileIndex(files));
 		if (target) {
 			DecoratorHelper.openAndShow(target.filepath, target.lineNumber);
 		}
 	}
 
-	// -1 if there is no active file or it is not (or no longer) part of the task
-	private _activeFileIndex(): number {
+	// taskmarks.json keeps the marks of files that don't exist here (a teammate's file, another branch).
+	// Navigation has to leave them out: such a file can't be opened, and next / previous would never get past it.
+	private _filesOnDisk(): File[] {
+		return this.activeTask.files.filter((file) => PathHelper.fileExists(file.filepath));
+	}
+
+	// -1 if there is no active file or it is not (or no longer) one of the files
+	private _activeFileIndex(files: File[]): number {
 		const activeFile = this.activeTask.activeFile;
-		return activeFile ? this.activeTask.files.indexOf(activeFile) : -1;
+		return activeFile ? files.indexOf(activeFile) : -1;
 	}
 
 	private _showActiveTaskInStatusBar(): void {

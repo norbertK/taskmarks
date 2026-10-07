@@ -28,7 +28,7 @@ Packaging: `npm run "build package"` (vsce). The `esbuild*` scripts produce `out
 ## Layout
 
 - `src/extension.ts`: registers the commands. Every handler delegates to `Helper`.
-- `src/Helper.ts`: wires VS Code events (active editor, save, text change incl. undo restore of removed marks) and the command UIs.
+- `src/Helper.ts`: wires VS Code events (active and visible editors, save, text change incl. undo restore of removed marks, changes of taskmarks.json) and the command UIs.
 - `src/TaskManager.ts` (singleton) → `Task` → `File[]` → `Mark`: the in-memory model.
 - `src/Persist.ts`, `src/PathHelper.ts`: load/save/reload `taskmarks.json`, backups, path handling, the storage location (`taskmarks.useGlobalTaskmarksJson`).
 - `src/core/*.ts`: pure logic (navigation, serialization, migration, lineAdjustment, paths). **Must not import `vscode`.** Put new logic here when it can live without VS Code, and test it here.
@@ -55,7 +55,8 @@ Packaging: `npm run "build package"` (vsce). The `esbuild*` scripts produce `out
 - Saving never drops marks because their file doesn't exist on disk (it may exist for a teammate or on another branch).
 - When taskmarks.json changes on disk, the tasks are replaced by the file's (`Persist.reloadIfChangedOnDisk`). A file that can't be read then is never saved over and gets no automatic backup-and-reset: that is only done at startup.
 - The tests run twice: `npm run testAll` on the vscode mock and `npm test` in a real VS Code, where the API objects are read-only. Stub getters with `sinon.stub(obj, 'prop').get(...)` and don't assign to `vscode.*` properties.
-- Mark line tracking only runs for the document in the active editor, and it works from each change's range and inserted text (`mapMarkLines`), not from line-count differences.
+- Mark line tracking runs for every changed document and for every task that has marks in it (`Helper.documentChanged`), not only for the active editor and the active task. It works from each change's range and inserted text (`mapMarkLines`), not from line-count differences.
+- `Task.files` only holds files with marks. Code that changes a file's marks directly has to call `Task.syncFile(file)` afterwards.
 
 ## Repo notes
 

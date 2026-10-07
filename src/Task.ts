@@ -35,7 +35,7 @@ export class Task {
 			return;
 		}
 		for (const persistFile of persistTaskToMerge.persistFiles) {
-			const file = this._getOrCreateFile(persistFile.filepath);
+			const file = this.getOrCreateFile(persistFile.filepath);
 			file.mergeMarks(persistFile.persistMarks);
 			this.syncFile(file);
 		}
@@ -46,13 +46,13 @@ export class Task {
 	}
 
 	toggle(filename: string, lineNumber: number, label: string): void {
-		const file = this._getOrCreateFile(PathHelper.reducePath(filename));
+		const file = this.getOrCreateFile(PathHelper.reducePath(filename));
 		file.toggleTaskMark({ lineNumber, label });
 		this.syncFile(file);
 	}
 
 	use(path: string): File {
-		this._activeFile = this._getOrCreateFile(PathHelper.reducePath(path));
+		this._activeFile = this.getOrCreateFile(PathHelper.reducePath(path));
 		return this._activeFile;
 	}
 
@@ -74,7 +74,8 @@ export class Task {
 		return this._files.some((file) => file.hasMarks);
 	}
 
-	private _getOrCreateFile(reducedFilePath: string): File {
+	// the file of the task with this path. A new file is not part of the task until it has marks (syncFile)
+	getOrCreateFile(reducedFilePath: string): File {
 		const file = this.getFile(reducedFilePath);
 		if (file) {
 			return file;

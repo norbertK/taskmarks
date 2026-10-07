@@ -16,43 +16,34 @@ export abstract class DecoratorHelper {
 			overviewRulerLane: vscode.OverviewRulerLane.Full,
 			overviewRulerColor: 'rgba(196, 196, 0, 0.8)',
 		});
+		context.subscriptions.push(this._vscTextEditorDecorationType);
 	}
 
-	static refresh(activeEditor: vscode.TextEditor, lineNumbers: number[]): void {
-		if (activeEditor === null) {
-			return;
-		}
+	static refresh(editor: vscode.TextEditor, lineNumbers: number[]): void {
 		const ranges = lineNumbers.map((lineNumber) => {
 			return new vscode.Range(lineNumber, 0, lineNumber, 0);
 		});
-		activeEditor.setDecorations(this._vscTextEditorDecorationType, ranges);
+		editor.setDecorations(this._vscTextEditorDecorationType, ranges);
 	}
 
-	static showLine(lineNumber: number): void {
-		const activeTextEditor = vscode.window.activeTextEditor;
-		if (Number.isNaN(lineNumber)) {
-			throw new Error('DecoratorHelper.showLine(lineNumber: number) lineNumber should never be NaN');
-		}
-		if (activeTextEditor === null || activeTextEditor === undefined) {
+	// puts the cursor on the line and scrolls it into view - in the active editor, if no other one is given
+	static showLine(lineNumber: number, editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor): void {
+		if (!editor) {
 			return;
 		}
-		let textEditorRevealType: vscode.TextEditorRevealType = vscode.TextEditorRevealType.InCenterIfOutsideViewport;
-		if (lineNumber === activeTextEditor.selection.active.line) {
-			textEditorRevealType = vscode.TextEditorRevealType.InCenterIfOutsideViewport;
-		}
 		const selection = new vscode.Selection(lineNumber, 0, lineNumber, 0);
-		activeTextEditor.selection = selection;
-		activeTextEditor.revealRange(selection, textEditorRevealType);
+		editor.selection = selection;
+		editor.revealRange(selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
 	}
 
-	static openAndShow(filepath: string, lineNumber: number): void {
-		const fullPath = PathHelper.getFullPath(filepath);
-		vscode.workspace.openTextDocument(fullPath).then((textDocument) => {
-			if (textDocument) {
-				vscode.window.showTextDocument(textDocument).then(() => {
-					this.showLine(lineNumber);
-				});
-			}
-		});
+	// filepath is relative to the workspace folder. A file that can't be opened is told to the user, not thrown.
+	static async openAndShow(filepath: string, lineNumber: number): Promise<void> {
+		try {
+			const textDocument = await vscode.workspace.openTextDocument(PathHelper.getFullPath(filepath));
+			const editor = await vscode.window.showTextDocument(textDocument);
+			this.showLine(lineNumber, editor);
+		} catch (error: unknown) {
+			vscode.window.showWarningMessage(`Taskmarks: ${filepath} could not be opened (${error instanceof Error ? error.message : String(error)}).`);
+		}
 	}
 }
