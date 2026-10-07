@@ -35,7 +35,7 @@ activate task #SkyBlue
 note right of task
     has
     _name: string
-    _files: Ring<File>
+    _files: File[]
     _activeFile: File
 end note
 

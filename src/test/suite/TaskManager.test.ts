@@ -99,10 +99,11 @@ describe('TaskManager Tests', () => {
 	//   expect(taskManager.activeTask).toEqual(anotherTask);
 	// });
 
-	// ToDo NK - add tests for nextMark, previousMark, nextDocument and previousDocument
 });
 
 import { expect } from 'chai';
+import * as sinon from 'sinon';
+import { DecoratorHelper } from '../../DecoratorHelper';
 import { IPersistTask } from '../../types';
 
 describe('TaskManager', () => {
@@ -182,6 +183,73 @@ describe('TaskManager', () => {
 			taskManager.useActiveTask('keep-active');
 			taskManager.delete('delete-other');
 			expect(taskManager.activeTask.name).to.equal('keep-active');
+		});
+	});
+
+	describe('#nextDocument / #previousDocument', () => {
+		let openAndShow: sinon.SinonStub;
+		let task: Task;
+
+		beforeEach(() => {
+			openAndShow = sinon.stub(DecoratorHelper, 'openAndShow');
+			taskManager.delete('navigation');
+			task = taskManager.useActiveTask('navigation');
+			task.toggle('/a.ts', 1, '');
+			task.toggle('/a.ts', 9, '');
+			task.use('/empty.ts');
+			task.toggle('/b.ts', 2, '');
+			task.toggle('/c.ts', 3, '');
+		});
+
+		afterEach(() => {
+			openAndShow.restore();
+			taskManager.delete('navigation');
+		});
+
+		it('should go to the file after the active file, not after the last added one', () => {
+			task.use('/a.ts');
+			taskManager.nextDocument();
+			expect(openAndShow.calledOnceWithExactly('/b.ts', 2)).to.be.true;
+		});
+
+		it('should wrap from the last file to the first', () => {
+			task.use('/c.ts');
+			taskManager.nextDocument();
+			expect(openAndShow.calledOnceWithExactly('/a.ts', 1)).to.be.true;
+		});
+
+		it('should go to the last mark of the file before the active file', () => {
+			task.use('/b.ts');
+			taskManager.previousDocument();
+			expect(openAndShow.calledOnceWithExactly('/a.ts', 9)).to.be.true;
+		});
+
+		it('should wrap from the first file to the last', () => {
+			task.use('/a.ts');
+			taskManager.previousDocument();
+			expect(openAndShow.calledOnceWithExactly('/c.ts', 3)).to.be.true;
+		});
+
+		it('should go to the next document when the active file has no further mark', () => {
+			task.use('/a.ts');
+			taskManager.nextMark(9);
+			expect(openAndShow.calledOnceWithExactly('/b.ts', 2)).to.be.true;
+		});
+
+		it('should do nothing when no file has marks', () => {
+			taskManager.delete('navigation');
+			task = taskManager.useActiveTask('navigation');
+			task.use('/empty.ts');
+			taskManager.nextDocument();
+			taskManager.previousDocument();
+			expect(openAndShow.called).to.be.false;
+		});
+
+		it('should still find a file when the active file is no longer part of the task', () => {
+			task.use('/b.ts');
+			task.toggle('/b.ts', 2, '');
+			taskManager.nextDocument();
+			expect(openAndShow.calledOnceWithExactly('/a.ts', 1)).to.be.true;
 		});
 	});
 

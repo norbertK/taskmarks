@@ -2,6 +2,14 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- Next / previous bookmark across files now continues from the file in the active editor. Before, it continued from the file that was added to the task last, so it could jump to the wrong file or back to the start of the current one
+
+### Changed
+- Removed the `Ring` class; a task keeps its files in a plain array and the file to jump to is computed in `core/navigation.ts`
+
 ## [1.0.1] - 2026-09-30
 
 First release since 0.9.6 (1.0.0 was not published).

@@ -121,7 +121,6 @@
 		"testAll": "npm run compile && nyc --reporter=html mocha --require ./out/test/mocha-setup.js \"./out/test/**/*.test.js\"",
 		"testBoth": "npm run testAll && npm run test",
 		"testFile": "npm run compile && nyc --reporter=html mocha --require ./out/test/mocha-setup.js \"./out/test/**/File.test.js\"",
-		"testRing": "npm run compile && nyc --reporter=html mocha --require ./out/test/mocha-setup.js \"./out/test/**/Ring.test.js\"",
 		"checkForUpgrade": "ncu",
 		"upgrade": "ncu --upgrade && npm install",
 		"inst": "npm install",

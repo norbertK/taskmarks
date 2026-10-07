@@ -93,6 +93,18 @@ describe('Navigation (pure)', () => {
 			];
 			expect(findNextFileWithMarks(emptyFiles, 0)).to.be.undefined;
 		});
+
+		it('should return the current file if it is the only one with marks', () => {
+			const onlyOne = [
+				{ filepath: '/a.ts', lineNumbers: [3, 7] },
+				{ filepath: '/b.ts', lineNumbers: [] },
+			];
+			expect(findNextFileWithMarks(onlyOne, 0)).to.deep.equal({ filepath: '/a.ts', lineNumber: 3 });
+		});
+
+		it('should start at the first file if there is no current file', () => {
+			expect(findNextFileWithMarks(files, -1)).to.deep.equal({ filepath: '/file1.ts', lineNumber: 10 });
+		});
 	});
 
 	describe('findPreviousFileWithMarks', () => {
@@ -119,6 +131,26 @@ describe('Navigation (pure)', () => {
 
 		it('should return undefined for empty files array', () => {
 			expect(findPreviousFileWithMarks([], 0)).to.be.undefined;
+		});
+
+		it('should return undefined if no files have marks', () => {
+			const emptyFiles = [
+				{ filepath: '/a.ts', lineNumbers: [] },
+				{ filepath: '/b.ts', lineNumbers: [] },
+			];
+			expect(findPreviousFileWithMarks(emptyFiles, 0)).to.be.undefined;
+		});
+
+		it('should return the current file if it is the only one with marks', () => {
+			const onlyOne = [
+				{ filepath: '/a.ts', lineNumbers: [] },
+				{ filepath: '/b.ts', lineNumbers: [3, 7] },
+			];
+			expect(findPreviousFileWithMarks(onlyOne, 1)).to.deep.equal({ filepath: '/b.ts', lineNumber: 7 });
+		});
+
+		it('should start at the last file if there is no current file', () => {
+			expect(findPreviousFileWithMarks(files, -1)).to.deep.equal({ filepath: '/file3.ts', lineNumber: 15 });
 		});
 	});
 });

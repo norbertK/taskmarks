@@ -2,7 +2,7 @@ import { Task } from './Task';
 import { DecoratorHelper } from './DecoratorHelper';
 import * as vscode from 'vscode';
 import type { IPersistTask } from './types';
-import { findNextMark, findPreviousMark } from './core/navigation';
+import { findNextFileWithMarks, findNextMark, findPreviousFileWithMarks, findPreviousMark } from './core/navigation';
 
 export class TaskManager {
 	private static _instance: TaskManager;
@@ -119,17 +119,9 @@ export class TaskManager {
 			return;
 		}
 
-		let currentFile = this.activeTask.activeFile;
-		let nextFile = this.activeTask.files.next;
-		while (currentFile !== nextFile) {
-			if (nextFile && nextFile.lineNumbers && nextFile.lineNumbers.length > 0) {
-				currentFile = nextFile;
-			} else {
-				nextFile = this.activeTask.files.next;
-			}
-		}
-		if (currentFile) {
-			DecoratorHelper.openAndShow(currentFile.filepath, currentFile.lineNumbers[0]);
+		const target = findNextFileWithMarks(this.activeTask.files, this._activeFileIndex());
+		if (target) {
+			DecoratorHelper.openAndShow(target.filepath, target.lineNumber);
 		}
 	}
 
@@ -138,18 +130,16 @@ export class TaskManager {
 			return;
 		}
 
-		let currentFile = this.activeTask.activeFile;
-		let previousFile = this.activeTask.files.previous;
-		while (currentFile !== previousFile) {
-			if (previousFile && previousFile.lineNumbers && previousFile.lineNumbers.length > 0) {
-				currentFile = previousFile;
-			} else {
-				previousFile = this.activeTask.files.previous;
-			}
+		const target = findPreviousFileWithMarks(this.activeTask.files, this._activeFileIndex());
+		if (target) {
+			DecoratorHelper.openAndShow(target.filepath, target.lineNumber);
 		}
-		if (currentFile) {
-			DecoratorHelper.openAndShow(currentFile.filepath, currentFile.lineNumbers[currentFile.lineNumbers.length - 1]);
-		}
+	}
+
+	// -1 if there is no active file or it is not (or no longer) part of the task
+	private _activeFileIndex(): number {
+		const activeFile = this.activeTask.activeFile;
+		return activeFile ? this.activeTask.files.indexOf(activeFile) : -1;
 	}
 
 	private _addTaskByNameIfMissing(taskname: string): Task {

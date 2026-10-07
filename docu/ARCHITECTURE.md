@@ -14,10 +14,9 @@ src/
 │
 ├── TaskManager.ts        # Singleton task orchestrator
 │
-├── Task.ts               # Task with Ring of files
+├── Task.ts               # Task with array of files
 ├── File.ts               # File with array of marks
 ├── Mark.ts               # Single bookmark (line + label)
-├── Ring.ts               # Circular array for navigation
 │
 ├── Persist.ts            # JSON save/load operations
 ├── PathHelper.ts         # Path manipulation, file I/O
@@ -34,7 +33,7 @@ src/
 **Layers:**
 - **VS Code Integration**: `extension.ts`, `Helper.ts`, `DecoratorHelper.ts`
 - **Business Logic**: `TaskManager.ts`
-- **Data Structures**: `Task.ts`, `File.ts`, `Mark.ts`, `Ring.ts`
+- **Data Structures**: `Task.ts`, `File.ts`, `Mark.ts`
 - **Persistence**: `Persist.ts`, `PathHelper.ts`
 - **Pure Core**: `core/*.ts` (testable without VS Code)
 
@@ -45,7 +44,7 @@ src/
 ```mermaid
 classDiagram
     TaskManager "1" --> "*" Task : _allTasks
-    Task "1" --> "1" Ring~File~ : _files
+    Task "1" --> "*" File : _files
     Task "1" --> "0..1" File : _activeFile
     File "1" --> "*" Mark : _marks
     
@@ -69,7 +68,7 @@ classDiagram
     
     class Task {
         -_name: string
-        -_files: Ring~File~
+        -_files: File[]
         -_activeFile: File
         +toggle(filename, line, label): void
         +use(path): File
@@ -89,14 +88,6 @@ classDiagram
         -_lineNumber: number
         -_label: string
         +getQuickPickItem(): QuickPickItem
-    }
-    
-    class Ring~T~ {
-        -_current: number
-        +next: T
-        +previous: T
-        +push(item): number
-        +delete(item): boolean
     }
 ```
 
@@ -167,35 +158,17 @@ Marks that land outside the document or on a line another mark already has are r
 
 ---
 
-## The Ring Structure
+## Navigation Across Files
 
-Files within a task are stored in a `Ring<File>`, enabling circular navigation:
-
-```
-        ┌─────────┐
-        │ File A  │
-        └────┬────┘
-             │
-    ┌────────┴────────┐
-    │                 │
-┌───┴───┐         ┌───┴───┐
-│File D │◄───────►│File B │ ◄── current
-└───┬───┘         └───┬───┘
-    │                 │
-    └────────┬────────┘
-             │
-        ┌────┴────┐
-        │ File C  │
-        └─────────┘
-
-.next     → moves clockwise
-.previous → moves counter-clockwise
-```
+Files within a task are a plain `File[]` in insertion order. There is no stored cursor: the position is always derived from `Task.activeFile`, which follows the active editor.
 
 **Navigation logic** (in `TaskManager`):
-1. `findNextMark()` looks for next line in current file
-2. If none found → `nextDocument()` advances the Ring
-3. Opens the next file with marks at its first mark
+1. `findNextMark()` looks for the next marked line in the active file
+2. If none found → `nextDocument()` calls `findNextFileWithMarks(files, indexOfActiveFile)` from `core/navigation.ts`
+3. That walks the array once from the file after the active one, wrapping around, skips files without marks, and checks the active file last (so a task with marks in one file wraps to that file's first mark)
+4. The result is opened at its first mark; if no file has marks, nothing happens
+
+`previousMark()` / `previousDocument()` mirror this with `findPreviousMark()` / `findPreviousFileWithMarks()` and open the previous file at its last mark.
 
 ---
 
@@ -375,7 +348,7 @@ normalizePath(filepath, fromChar, toChar): string
 ## Key Design Decisions
 
 1. **Singleton TaskManager**: Single source of truth for all task state
-2. **Ring for file navigation**: Circular structure enables seamless prev/next across files
+2. **No navigation cursor**: prev/next across files is computed from the active file, so it cannot drift from the editor
 3. **Relative paths**: Stored paths are workspace-relative for portability
 4. **Auto-save on document save**: Marks persist automatically
 5. **Line tracking**: Marks adjust when lines are inserted/deleted above them

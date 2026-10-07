@@ -60,12 +60,12 @@ describe('Task', () => {
 	});
 
 	describe('#files()', () => {
-		it('should return an empty Ring if no files have been added', () => {
+		it('should return an empty array if no files have been added', () => {
 			const task = new Task('MyTask');
 			expect(task.files.length).to.equal(0);
 		});
 
-		it('should return a Ring containing all added files', () => {
+		it('should return an array containing all added files', () => {
 			const task = new Task('MyTask');
 			const file1 = new File('file1.txt', 1);
 			const file2 = new File('file2.txt', 2);

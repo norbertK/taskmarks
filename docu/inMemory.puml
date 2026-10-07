@@ -28,13 +28,13 @@ class TaskManager {
 class Task {
  -_name: string
  -_activeFile: File | undefined
- -_files: Ring<File>
+ -_files: File[]
 
  +get name()
  +get activeFileFilePath(): string | undefined
  +get activeFile(): File | undefined
  +set activeFile(file: File | undefined)
- +get files(): Ring<File>
+ +get files(): File[]
  +get allMarks(): Mark[] 
 
  +mergeWith(taskToMerge: IPersistTask): Task
@@ -105,26 +105,6 @@ IPersistTaskManager <|.. TaskManager
 IPersistTask <|.. Task
 IPersistFile <|.. File
 number <|.. Mark
-
-class Ring<extends Array<T>> {
-    -_current = -1
-
-    +get current(): T | undefined
-    +get next(): T | undefined
-    +get previous(): T | undefined
-    +get top(): T | undefined
-    +get bottom(): T | undefined
-    
-    -checkPosition(): void
-
-    +insertBefore(item: T): T | undefined
-    +insertAfter(item: T): T | undefined
-    +pushArray(items: T[]): number
-    +push(item: T): number
-    +deleteCurrent(): T | undefined
-
-
-}
 
 abstract class Helper{
     -{static}_activeEditorLineCount: number

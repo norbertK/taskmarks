@@ -1,17 +1,16 @@
 import * as vscode from 'vscode';
 import { File } from './File';
-import { Ring } from './Ring';
 import { PathHelper } from './PathHelper';
 import type { IPersistTask, PathMark } from './types';
 
 export class Task {
 	private _name: string;
 	private _activeFile: File | undefined;
-	private _files: Ring<File>;
+	private _files: File[];
 
 	constructor(name: string) {
 		this._name = name;
-		this._files = new Ring();
+		this._files = [];
 	}
 
 	get name(): string {
@@ -33,7 +32,7 @@ export class Task {
 		return this._activeFile;
 	}
 
-	get files(): Ring<File> {
+	get files(): File[] {
 		return this._files;
 	}
 
@@ -55,8 +54,8 @@ export class Task {
 	}
 
 	mergeFilesWithPersistFiles(persistTaskToMerge: IPersistTask): Task {
-		// start with an empty Ring
-		const newFiles: Ring<File> = new Ring();
+		// start with an empty array
+		const newFiles: File[] = [];
 
 		// copy all old, but check for doubles
 		if (this._files && this._files.length > 0) {
@@ -97,7 +96,7 @@ export class Task {
 			});
 		}
 
-		// replace old _files Ring with newFiles
+		// replace old _files with newFiles
 		this._files = newFiles;
 
 		return this;
@@ -127,7 +126,7 @@ export class Task {
 		if (file) {
 			file.toggleTaskMark({ lineNumber, label });
 			if (!file.hasMarks) {
-				this._files.delete(file);
+				this._files.splice(this._files.indexOf(file), 1);
 			}
 		} else {
 			file = new File(reducedFilePath, lineNumber, label);
