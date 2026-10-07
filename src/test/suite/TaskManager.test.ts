@@ -151,6 +151,32 @@ describe('TaskManager', () => {
 		it('should throw error for non-existent task', () => {
 			expect(() => taskManager.renameTask('non-existent', 'new-name')).to.throw();
 		});
+
+		it('should refuse a name that another task already has', () => {
+			taskManager.useActiveTask('rename-one').toggle('/one.ts', 1, '');
+			taskManager.useActiveTask('rename-two').toggle('/two.ts', 1, '');
+
+			expect(taskManager.renameTask('rename-two', 'rename-one')).to.be.false;
+
+			expect(taskManager.taskNames.filter((name) => name === 'rename-one').length).to.equal(1);
+			expect(taskManager.taskNames).to.include('rename-two');
+			expect(taskManager.activeTask.name).to.equal('rename-two');
+			taskManager.delete('rename-one');
+			taskManager.delete('rename-two');
+		});
+
+		it('should report a successful rename', () => {
+			taskManager.useActiveTask('rename-ok');
+			expect(taskManager.renameTask('rename-ok', 'rename-done')).to.be.true;
+			taskManager.delete('rename-done');
+		});
+
+		it('should accept the name the task already has', () => {
+			taskManager.useActiveTask('rename-same');
+			expect(taskManager.renameTask('rename-same', 'rename-same')).to.be.true;
+			expect(taskManager.taskNames.filter((name) => name === 'rename-same').length).to.equal(1);
+			taskManager.delete('rename-same');
+		});
 	});
 
 	describe('#taskNames', () => {
@@ -175,6 +201,19 @@ describe('TaskManager', () => {
 			taskManager.useActiveTask('active-to-delete');
 			taskManager.delete('active-to-delete');
 			expect(taskManager.activeTask.name).to.equal('default');
+		});
+
+		it('should replace the active default task with a new, empty default task', () => {
+			const oldDefault = taskManager.useActiveTask('default');
+			oldDefault.toggle('/delete-default.ts', 1, '');
+
+			taskManager.delete('default');
+
+			expect(taskManager.activeTask).to.not.equal(oldDefault);
+			expect(taskManager.activeTask.name).to.equal('default');
+			expect(taskManager.activeTask.hasMarks).to.be.false;
+			expect(taskManager.allTasks).to.include(taskManager.activeTask);
+			expect(taskManager.allTasks).to.not.include(oldDefault);
 		});
 
 		it('should keep current active task when deleting a different task', () => {

@@ -13,10 +13,10 @@ class TaskManager {
     +get allTasks(): Task[]
     +get taskNames(): string[]
 
-    +renameTask(oldTaskName: string, newTaskName: string): void 
+    +renameTask(oldTaskName: string, newTaskName: string): boolean
     +useActiveTask(taskname = 'default'): Task
     +addTask(task: IPersistTask): void
-    +delete(taskname: string): Task
+    +delete(taskname: string): void
     +nextMark(currentline: number): void
     +previousMark(currentline: number): void
     +nextDocument(): void

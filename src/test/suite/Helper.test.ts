@@ -235,6 +235,77 @@ describe('Helper', () => {
 		});
 	});
 
+	describe('renameTask', () => {
+		let taskManager: TaskManager;
+		let saveTaskmarksJson: sinon.SinonStub;
+		let showInformationMessage: sinon.SinonSpy;
+		let namesWhenSaved: string[];
+
+		// answers of the user: the task picked from the list, then the name typed into the input box
+		function answer(pickedTask: string | undefined, newName: string | undefined): void {
+			sinon.replace(vscode.window, 'showQuickPick', sinon.fake.resolves(pickedTask) as any);
+			sinon.replace(vscode.window, 'showInputBox', sinon.fake.resolves(newName) as any);
+		}
+
+		function answered(): Promise<void> {
+			return new Promise((resolve) => setImmediate(resolve));
+		}
+
+		beforeEach(() => {
+			taskManager = TaskManager.instance;
+			(Helper as any)._taskManager = taskManager;
+			taskManager.useActiveTask('helper-rename-a');
+			taskManager.useActiveTask('helper-rename-b');
+			namesWhenSaved = [];
+			saveTaskmarksJson = sinon.stub(Persist, 'saveTaskmarksJson').callsFake(() => {
+				namesWhenSaved = [...taskManager.taskNames];
+			});
+			showInformationMessage = sinon.fake();
+			sinon.replace(vscode.window, 'showInformationMessage', showInformationMessage as any);
+		});
+
+		afterEach(() => {
+			sinon.restore();
+			['helper-rename-a', 'helper-rename-b', 'helper-rename-c'].forEach((name) => taskManager.delete(name));
+		});
+
+		it('should rename the picked task and save after the rename', async () => {
+			answer('helper-rename-b', 'helper-rename-c');
+			await Helper.renameTask();
+			await answered();
+			expect(taskManager.taskNames).to.include('helper-rename-c');
+			expect(taskManager.taskNames).to.not.include('helper-rename-b');
+			expect(saveTaskmarksJson.calledOnce).to.be.true;
+			expect(namesWhenSaved).to.include('helper-rename-c');
+		});
+
+		it('should refuse a name that another task already has and say so', async () => {
+			answer('helper-rename-b', 'helper-rename-a');
+			await Helper.renameTask();
+			await answered();
+			expect(taskManager.taskNames.filter((name) => name === 'helper-rename-a').length).to.equal(1);
+			expect(taskManager.taskNames).to.include('helper-rename-b');
+			expect(showInformationMessage.calledOnceWithExactly("Taskmarks: there is already a task named 'helper-rename-a'.")).to.be.true;
+			expect(saveTaskmarksJson.called).to.be.false;
+		});
+
+		it('should do nothing when the name input is cancelled', async () => {
+			answer('helper-rename-b', undefined);
+			await Helper.renameTask();
+			await answered();
+			expect(taskManager.taskNames).to.include('helper-rename-b');
+			expect(saveTaskmarksJson.called).to.be.false;
+		});
+
+		it('should do nothing when no task is picked', async () => {
+			answer(undefined, 'helper-rename-c');
+			await Helper.renameTask();
+			await answered();
+			expect(taskManager.taskNames).to.not.include('helper-rename-c');
+			expect(saveTaskmarksJson.called).to.be.false;
+		});
+	});
+
 	describe('toggleMark', () => {
 		const basePath = 'c:\\workspace';
 		const fileInWorkspace = 'c:\\workspace\\src\\a.ts';
@@ -250,13 +321,14 @@ describe('Helper', () => {
 		let showInputBox: sinon.SinonSpy;
 		let enableLabel: boolean;
 		let labelAnswer: string | undefined;
+		let activeEditor: vscode.TextEditor | undefined;
 
 		function fakeEditor(fileName: string, line: number): vscode.TextEditor {
 			return { selection: { active: { line } }, document: { fileName, uri: { fsPath: fileName } } } as unknown as vscode.TextEditor;
 		}
 
 		function setActiveEditor(editor: vscode.TextEditor | undefined): void {
-			(vscode.window as any).activeTextEditor = editor;
+			activeEditor = editor;
 		}
 
 		// labelAnswer is what the user types into the input box, undefined means cancelled
@@ -280,6 +352,10 @@ describe('Helper', () => {
 			(Helper as any)._taskManager = taskManager;
 			(Helper as any)._activeEditor = undefined;
 
+			// in a real VS Code (npm test) activeTextEditor has only a getter, so it can't be assigned
+			activeEditor = undefined;
+			sinon.stub(vscode.window, 'activeTextEditor').get(() => activeEditor);
+
 			saveTaskmarksJson = sinon.stub(Persist, 'saveTaskmarksJson');
 			refresh = sinon.stub(DecoratorHelper, 'refresh');
 			showInformationMessage = sinon.fake();
@@ -292,7 +368,6 @@ describe('Helper', () => {
 
 		afterEach(() => {
 			sinon.restore();
-			setActiveEditor(undefined);
 			(Helper as any)._activeEditor = undefined;
 			taskManager.delete('toggleMark');
 			PathHelper.basePath = previousBasePath;

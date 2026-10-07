@@ -3,12 +3,6 @@
  * The caller handles the actual navigation (showing lines, opening files).
  */
 
-export interface NavigationTarget {
-	type: 'line' | 'nextDocument' | 'previousDocument' | 'none';
-	lineNumber?: number;
-	filepath?: string;
-}
-
 /**
  * Find the next mark after the current line in the given line numbers.
  */

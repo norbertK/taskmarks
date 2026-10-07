@@ -7,6 +7,9 @@ All notable changes to the "taskmarks" extension will be documented in this file
 ### Fixed
 - Next / previous bookmark across files now continues from the file in the active editor. Before, it continued from the file that was added to the task last, so it could jump to the wrong file or back to the start of the current one
 - "Select Bookmark from List" showed the old line number and line text of a bookmark that had moved or whose line was edited since the list was first opened, and jumped to the old line. A bookmark whose file could not be read once stayed missing from the list
+- "Delete Task" on the active `default` task did not remove it: its bookmarks stayed visible, but the task was no longer saved, so bookmarks set afterwards were lost with the next reload. It is now replaced by a new, empty `default` task
+- "Rename Task" to the name of another task created two tasks with the same name, of which only one could be selected. Such a rename is now refused with a message
+- A renamed task was only written to taskmarks.json with the next save
 - A bookmark in a file outside the workspace folder was lost with the next reload. Such a bookmark is no longer set; a message says why
 - Removing the last bookmark of a file and setting one again no longer moves the file to the end of its task in taskmarks.json
 - Paste from clipboard takes over the label of a bookmark if the bookmark on that line has none yet. Before, the label was dropped

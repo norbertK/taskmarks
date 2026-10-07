@@ -33,30 +33,29 @@ export class TaskManager {
 		this._activeTask = this.useActiveTask();
 	}
 
-	renameTask(oldTaskName: string, newTaskName: string): void {
-		let task = this._allTasks.find((task) => task.name === oldTaskName);
+	// false if another task already has the new name - tasks are found by their name, so it has to be unique
+	renameTask(oldTaskName: string, newTaskName: string): boolean {
+		const task = this._allTasks.find((task) => task.name === oldTaskName);
 		if (!task) {
 			throw new Error('should not happen - picked from list');
 		}
-
-		task.name = newTaskName;
-
-		this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
-		this._statusBarItem.show();
-	}
-
-	useActiveTask(taskname = 'default'): Task {
-		if (this.activeTask && this.activeTask.name === taskname) {
-			return this.activeTask;
+		const taskWithNewName = this._allTasks.find((task) => task.name === newTaskName);
+		if (taskWithNewName && taskWithNewName !== task) {
+			return false;
 		}
 
-		let task = this._addTaskByNameIfMissing(taskname);
+		task.name = newTaskName;
+		this._showActiveTaskInStatusBar();
+		return true;
+	}
 
-		this._statusBarItem.hide();
-		this._activeTask = task;
-		this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
-		this._statusBarItem.show();
-
+	// makes the task with this name the active one, creates it if there is none
+	useActiveTask(taskname = 'default'): Task {
+		const task = this._addTaskByNameIfMissing(taskname);
+		if (task !== this._activeTask) {
+			this._activeTask = task;
+			this._showActiveTaskInStatusBar();
+		}
 		return task;
 	}
 
@@ -65,31 +64,26 @@ export class TaskManager {
 		task.mergeFilesWithPersistFiles(iPersistTask);
 	}
 
-	delete(nameOfTaskToDelete: string): Task {
+	// after deleting the active task, the default task is active - a new, empty one if the default task itself was deleted
+	delete(nameOfTaskToDelete: string): void {
 		const found = this._allTasks.findIndex((taskToDelete) => taskToDelete.name === nameOfTaskToDelete);
 
 		if (found > -1) {
 			this._allTasks.splice(found, 1);
 		}
 
-		if (this._activeTask.name === nameOfTaskToDelete) {
-			return this.useActiveTask();
+		if (!this._allTasks.includes(this._activeTask)) {
+			this.useActiveTask();
 		}
-
-		return this._activeTask;
 	}
 
 	nextMark(currentline: number): void {
-		if (
-			this.activeTask === undefined ||
-			this.activeTask.files === undefined ||
-			this.activeTask.files.length === 0 ||
-			this.activeTask.activeFile === undefined
-		) {
+		const activeFile = this.activeTask.activeFile;
+		if (!activeFile) {
 			return;
 		}
 
-		const nextLine = findNextMark(currentline, this.activeTask.activeFile.lineNumbers);
+		const nextLine = findNextMark(currentline, activeFile.lineNumbers);
 		if (nextLine !== undefined) {
 			DecoratorHelper.showLine(nextLine);
 		} else {
@@ -98,15 +92,12 @@ export class TaskManager {
 	}
 
 	previousMark(currentline: number): void {
-		if (!this.activeTask || !this.activeTask.files || this.activeTask.files.length === 0) {
+		const activeFile = this.activeTask.activeFile;
+		if (!activeFile) {
 			return;
 		}
 
-		if (!this.activeTask.activeFile) {
-			return;
-		}
-
-		const prevLine = findPreviousMark(currentline, this.activeTask.activeFile.lineNumbers);
+		const prevLine = findPreviousMark(currentline, activeFile.lineNumbers);
 		if (prevLine !== undefined) {
 			DecoratorHelper.showLine(prevLine);
 		} else {
@@ -115,10 +106,6 @@ export class TaskManager {
 	}
 
 	nextDocument(): void {
-		if (!this.activeTask || this.activeTask.files.length === 0) {
-			return;
-		}
-
 		const target = findNextFileWithMarks(this.activeTask.files, this._activeFileIndex());
 		if (target) {
 			DecoratorHelper.openAndShow(target.filepath, target.lineNumber);
@@ -126,10 +113,6 @@ export class TaskManager {
 	}
 
 	previousDocument(): void {
-		if (!this.activeTask || this.activeTask.files.length === 0) {
-			return;
-		}
-
 		const target = findPreviousFileWithMarks(this.activeTask.files, this._activeFileIndex());
 		if (target) {
 			DecoratorHelper.openAndShow(target.filepath, target.lineNumber);
@@ -140,6 +123,11 @@ export class TaskManager {
 	private _activeFileIndex(): number {
 		const activeFile = this.activeTask.activeFile;
 		return activeFile ? this.activeTask.files.indexOf(activeFile) : -1;
+	}
+
+	private _showActiveTaskInStatusBar(): void {
+		this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
+		this._statusBarItem.show();
 	}
 
 	private _addTaskByNameIfMissing(taskname: string): Task {

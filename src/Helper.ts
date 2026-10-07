@@ -252,16 +252,20 @@ export abstract class Helper {
 				}
 			});
 			vscode.window.showQuickPick(taskNames, options).then((oldTaskName) => {
-				if (oldTaskName) {
-					vscode.window.showInputBox({ prompt: `New name for task '${oldTaskName}'`, value: oldTaskName }).then((newTaskName) => {
-						if (newTaskName) {
-							this._taskManager.renameTask(oldTaskName, newTaskName);
-						}
-					});
+				if (!oldTaskName) {
+					return;
 				}
-
-				Helper.triggerChangeActiveFile();
-				Persist.saveTaskmarksJson();
+				vscode.window.showInputBox({ prompt: `New name for task '${oldTaskName}'`, value: oldTaskName }).then((newTaskName) => {
+					if (!newTaskName) {
+						return;
+					}
+					if (!this._taskManager.renameTask(oldTaskName, newTaskName)) {
+						vscode.window.showInformationMessage(`Taskmarks: there is already a task named '${newTaskName}'.`);
+						return;
+					}
+					// save here, not after showInputBox() was called - then the new name is not known yet
+					Persist.saveTaskmarksJson();
+				});
 			});
 		} catch (error: unknown) {
 			const message = Helper.getErrorMessage(error);
