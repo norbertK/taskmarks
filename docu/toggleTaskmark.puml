@@ -64,7 +64,7 @@ alt file exists
     end
 
 else file not found
-    task -> file: new File(reducedFilePath, lineNumber)
+    task -> file: new File(reducedFilePath)
     file -> file: addMark(lineNumber)
     file --> task
     task -> task: add file to files

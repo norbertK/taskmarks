@@ -1,4 +1,4 @@
-import { describe, it } from 'mocha';
+import { describe, it, beforeEach, afterEach } from 'mocha';
 import { expect } from 'chai';
 
 import assert = require('assert');
@@ -32,6 +32,63 @@ describe('Mark', () => {
 		const myFunction = sinon.spy();
 		myFunction();
 		sinon.assert.calledOnce(myFunction);
+	});
+
+	describe('getQuickPickItem', () => {
+		let lines: string[];
+
+		function fakeDocument() {
+			return { lineCount: lines.length, lineAt: (line: number) => ({ text: lines[line] }) };
+		}
+
+		beforeEach(() => {
+			lines = ['zero', 'one', 'two', 'three'];
+			sinon.replace(vscode.workspace, 'openTextDocument', sinon.fake(() => Promise.resolve(fakeDocument())) as any);
+		});
+
+		afterEach(() => {
+			sinon.restore();
+		});
+
+		it('should show the text of the marked line, its line number and the file', async () => {
+			const mark = new Mark('/src/a.ts', 1, '');
+			expect(await mark.getQuickPickItem()).to.deep.equal({ label: 'one', description: '1', detail: '/src/a.ts' });
+		});
+
+		it('should show the label instead of the line text if there is one', async () => {
+			const mark = new Mark('/src/a.ts', 1, 'look here');
+			expect((await mark.getQuickPickItem())?.label).to.equal('look here');
+		});
+
+		it('should show the new line number and text after the mark has moved', async () => {
+			const mark = new Mark('/src/a.ts', 1, '');
+			await mark.getQuickPickItem();
+
+			mark.lineNumber = 3;
+
+			expect(await mark.getQuickPickItem()).to.deep.equal({ label: 'three', description: '3', detail: '/src/a.ts' });
+		});
+
+		it('should show the new text after the marked line was edited', async () => {
+			const mark = new Mark('/src/a.ts', 1, '');
+			await mark.getQuickPickItem();
+
+			lines[1] = 'one, edited';
+
+			expect((await mark.getQuickPickItem())?.label).to.equal('one, edited');
+		});
+
+		it('should try again after the file could not be read', async () => {
+			sinon.restore();
+			sinon.replace(vscode.workspace, 'openTextDocument', sinon.fake(() => Promise.reject(new Error('file not found'))) as any);
+			const mark = new Mark('/src/a.ts', 1, '');
+			expect(await mark.getQuickPickItem()).to.be.undefined;
+
+			sinon.restore();
+			sinon.replace(vscode.workspace, 'openTextDocument', sinon.fake(() => Promise.resolve(fakeDocument())) as any);
+
+			expect((await mark.getQuickPickItem())?.label).to.equal('one');
+		});
 	});
 
 	// todo

@@ -8,6 +8,7 @@ All notable changes to the "taskmarks" extension will be documented in this file
 - Next / previous bookmark across files now continues from the file in the active editor. Before, it continued from the file that was added to the task last, so it could jump to the wrong file or back to the start of the current one
 - A bookmark in a file outside the workspace folder was lost with the next reload. Such a bookmark is no longer set; a message says why
 - Removing the last bookmark of a file and setting one again no longer moves the file to the end of its task in taskmarks.json
+- Paste from clipboard takes over the label of a bookmark if the bookmark on that line has none yet. Before, the label was dropped
 
 ### Changed
 - A task only keeps files that have bookmarks, in the order they got their first one. Before, every opened file was added, so the order in taskmarks.json and for next / previous bookmark depended on the order the files were opened in

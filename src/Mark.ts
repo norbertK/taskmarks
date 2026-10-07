@@ -54,6 +54,10 @@ export class Mark implements PathMark {
 		return this._label;
 	}
 
+	set label(label: string) {
+		this._label = label;
+	}
+
 	get lineNumber(): number {
 		return this._lineNumber;
 	}

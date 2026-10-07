@@ -44,6 +44,12 @@ import { expect } from 'chai';
 import { Task } from '../../Task';
 import { File } from '../../File';
 
+function fileWithMark(filePath: string, lineNumber: number, label = ''): File {
+	const file = new File(filePath);
+	file.addMark({ lineNumber, label });
+	return file;
+}
+
 describe('Task', () => {
 	describe('constructor', () => {
 		it('should create a Task object with a name', () => {
@@ -67,8 +73,8 @@ describe('Task', () => {
 
 		it('should return an array containing all added files', () => {
 			const task = new Task('MyTask');
-			const file1 = new File('file1.txt', 1);
-			const file2 = new File('file2.txt', 2);
+			const file1 = fileWithMark('file1.txt', 1);
+			const file2 = fileWithMark('file2.txt', 2);
 			task.files.push(file1);
 			task.files.push(file2);
 			expect(task.files.length).to.equal(2);
@@ -88,7 +94,7 @@ describe('Task', () => {
 
 		it('should add a mark to an existing file', () => {
 			const task = new Task('MyTask');
-			const file1 = new File('file1.txt', 1);
+			const file1 = fileWithMark('file1.txt', 1);
 			task.files.push(file1);
 			task.toggle('file1.txt', 2, 'label2');
 			const hasMarks = task.hasMarks;
@@ -134,7 +140,7 @@ describe('Task', () => {
 
 		it('should remove a mark if it already exists', () => {
 			const task = new Task('MyTask');
-			const file1 = new File('file1.txt', 1, 'label1');
+			const file1 = fileWithMark('file1.txt', 1, 'label1');
 			task.files.push(file1);
 			task.toggle('file1.txt', 1, 'label1');
 			const hasMarks = task.hasMarks;

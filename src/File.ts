@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { IPersistFile, IPersistMark } from './types';
+import type { IPersistMark } from './types';
 import { Mark } from './Mark';
 
 export class File {
@@ -35,73 +35,33 @@ export class File {
 	}
 
 	get lineNumbers(): number[] {
-		const lineNumbers: number[] = [];
-		this._marks.forEach((mark) => {
-			lineNumbers.push(mark.lineNumber);
-		});
-
-		return lineNumbers;
+		return this._marks.map((mark) => mark.lineNumber);
 	}
 
-	constructor(filePath: string, lineNumber = -1, label = '') {
+	constructor(filePath: string) {
 		this._filepath = filePath;
-		this._marks = [];
-		if (lineNumber === -1) {
-			return;
-		}
-		this.toggleTaskMark({ lineNumber, label });
 	}
 
-	mergeMarksWithPersistFile(persistFile: IPersistFile): File {
-		if (persistFile === undefined || persistFile.persistMarks === undefined) {
-			return this.mergeMarksAndLineNumbers([]);
+	// adds a mark for every line that has none yet and keeps the marks sorted by line
+	// on a line that already has a mark, only a missing label is taken over
+	mergeMarks(persistMarks: IPersistMark[]): void {
+		for (const { lineNumber, label } of persistMarks) {
+			const existing = this._marks.find((mark) => mark.lineNumber === lineNumber);
+			if (!existing) {
+				this._marks.push(new Mark(this._filepath, lineNumber, label));
+			} else if (!existing.label && label) {
+				existing.label = label;
+			}
 		}
-		return this.mergeMarksAndLineNumbers(persistFile.persistMarks);
+		this._marks.sort((first, second) => first.lineNumber - second.lineNumber);
 	}
 
-	mergeMarksAndLineNumbers(persistMarks: IPersistMark[]): File {
-		// start with an empty array
-		const newMarks: Mark[] = [];
-
-		// first remove double marks in this._marks
-		// copy all old, but check for doubles
-		if (this._marks && this._marks.length > 0) {
-			this._marks.forEach((mark) => {
-				const pos = newMarks.findIndex((newMark) => mark.lineNumber === newMark.lineNumber);
-				if (pos === -1) {
-					newMarks.push(mark);
-				}
-			});
-		}
-
-		// now insert the new lineNumbers
-		if (persistMarks && persistMarks.length > 0) {
-			persistMarks.forEach((lineNumbersAndLabel) => {
-				const pos = newMarks.findIndex((newMark) => lineNumbersAndLabel.lineNumber === newMark.lineNumber);
-				if (pos === -1) {
-					newMarks.push(new Mark(this._filepath, lineNumbersAndLabel.lineNumber, lineNumbersAndLabel.label));
-				}
-			});
-		}
-		// sort
-		let sortedMarks = newMarks.sort((first, second) => 0 - (first.lineNumber > second.lineNumber ? -1 : 1));
-
-		// replace old _marks array with sortedMarks
-		this._marks = sortedMarks;
-
-		return this;
-	}
-
-	addMark(lineNumbersAndLabel: { lineNumber: number; label: string }): void {
-		this.mergeMarksAndLineNumbers([lineNumbersAndLabel]);
+	addMark(persistMark: IPersistMark): void {
+		this.mergeMarks([persistMark]);
 	}
 
 	hasMark(lineNumber: number): boolean {
-		const index = this._marks.findIndex((mark) => mark.lineNumber === lineNumber);
-		if (index > -1) {
-			return true;
-		}
-		return false;
+		return this._marks.some((mark) => mark.lineNumber === lineNumber);
 	}
 
 	toggleTaskMark(persistMark: IPersistMark): void {

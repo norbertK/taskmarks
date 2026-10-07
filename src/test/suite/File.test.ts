@@ -6,6 +6,12 @@ import { expect } from 'chai';
 import { File } from '../../File';
 // import { Mark } from '../../Mark';
 
+function fileWithMark(filePath: string, lineNumber: number, label = ''): File {
+	const file = new File(filePath);
+	file.addMark({ lineNumber, label });
+	return file;
+}
+
 describe('File', () => {
 	const filePath = 'test.js';
 	const lineNumber = 1;
@@ -13,7 +19,7 @@ describe('File', () => {
 	let firstFile: File;
 
 	beforeEach(() => {
-		firstFile = new File(filePath, lineNumber, label);
+		firstFile = fileWithMark(filePath, lineNumber, label);
 	});
 
 	describe('allPersistMarks', () => {
@@ -37,31 +43,21 @@ describe('File', () => {
 	});
 
 	describe('a File', () => {
-		it('should have a filepath and an empty number array', () => {
-			firstFile = new File(filePath, lineNumber, label);
+		it('should have a filepath and the line numbers of its marks', () => {
+			firstFile = fileWithMark(filePath, lineNumber, label);
 			expect(firstFile.filepath).to.eql('test.js');
 			expect(firstFile.lineNumbers).to.eql([1]);
 		});
 	});
 
 	describe('constructor', () => {
-		it('should initialize with filepath and no marks if line number is not provided', () => {
+		it('should initialize with filepath and no marks', () => {
 			const filePath = '/path/to/file.txt';
 			const file = new File(filePath);
 			expect(file.filepath).to.eql(filePath);
 			expect(file.marks).to.eql([]);
 		});
 
-		it('should initialize with filepath and a mark if line number is provided', () => {
-			const filePath = '/path/to/file.txt';
-			const lineNumber = 10;
-			const label = 'Test label';
-			const file = new File(filePath, lineNumber, label);
-			expect(file.filepath).to.eql(filePath);
-			expect(file.marks.length).to.eql(1);
-			expect(file.marks[0].lineNumber).to.eql(lineNumber);
-			expect(file.marks[0].label).to.eql(label);
-		});
 	});
 
 	describe('addMark', () => {
@@ -82,7 +78,7 @@ describe('File', () => {
 			const filePath = '/path/to/file.txt';
 			const lineNumber = 10;
 			const label = 'Test label';
-			const file = new File(filePath, lineNumber, label);
+			const file = fileWithMark(filePath, lineNumber, label);
 			expect(file.hasMark(lineNumber)).to.eql(true);
 		});
 
@@ -90,7 +86,7 @@ describe('File', () => {
 			const filePath = '/path/to/file.txt';
 			const lineNumber = 10;
 			const label = 'Test label';
-			const file = new File(filePath, lineNumber, label);
+			const file = fileWithMark(filePath, lineNumber, label);
 			expect(file.hasMark(20)).to.eql(false);
 		});
 	});
@@ -100,7 +96,7 @@ describe('File', () => {
 			const filePath = '/path/to/file.txt';
 			const lineNumber = 10;
 			const label = 'Test label';
-			const file = new File(filePath, lineNumber, label);
+			const file = fileWithMark(filePath, lineNumber, label);
 			expect(file.marks.length).to.eql(1);
 			file.toggleTaskMark({ lineNumber, label: '' });
 			expect(file.marks).to.eql([]);
@@ -116,9 +112,9 @@ describe('File', () => {
 		});
 	});
 
-	describe('mergeMarksAndLineNumbers', () => {
+	describe('mergeMarks', () => {
 		it('lineNumbers should return numbers ordered with no doubles', () => {
-			firstFile.mergeMarksAndLineNumbers([
+			firstFile.mergeMarks([
 				{ lineNumber: 20, label: '' },
 				{ lineNumber: 30, label: '' },
 				{ lineNumber: 10, label: '' },
@@ -129,12 +125,12 @@ describe('File', () => {
 		});
 
 		it('after adding a second array, lineNumbers should return the combined numbers', () => {
-			firstFile.mergeMarksAndLineNumbers([
+			firstFile.mergeMarks([
 				{ lineNumber: 20, label: '' },
 				{ lineNumber: 30, label: '' },
 				{ lineNumber: 10, label: '' },
 			]);
-			firstFile.mergeMarksAndLineNumbers([
+			firstFile.mergeMarks([
 				{ lineNumber: 20, label: '' },
 				{ lineNumber: 50, label: '' },
 				{ lineNumber: 40, label: '' },
@@ -144,7 +140,7 @@ describe('File', () => {
 		});
 
 		it('after adding an existing lineNumber, nothing should change', () => {
-			firstFile.mergeMarksAndLineNumbers([
+			firstFile.mergeMarks([
 				{ lineNumber: 20, label: '' },
 				{ lineNumber: 30, label: '' },
 			]);
@@ -153,12 +149,43 @@ describe('File', () => {
 		});
 
 		it('after adding one new lineNumber, lineNumbers should include it in order', () => {
-			firstFile.mergeMarksAndLineNumbers([
+			firstFile.mergeMarks([
 				{ lineNumber: 20, label: '' },
 				{ lineNumber: 30, label: '' },
 			]);
 			firstFile.addMark({ lineNumber: 25, label: '' });
 			expect(firstFile.lineNumbers).to.eql([1, 20, 25, 30]);
+		});
+	});
+
+	describe('mergeMarks and labels', () => {
+		it('should keep the label of an existing mark', () => {
+			const file = fileWithMark(filePath, 10, 'mine');
+			file.mergeMarks([{ lineNumber: 10, label: 'theirs' }]);
+			expect(file.allPersistMarks).to.eql([{ lineNumber: 10, label: 'mine' }]);
+		});
+
+		it('should take over the label for a mark that has none', () => {
+			const file = fileWithMark(filePath, 10, '');
+			const mark = file.marks[0];
+			file.mergeMarks([{ lineNumber: 10, label: 'theirs' }]);
+			expect(file.allPersistMarks).to.eql([{ lineNumber: 10, label: 'theirs' }]);
+			expect(file.marks[0]).to.equal(mark);
+		});
+
+		it('should not remove a label when the merged mark has none', () => {
+			const file = fileWithMark(filePath, 10, 'mine');
+			file.mergeMarks([{ lineNumber: 10, label: '' }]);
+			expect(file.allPersistMarks).to.eql([{ lineNumber: 10, label: 'mine' }]);
+		});
+
+		it('should take the label of the first of two new marks for the same line', () => {
+			const file = new File(filePath);
+			file.mergeMarks([
+				{ lineNumber: 10, label: 'first' },
+				{ lineNumber: 10, label: 'second' },
+			]);
+			expect(file.allPersistMarks).to.eql([{ lineNumber: 10, label: 'first' }]);
 		});
 	});
 
@@ -187,8 +214,8 @@ describe('File', () => {
 			const lineNumber = 10;
 			const label = 'test';
 
-			const fileWithMark = new File(filePath, lineNumber, label);
-			expect(fileWithMark.hasMarks).to.be.true;
+			const file = fileWithMark(filePath, lineNumber, label);
+			expect(file.hasMarks).to.be.true;
 		});
 	});
 });

@@ -46,7 +46,7 @@ export class Task {
 		}
 		for (const persistFile of persistTaskToMerge.persistFiles) {
 			const file = this._getOrCreateFile(persistFile.filepath);
-			file.mergeMarksAndLineNumbers(persistFile.persistMarks);
+			file.mergeMarks(persistFile.persistMarks);
 			this.syncFile(file);
 		}
 	}
