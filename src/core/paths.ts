@@ -36,6 +36,19 @@ export function reducePath(basePath: string, filepath: string): string {
 }
 
 /**
+ * Check whether a full path lies inside basePath (and is not basePath itself).
+ * Only such paths can be stored relative to basePath.
+ */
+export function isInsideBasePath(basePath: string, filepath: string): boolean {
+	if (basePath === '' || !filepath.startsWith(basePath)) {
+		return false;
+	}
+	const rest = filepath.substring(basePath.length);
+	// without the separator check, /workspace2/a.ts would count as inside /workspace
+	return /[\\/]$/.test(basePath) ? rest.length > 0 : /^[\\/]./.test(rest);
+}
+
+/**
  * Replace all occurrences of a substring.
  */
 export function replaceAll(str: string, search: string, replacement: string): string {

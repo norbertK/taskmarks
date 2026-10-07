@@ -154,6 +154,7 @@ export abstract class Helper {
 
 				activeFile.removeMarks(marksToRemove);
 				restored.forEach((mark) => activeFile.addMark(mark));
+				this._taskManager.activeTask.syncFile(activeFile);
 				Helper.refresh();
 				Persist.saveTaskmarksJson();
 			},
@@ -309,6 +310,11 @@ export abstract class Helper {
 			const activeLine = activeTextEditor.selection.active.line;
 
 			const fullName = activeTextEditor.document.fileName;
+			if (!PathHelper.isInWorkspace(fullName)) {
+				// such a path can't be stored workspace-relative, the mark would be lost with the next reload
+				vscode.window.showInformationMessage('Taskmarks: bookmarks can only be set in files inside the workspace folder.');
+				return;
+			}
 			if (enableLabel && !this._taskManager.activeTask.lineHasMark(fullName, activeLine)) {
 				vscode.window.showInputBox({ prompt: 'Label for this bookmark (shown in "Select Bookmark from List")' }).then((newLabel) => {
 					if (newLabel) {

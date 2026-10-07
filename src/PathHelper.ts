@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 
 import { IPersistTaskManager } from './types';
-import { detectPathCharacters, getFullPath as coreGetFullPath, reducePath as coreReducePath } from './core/paths';
+import { detectPathCharacters, getFullPath as coreGetFullPath, isInsideBasePath, reducePath as coreReducePath } from './core/paths';
 import { createDefaultTaskmarksJson } from './core/serialization';
 
 export abstract class PathHelper {
@@ -89,6 +89,10 @@ export abstract class PathHelper {
 
 	static getFullPath(filepath: string): string {
 		return coreGetFullPath(PathHelper.basePath, filepath);
+	}
+
+	static isInWorkspace(filepath: string): boolean {
+		return isInsideBasePath(PathHelper.basePath, filepath);
 	}
 
 	static reducePath(filepath: string): string {

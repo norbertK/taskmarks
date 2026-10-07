@@ -196,7 +196,6 @@ describe('TaskManager', () => {
 			task = taskManager.useActiveTask('navigation');
 			task.toggle('/a.ts', 1, '');
 			task.toggle('/a.ts', 9, '');
-			task.use('/empty.ts');
 			task.toggle('/b.ts', 2, '');
 			task.toggle('/c.ts', 3, '');
 		});

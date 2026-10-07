@@ -80,7 +80,7 @@ describe('Task', () => {
 		it('should add a mark to a new file', () => {
 			const task = new Task('MyTask');
 			task.toggle('file1.txt', 1, 'label1');
-			const hasMarks = task.hasFiles;
+			const hasMarks = task.hasMarks;
 			expect(hasMarks).to.be.true;
 			const file = task.getFile('file1.txt');
 			expect(file?.hasMark(1)).to.be.true;
@@ -91,9 +91,45 @@ describe('Task', () => {
 			const file1 = new File('file1.txt', 1);
 			task.files.push(file1);
 			task.toggle('file1.txt', 2, 'label2');
-			const hasMarks = task.hasFiles;
+			const hasMarks = task.hasMarks;
 			expect(hasMarks).to.be.true;
 			expect(file1.hasMark(2)).to.be.true;
+		});
+
+		it('should put the mark on the active file and add that file to the task', () => {
+			const task = new Task('MyTask');
+			const active = task.use('file1.txt');
+			task.toggle('file1.txt', 1, '');
+			expect(task.files).to.deep.equal([active]);
+			expect(task.activeFile).to.equal(active);
+		});
+
+		it('should remove the file with its last mark, but keep it as the active file', () => {
+			const task = new Task('MyTask');
+			const active = task.use('file1.txt');
+			task.toggle('file1.txt', 1, '');
+			task.toggle('file1.txt', 1, '');
+			expect(task.files.length).to.equal(0);
+			expect(task.activeFile).to.equal(active);
+		});
+
+		it('should keep the order of the files when a mark is toggled off and on again', () => {
+			const task = new Task('MyTask');
+			task.toggle('file1.txt', 1, '');
+			task.toggle('file1.txt', 5, '');
+			task.toggle('file2.txt', 1, '');
+			task.toggle('file1.txt', 1, '');
+			task.toggle('file1.txt', 1, '');
+			expect(task.files.map((file) => file.filepath)).to.deep.equal(['file1.txt', 'file2.txt']);
+		});
+
+		it('should order the files by their first mark, not by when they were opened', () => {
+			const task = new Task('MyTask');
+			task.use('file1.txt');
+			task.use('file2.txt');
+			task.toggle('file2.txt', 1, '');
+			task.toggle('file1.txt', 1, '');
+			expect(task.files.map((file) => file.filepath)).to.deep.equal(['file2.txt', 'file1.txt']);
 		});
 
 		it('should remove a mark if it already exists', () => {
@@ -101,7 +137,7 @@ describe('Task', () => {
 			const file1 = new File('file1.txt', 1, 'label1');
 			task.files.push(file1);
 			task.toggle('file1.txt', 1, 'label1');
-			const hasMarks = task.hasFiles;
+			const hasMarks = task.hasMarks;
 			expect(hasMarks).to.be.false;
 			expect(file1.hasMark(1)).to.be.false;
 		});
@@ -118,12 +154,26 @@ describe('Task', () => {
 
 		it('should return an existing file with the given path', function () {
 			const task = new Task('Test Task');
-			const file1 = task.use('/path/to/file1');
-			const file2 = task.use('/path/to/file2');
-			const file3 = task.use('/path/to/file3');
+			task.toggle('/path/to/file1', 1, '');
+			const file1 = task.getFile('/path/to/file1');
+			task.use('/path/to/file2');
 			const file1Again = task.use('/path/to/file1');
 
 			expect(file1Again).to.equal(file1);
+		});
+
+		it('should not add a file without marks to the task', function () {
+			const task = new Task('Test Task');
+			task.use('/path/to/file1');
+
+			expect(task.files.length).to.equal(0);
+		});
+
+		it('should return the same file while it stays active', function () {
+			const task = new Task('Test Task');
+			const file1 = task.use('/path/to/file1');
+
+			expect(task.use('/path/to/file1')).to.equal(file1);
 		});
 
 		it('should set the active file to the file with the given path', function () {
@@ -137,6 +187,25 @@ describe('Task', () => {
 		});
 	});
 
+	describe('#syncFile()', () => {
+		it('should remove a file whose marks were all removed from outside', () => {
+			const task = new Task('MyTask');
+			task.toggle('file1.txt', 1, '');
+			const file = task.getFile('file1.txt')!;
+			file.removeMarks([...file.marks]);
+			task.syncFile(file);
+			expect(task.files.length).to.equal(0);
+		});
+
+		it('should add a file that got marks from outside', () => {
+			const task = new Task('MyTask');
+			const active = task.use('file1.txt');
+			active.addMark({ lineNumber: 3, label: '' });
+			task.syncFile(active);
+			expect(task.files).to.deep.equal([active]);
+		});
+	});
+
 	describe('#getFile()', function () {
 		it('should return undefined if no file with the given path exists', function () {
 			const task = new Task('Test Task');
@@ -147,12 +216,13 @@ describe('Task', () => {
 
 		it('should return the file with the given path', function () {
 			const task = new Task('Test Task');
-			const file1 = task.use('/path/to/file1');
-			const file2 = task.use('/path/to/file2');
-			const file3 = task.use('/path/to/file3');
+			task.toggle('/path/to/file1', 1, '');
+			task.toggle('/path/to/file2', 2, '');
+			task.toggle('/path/to/file3', 3, '');
 			const getFile2 = task.getFile('/path/to/file2');
 
-			expect(getFile2).to.equal(file2);
+			expect(getFile2?.filepath).to.equal('/path/to/file2');
+			expect(getFile2?.hasMark(2)).to.be.true;
 		});
 	});
 
@@ -161,19 +231,6 @@ describe('Task', () => {
 			const task = new Task('original');
 			task.name = 'renamed';
 			expect(task.name).to.equal('renamed');
-		});
-	});
-
-	describe('#activeFileFilePath', () => {
-		it('should return undefined when no active file', () => {
-			const task = new Task('Test');
-			expect(task.activeFileFilePath).to.be.undefined;
-		});
-
-		it('should return the filepath of the active file', () => {
-			const task = new Task('Test');
-			task.use('/path/to/file.ts');
-			expect(task.activeFileFilePath).to.equal('/path/to/file.ts');
 		});
 	});
 
@@ -194,26 +251,6 @@ describe('Task', () => {
 			task.toggle('file.ts', 10, 'label');
 			task.toggle('file.ts', 10, '');
 			expect(task.hasMarks).to.be.false;
-		});
-	});
-
-	describe('#allMarks', () => {
-		it('should return empty array for new task', () => {
-			const task = new Task('Test');
-			expect(task.allMarks).to.deep.equal([]);
-		});
-
-		it('should return all marks from all files', () => {
-			const task = new Task('Test');
-			task.toggle('file1.ts', 10, 'label1');
-			task.toggle('file1.ts', 20, 'label2');
-			task.toggle('file2.ts', 5, 'label3');
-
-			const marks = task.allMarks;
-			expect(marks.length).to.equal(3);
-			expect(marks[0].lineNumber).to.equal(10);
-			expect(marks[1].lineNumber).to.equal(20);
-			expect(marks[2].lineNumber).to.equal(5);
 		});
 	});
 
@@ -286,7 +323,15 @@ describe('Task', () => {
 			expect(task.getFile('/file1.ts')?.marks.length).to.equal(2);
 		});
 
-		it('should handle empty persistMarks', () => {
+		it('should merge into the active file, so the active editor sees the marks', () => {
+			const task = new Task('Test');
+			const active = task.use('/file1.ts');
+			task.mergeFilesWithPersistFiles({ name: 'Test', persistFiles: [{ filepath: '/file1.ts', persistMarks: [{ lineNumber: 10, label: '' }] }] });
+			expect(task.files).to.deep.equal([active]);
+			expect(active.hasMark(10)).to.be.true;
+		});
+
+		it('should not add files without marks', () => {
 			const task = new Task('Test');
 			const persistTask = {
 				name: 'Test',
@@ -298,8 +343,7 @@ describe('Task', () => {
 				],
 			};
 			task.mergeFilesWithPersistFiles(persistTask);
-			expect(task.files.length).to.equal(1);
-			expect(task.getFile('/file1.ts')?.marks.length).to.equal(0);
+			expect(task.files.length).to.equal(0);
 		});
 	});
 });

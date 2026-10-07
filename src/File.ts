@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { IPersistFile, IPersistMark, PathMark } from './types';
+import type { IPersistFile, IPersistMark } from './types';
 import { Mark } from './Mark';
 
 export class File {
@@ -17,16 +17,6 @@ export class File {
 	get allPersistMarks(): IPersistMark[] {
 		return this._marks.map((mark) => {
 			return {
-				lineNumber: mark.lineNumber,
-				label: mark.label,
-			};
-		});
-	}
-
-	get allPathMarks(): PathMark[] {
-		return this._marks.map((mark) => {
-			return {
-				filepath: mark.filepath,
 				lineNumber: mark.lineNumber,
 				label: mark.label,
 			};

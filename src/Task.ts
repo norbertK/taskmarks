@@ -1,11 +1,13 @@
 import * as vscode from 'vscode';
 import { File } from './File';
 import { PathHelper } from './PathHelper';
-import type { IPersistTask, PathMark } from './types';
+import type { IPersistTask } from './types';
 
 export class Task {
 	private _name: string;
+	// the file in the active editor - only part of _files while it has marks
 	private _activeFile: File | undefined;
+	// the files with marks, in the order they got their first mark
 	private _files: File[];
 
 	constructor(name: string) {
@@ -21,27 +23,12 @@ export class Task {
 		this._name = name;
 	}
 
-	get activeFileFilePath(): string | undefined {
-		if (this._activeFile) {
-			return this._activeFile.filepath;
-		}
-		return undefined;
-	}
-
 	get activeFile(): File | undefined {
 		return this._activeFile;
 	}
 
 	get files(): File[] {
 		return this._files;
-	}
-
-	get allMarks(): PathMark[] {
-		const allMarks: PathMark[] = [];
-		this._files.forEach((file) => {
-			allMarks.push(...file.allPathMarks);
-		});
-		return allMarks;
 	}
 
 	async getQuickPickItems(): Promise<vscode.QuickPickItem[]> {
@@ -53,123 +40,59 @@ export class Task {
 		return quickPickItems;
 	}
 
-	mergeFilesWithPersistFiles(persistTaskToMerge: IPersistTask): Task {
-		// start with an empty array
-		const newFiles: File[] = [];
-
-		// copy all old, but check for doubles
-		if (this._files && this._files.length > 0) {
-			this._files.forEach((oldFile) => {
-				if (oldFile !== undefined) {
-					const fileFound: File | undefined = newFiles.find((newFile) => oldFile?.filepath === newFile?.filepath);
-
-					if (fileFound === undefined) {
-						newFiles.push(oldFile);
-					} else {
-						// if double, merge line numbers
-						fileFound.mergeMarksAndLineNumbers(oldFile.allPathMarks);
-					}
-				}
-			});
+	mergeFilesWithPersistFiles(persistTaskToMerge: IPersistTask): void {
+		if (!persistTaskToMerge?.persistFiles) {
+			return;
 		}
-
-		if (persistTaskToMerge === undefined || persistTaskToMerge.persistFiles === undefined) {
-			return this;
+		for (const persistFile of persistTaskToMerge.persistFiles) {
+			const file = this._getOrCreateFile(persistFile.filepath);
+			file.mergeMarksAndLineNumbers(persistFile.persistMarks);
+			this.syncFile(file);
 		}
-		// now do the same with persistTaskToMerge.files
-		if (persistTaskToMerge.persistFiles.length > 0) {
-			persistTaskToMerge.persistFiles.forEach((persistFile) => {
-				const fileFound: File | undefined = newFiles.find((newFile) => persistFile.filepath === newFile?.filepath);
-
-				if (fileFound === undefined) {
-					const newFile = new File(persistFile.filepath, -1);
-					if (persistFile.persistMarks && persistFile.persistMarks.length > 0) {
-						persistFile.persistMarks.forEach((lineNumber) => {
-							newFile.addMark(lineNumber);
-						});
-					}
-					newFiles.push(newFile);
-				} else {
-					// if double, merge line numbers
-					fileFound.mergeMarksAndLineNumbers(persistFile.persistMarks);
-				}
-			});
-		}
-
-		// replace old _files with newFiles
-		this._files = newFiles;
-
-		return this;
 	}
 
 	lineHasMark(filename: string, lineNumber: number): boolean {
-		const reducedFilePath = PathHelper.reducePath(filename);
-
-		let file: File | undefined = this._files.find((aFile) => {
-			return aFile.filepath === reducedFilePath;
-		});
-
-		if (file && file.hasMark(lineNumber)) {
-			return true;
-		}
-
-		return false;
+		return this.getFile(PathHelper.reducePath(filename))?.hasMark(lineNumber) ?? false;
 	}
 
 	toggle(filename: string, lineNumber: number, label: string): void {
-		const reducedFilePath = PathHelper.reducePath(filename);
-
-		let file: File | undefined = this._files.find((aFile) => {
-			return aFile.filepath === reducedFilePath;
-		});
-
-		if (file) {
-			file.toggleTaskMark({ lineNumber, label });
-			if (!file.hasMarks) {
-				this._files.splice(this._files.indexOf(file), 1);
-			}
-		} else {
-			file = new File(reducedFilePath, lineNumber, label);
-			this._files.push(file);
-		}
+		const file = this._getOrCreateFile(PathHelper.reducePath(filename));
+		file.toggleTaskMark({ lineNumber, label });
+		this.syncFile(file);
 	}
 
 	use(path: string): File {
-		const filePath = PathHelper.reducePath(path);
-		let file: File | undefined = undefined;
-		if (this.hasFiles) {
-			file = this.getFile(filePath);
-		}
+		this._activeFile = this._getOrCreateFile(PathHelper.reducePath(path));
+		return this._activeFile;
+	}
 
-		if (!file) {
-			file = new File(filePath, -1);
+	// call after the marks of a file were changed: adds the file with its first mark, removes it with its last
+	syncFile(file: File): void {
+		const index = this._files.indexOf(file);
+		if (file.hasMarks && index === -1) {
 			this._files.push(file);
+		} else if (!file.hasMarks && index > -1) {
+			this._files.splice(index, 1);
 		}
-
-		this._activeFile = file;
-
-		return file;
 	}
 
 	getFile(reducedFilePath: string): File | undefined {
-		const fileMark: File | undefined = this._files.find((file) => {
-			return file.filepath === reducedFilePath;
-		});
-
-		return fileMark;
-	}
-
-	get hasFiles(): boolean {
-		return this._files.length > 0;
+		return this._files.find((file) => file.filepath === reducedFilePath);
 	}
 
 	get hasMarks(): boolean {
-		const fileWithMark: File | undefined = this._files.find((file) => {
-			return file.hasMarks;
-		});
-		if (fileWithMark) {
-			return true;
+		return this._files.some((file) => file.hasMarks);
+	}
+
+	private _getOrCreateFile(reducedFilePath: string): File {
+		const file = this.getFile(reducedFilePath);
+		if (file) {
+			return file;
 		}
-		return false;
+		// reuse the active file, so the active editor and the task keep working on the same object
+		if (this._activeFile?.filepath === reducedFilePath) {
+			return this._activeFile;
+		}
+		return new File(reducedFilePath);
 	}
 }

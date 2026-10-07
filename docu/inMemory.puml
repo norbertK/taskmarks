@@ -31,15 +31,14 @@ class Task {
  -_files: File[]
 
  +get name()
- +get activeFileFilePath(): string | undefined
  +get activeFile(): File | undefined
  +set activeFile(file: File | undefined)
  +get files(): File[]
- +get allMarks(): Mark[] 
 
  +mergeWith(taskToMerge: IPersistTask): Task
  +toggle(path: string, lineNumber: number): boolean
  +use(path: string): File
+ +syncFile(file: File): void
  +getFile(reducedFilePath: string): File | undefined
 }
 

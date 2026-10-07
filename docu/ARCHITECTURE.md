@@ -72,6 +72,7 @@ classDiagram
         -_activeFile: File
         +toggle(filename, line, label): void
         +use(path): File
+        +syncFile(file): void
         +lineHasMark(filename, line): boolean
     }
     
@@ -114,6 +115,7 @@ sequenceDiagram
     TM-->>H: Task
     H->>T: toggle(filename, line, label)
     T->>F: toggleTaskMark(mark)
+    T->>T: syncFile(file)
     F->>F: splice or push Mark
     H->>P: saveTaskmarksJson()
     P->>P: JSON.stringify()
@@ -160,7 +162,11 @@ Marks that land outside the document or on a line another mark already has are r
 
 ## Navigation Across Files
 
-Files within a task are a plain `File[]` in insertion order. There is no stored cursor: the position is always derived from `Task.activeFile`, which follows the active editor.
+`Task.files` is a plain `File[]` and holds only files that have marks, in the order they got their first mark. `Task.syncFile(file)` keeps it that way: it adds a file with its first mark and removes it with its last. `toggle()` and `mergeFilesWithPersistFiles()` call it themselves; code that changes a file's marks directly (the change handler in `Helper`) has to call it.
+
+`Task.activeFile` is the file in the active editor, set by `use()` on every editor change. While it has no marks it is not part of `files`. When it gets a mark, the same `File` object is added, so the editor and the task never work on two objects for one path.
+
+There is no stored cursor: the position is always derived from `activeFile`. If the active file has no marks, navigation starts at the first (next) or last (previous) file of the task.
 
 **Navigation logic** (in `TaskManager`):
 1. `findNextMark()` looks for the next marked line in the active file
@@ -340,6 +346,7 @@ mapMarkLines(lines, changes: TextChange[], newLineCount): (number | undefined)[]
 detectPathCharacters(path): { active: string, inactive: string }
 getFullPath(basePath, filepath): string
 reducePath(basePath, filepath): string
+isInsideBasePath(basePath, filepath): boolean   // marks are only set in such files
 normalizePath(filepath, fromChar, toChar): string
 ```
 
@@ -349,7 +356,7 @@ normalizePath(filepath, fromChar, toChar): string
 
 1. **Singleton TaskManager**: Single source of truth for all task state
 2. **No navigation cursor**: prev/next across files is computed from the active file, so it cannot drift from the editor
-3. **Relative paths**: Stored paths are workspace-relative for portability
+3. **Relative paths**: Stored paths are workspace-relative for portability. A file outside the (first) workspace folder can't be stored that way, so `Helper.toggleMark()` refuses to set a mark there
 4. **Auto-save on document save**: Marks persist automatically
 5. **Line tracking**: Marks adjust when lines are inserted/deleted above them
 6. **Pure core modules**: Business logic separated from VS Code APIs for testability

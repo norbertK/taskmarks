@@ -4,6 +4,7 @@ import {
 	detectPathCharacters,
 	getFullPath,
 	reducePath,
+	isInsideBasePath,
 	replaceAll,
 	normalizePath,
 } from '../../core/paths';
@@ -45,6 +46,34 @@ describe('Paths (pure)', () => {
 
 		it('should handle Windows paths', () => {
 			expect(getFullPath('C:\\workspace', '\\src\\file.ts')).to.equal('C:\\workspace\\src\\file.ts');
+		});
+	});
+
+	describe('isInsideBasePath', () => {
+		it('should accept a file below basePath', () => {
+			expect(isInsideBasePath('/workspace', '/workspace/src/file.ts')).to.be.true;
+			expect(isInsideBasePath('c:\\workspace', 'c:\\workspace\\src\\file.ts')).to.be.true;
+		});
+
+		it('should accept a basePath with a trailing separator', () => {
+			expect(isInsideBasePath('c:\\', 'c:\\file.ts')).to.be.true;
+		});
+
+		it('should reject a file outside basePath', () => {
+			expect(isInsideBasePath('c:\\workspace', 'd:\\other\\file.ts')).to.be.false;
+		});
+
+		it('should reject a sibling folder that starts with the same name', () => {
+			expect(isInsideBasePath('/workspace', '/workspace2/file.ts')).to.be.false;
+		});
+
+		it('should reject basePath itself and names without a path', () => {
+			expect(isInsideBasePath('/workspace', '/workspace')).to.be.false;
+			expect(isInsideBasePath('/workspace', 'Untitled-1')).to.be.false;
+		});
+
+		it('should reject everything while basePath is empty', () => {
+			expect(isInsideBasePath('', '/workspace/file.ts')).to.be.false;
 		});
 	});
 
