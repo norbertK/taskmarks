@@ -1,4 +1,5 @@
 {
+  "version": 2,
   "activeTaskName": "taskMarks",
   "persistTasks": [
     {
@@ -29,7 +30,11 @@
           "filepath": "\\src\\taskmarks.test.txt",
           "persistMarks": [
             {
-              "lineNumber": 17,
+              "lineNumber": 20,
+              "label": ""
+            },
+            {
+              "lineNumber": 38,
               "label": ""
             }
           ]
@@ -39,6 +44,33 @@
           "persistMarks": [
             {
               "lineNumber": 7,
+              "label": ""
+            }
+          ]
+        },
+        {
+          "filepath": "\\src\\TaskManager.ts",
+          "persistMarks": [
+            {
+              "lineNumber": 21,
+              "label": ""
+            }
+          ]
+        },
+        {
+          "filepath": "\\.vscode\\taskmarks.json",
+          "persistMarks": [
+            {
+              "lineNumber": 29,
+              "label": ""
+            }
+          ]
+        },
+        {
+          "filepath": "\\src\\Helper.ts",
+          "persistMarks": [
+            {
+              "lineNumber": 324,
               "label": ""
             }
           ]

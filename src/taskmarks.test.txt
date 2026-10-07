@@ -15,7 +15,6 @@ log and end taskmarks:
 
 throw new Error('xyz');
 
-
 {
     "name": "taskMarks",
     "persistFiles": [
@@ -26,6 +25,7 @@ throw new Error('xyz');
                     "lineNumber": 41,
                     "label": ""
                 },
+                
                 {
                     "lineNumber": 65,
                     "label": ""
@@ -37,6 +37,7 @@ throw new Error('xyz');
             ]
         },
         {
+
             "filepath": "\\src\\Ring.ts",
             "persistMarks": [
                 {
