@@ -34,7 +34,7 @@ All notable changes to the "taskmarks" extension will be documented in this file
 - "Delete Task" asks for confirmation if the task has bookmarks
 - A task only keeps files that have bookmarks, in the order they got their first one. Before, every opened file was added, so the order in taskmarks.json and for next / previous bookmark depended on the order the files were opened in
 - From a file without bookmarks, next / previous bookmark goes to the first / last file of the task
-- The list entries for "Select Bookmark from List" are built in `Helper`; `Mark`, `File` and `Task` no longer depend on the VS Code API
+- Internal structure: the commands moved from `Helper` to `Commands`, the tracking of edits to `MarkTracker`, error formatting to `core/errors.ts`. `TaskManager`, `Task`, `File` and `Mark` no longer depend on the VS Code API
 - Removed the `Ring` class; a task keeps its files in a plain array and the file to jump to is computed in `core/navigation.ts`
 
 ## [1.0.1] - 2026-09-30

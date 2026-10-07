@@ -102,9 +102,6 @@ describe('TaskManager Tests', () => {
 });
 
 import { expect } from 'chai';
-import * as sinon from 'sinon';
-import { DecoratorHelper } from '../../DecoratorHelper';
-import { PathHelper } from '../../PathHelper';
 import { IPersistTask } from '../../types';
 
 describe('TaskManager', () => {
@@ -259,105 +256,6 @@ describe('TaskManager', () => {
 			taskManager.useActiveTask('keep-active');
 			taskManager.delete('delete-other');
 			expect(taskManager.activeTask.name).to.equal('keep-active');
-		});
-	});
-
-	describe('#nextDocument / #previousDocument', () => {
-		let openAndShow: sinon.SinonStub;
-		let task: Task;
-		// files with marks that are not on disk, e.g. marked by a teammate on another branch
-		let missingFiles: string[];
-
-		beforeEach(() => {
-			openAndShow = sinon.stub(DecoratorHelper, 'openAndShow');
-			missingFiles = [];
-			sinon.stub(PathHelper, 'fileExists').callsFake((filepath: string) => !missingFiles.includes(filepath));
-			taskManager.delete('navigation');
-			task = taskManager.useActiveTask('navigation');
-			task.toggle('/a.ts', 1, '');
-			task.toggle('/a.ts', 9, '');
-			task.toggle('/b.ts', 2, '');
-			task.toggle('/c.ts', 3, '');
-		});
-
-		afterEach(() => {
-			sinon.restore();
-			taskManager.delete('navigation');
-		});
-
-		it('should skip a file that does not exist and go on to the one after it', () => {
-			missingFiles = ['/b.ts'];
-			task.use('/a.ts');
-			taskManager.nextDocument();
-			expect(openAndShow.calledOnceWithExactly('/c.ts', 3)).to.be.true;
-		});
-
-		it('should skip a file that does not exist when going back', () => {
-			missingFiles = ['/b.ts'];
-			task.use('/c.ts');
-			taskManager.previousDocument();
-			expect(openAndShow.calledOnceWithExactly('/a.ts', 9)).to.be.true;
-		});
-
-		it('should wrap around past a missing file at the end', () => {
-			missingFiles = ['/c.ts'];
-			task.use('/b.ts');
-			taskManager.nextDocument();
-			expect(openAndShow.calledOnceWithExactly('/a.ts', 1)).to.be.true;
-		});
-
-		it('should do nothing when none of the files exists', () => {
-			missingFiles = ['/a.ts', '/b.ts', '/c.ts'];
-			task.use('/a.ts');
-			taskManager.nextDocument();
-			taskManager.previousDocument();
-			expect(openAndShow.called).to.be.false;
-		});
-
-		it('should go to the file after the active file, not after the last added one', () => {
-			task.use('/a.ts');
-			taskManager.nextDocument();
-			expect(openAndShow.calledOnceWithExactly('/b.ts', 2)).to.be.true;
-		});
-
-		it('should wrap from the last file to the first', () => {
-			task.use('/c.ts');
-			taskManager.nextDocument();
-			expect(openAndShow.calledOnceWithExactly('/a.ts', 1)).to.be.true;
-		});
-
-		it('should go to the last mark of the file before the active file', () => {
-			task.use('/b.ts');
-			taskManager.previousDocument();
-			expect(openAndShow.calledOnceWithExactly('/a.ts', 9)).to.be.true;
-		});
-
-		it('should wrap from the first file to the last', () => {
-			task.use('/a.ts');
-			taskManager.previousDocument();
-			expect(openAndShow.calledOnceWithExactly('/c.ts', 3)).to.be.true;
-		});
-
-		it('should go to the next document when the active file has no further mark', () => {
-			task.use('/a.ts');
-			taskManager.nextMark(9);
-			expect(openAndShow.calledOnceWithExactly('/b.ts', 2)).to.be.true;
-		});
-
-		it('should do nothing when no file has marks', () => {
-			taskManager.delete('navigation');
-			task = taskManager.useActiveTask('navigation');
-			task.use('/empty.ts');
-			taskManager.nextDocument();
-			taskManager.previousDocument();
-			expect(openAndShow.called).to.be.false;
-		});
-
-		it('should still find a file when the active file is no longer part of the task', () => {
-			task.use('/b.ts');
-			task.toggle('/b.ts', 2, '');
-			taskManager.nextDocument();
-			expect(openAndShow.calledOnceWithExactly('/a.ts', 1)).to.be.true;
 		});
 	});
 

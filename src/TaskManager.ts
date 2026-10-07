@@ -1,10 +1,5 @@
 import { Task } from './Task';
-import { DecoratorHelper } from './DecoratorHelper';
-import { PathHelper } from './PathHelper';
-import type { File } from './File';
-import * as vscode from 'vscode';
 import type { IPersistTask } from './types';
-import { findNextFileWithMarks, findNextMark, findPreviousFileWithMarks, findPreviousMark } from './core/navigation';
 
 export class TaskManager {
 	private static _instance: TaskManager;
@@ -15,7 +10,6 @@ export class TaskManager {
 
 	private _activeTask: Task;
 	private _allTasks: Task[];
-	private _statusBarItem: vscode.StatusBarItem;
 
 	get activeTask(): Task {
 		return this._activeTask;
@@ -31,7 +25,6 @@ export class TaskManager {
 
 	private constructor() {
 		this._allTasks = [];
-		this._statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
 		this._activeTask = this.useActiveTask();
 	}
 
@@ -47,18 +40,13 @@ export class TaskManager {
 		}
 
 		task.name = newTaskName;
-		this._showActiveTaskInStatusBar();
 		return true;
 	}
 
 	// makes the task with this name the active one, creates it if there is none
 	useActiveTask(taskname = 'default'): Task {
-		const task = this._addTaskByNameIfMissing(taskname);
-		if (task !== this._activeTask) {
-			this._activeTask = task;
-			this._showActiveTaskInStatusBar();
-		}
-		return task;
+		this._activeTask = this._addTaskByNameIfMissing(taskname);
+		return this._activeTask;
 	}
 
 	// replaces all tasks, e.g. after taskmarks.json was loaded. The task objects are new: files have to be used again
@@ -84,67 +72,6 @@ export class TaskManager {
 		if (!this._allTasks.includes(this._activeTask)) {
 			this.useActiveTask();
 		}
-	}
-
-	nextMark(currentline: number): void {
-		const activeFile = this.activeTask.activeFile;
-		if (!activeFile) {
-			return;
-		}
-
-		const nextLine = findNextMark(currentline, activeFile.lineNumbers);
-		if (nextLine !== undefined) {
-			DecoratorHelper.showLine(nextLine);
-		} else {
-			this.nextDocument();
-		}
-	}
-
-	previousMark(currentline: number): void {
-		const activeFile = this.activeTask.activeFile;
-		if (!activeFile) {
-			return;
-		}
-
-		const prevLine = findPreviousMark(currentline, activeFile.lineNumbers);
-		if (prevLine !== undefined) {
-			DecoratorHelper.showLine(prevLine);
-		} else {
-			this.previousDocument();
-		}
-	}
-
-	nextDocument(): void {
-		const files = this._filesOnDisk();
-		const target = findNextFileWithMarks(files, this._activeFileIndex(files));
-		if (target) {
-			DecoratorHelper.openAndShow(target.filepath, target.lineNumber);
-		}
-	}
-
-	previousDocument(): void {
-		const files = this._filesOnDisk();
-		const target = findPreviousFileWithMarks(files, this._activeFileIndex(files));
-		if (target) {
-			DecoratorHelper.openAndShow(target.filepath, target.lineNumber);
-		}
-	}
-
-	// taskmarks.json keeps the marks of files that don't exist here (a teammate's file, another branch).
-	// Navigation has to leave them out: such a file can't be opened, and next / previous would never get past it.
-	private _filesOnDisk(): File[] {
-		return this.activeTask.files.filter((file) => PathHelper.fileExists(file.filepath));
-	}
-
-	// -1 if there is no active file or it is not (or no longer) one of the files
-	private _activeFileIndex(files: File[]): number {
-		const activeFile = this.activeTask.activeFile;
-		return activeFile ? files.indexOf(activeFile) : -1;
-	}
-
-	private _showActiveTaskInStatusBar(): void {
-		this._statusBarItem.text = 'TaskMarks: ' + this._activeTask.name;
-		this._statusBarItem.show();
 	}
 
 	private _addTaskByNameIfMissing(taskname: string): Task {

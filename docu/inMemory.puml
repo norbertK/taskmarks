@@ -7,7 +7,6 @@ class TaskManager {
     -constructor()
     -_activeTask: Task
     -_allTasks: Task[]
-    -_statusBarItem: vscode.StatusBarItem
 
     +get activeTask(): Task
     +get allTasks(): Task[]
@@ -17,10 +16,7 @@ class TaskManager {
     +useActiveTask(taskname = 'default'): Task
     +addTask(task: IPersistTask): void
     +delete(taskname: string): void
-    +nextMark(currentline: number): void
-    +previousMark(currentline: number): void
-    +nextDocument(): void
-    +previousDocument(): void
+    +replaceTasks(persistTasks: IPersistTask[], activeTaskName: string): void
 
     -_addTaskByNameIfMissing(taskname: string): Task
 }

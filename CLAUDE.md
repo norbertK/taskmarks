@@ -27,9 +27,11 @@ Packaging: `npm run "build package"` (vsce). The `esbuild*` scripts produce `out
 
 ## Layout
 
-- `src/extension.ts`: registers the commands. Every handler delegates to `Helper`.
-- `src/Helper.ts`: wires VS Code events (active and visible editors, save, text change incl. undo restore of removed marks, changes of taskmarks.json) and the command UIs.
-- `src/TaskManager.ts` (singleton) → `Task` → `File[]` → `Mark`: the in-memory model.
+- `src/extension.ts`: registers the commands. Every handler delegates to `Commands`.
+- `src/Commands.ts`: the commands with their UIs (prompts, lists, messages). They use `Helper.taskManager`, `Helper.refresh()`, `Helper.save()`.
+- `src/Helper.ts`: wiring. Loads the tasks, listens to VS Code events (active and visible editors, save, text change, changes of taskmarks.json), shows marks and status bar, saves.
+- `src/MarkTracker.ts`: moves and removes marks when a document changes, restores them on undo.
+- `src/TaskManager.ts` (singleton) → `Task` → `File[]` → `Mark`: the in-memory model. No `vscode` import in these four.
 - `src/Persist.ts`, `src/PathHelper.ts`: load/save/reload `taskmarks.json`, backups, path handling, the storage location (`taskmarks.useGlobalTaskmarksJson`).
 - `src/core/*.ts`: pure logic (navigation, serialization, migration, lineAdjustment, paths). **Must not import `vscode`.** Put new logic here when it can live without VS Code, and test it here.
 - `src/test/suite/*.test.ts`: unit tests. `src/test/mock/vscode.mock.ts` is injected for `require('vscode')` by `src/test/mocha-setup.ts`.
@@ -39,7 +41,7 @@ Packaging: `npm run "build package"` (vsce). The `esbuild*` scripts produce `out
 
 - Formatting: tabs, single quotes, semicolons, print width 150, trailing commas es5 (`.prettierrc.json`).
 - Tests: mocha `describe`/`it` imported from `'mocha'`, `expect` from chai, sinon for fakes. The vscode mock is minimal: if code under test uses a new VS Code API, add a fake for it to the mock.
-- `Helper`, `Persist` and `PathHelper` are abstract classes with only static state, and `TaskManager` is a singleton. State carries over between tests, so reset it explicitly.
+- `Helper`, `Commands`, `MarkTracker`, `Persist` and `PathHelper` are abstract classes with only static state, and `TaskManager` is a singleton. State carries over between tests, so reset it explicitly.
 - Errors: catch and report with `Helper.reportError({ message: Helper.getErrorMessage(error) })` (goes to the "Taskmarks Errors" output channel).
 - Mark line numbers are 0-based (taken from `selection.active.line`).
 - Stored file paths are workspace-relative with a leading separator (e.g. `\src\a.ts`). On load, `normalizeFilePaths` converts them to the current OS separator; on save they get back the separator the file uses (`Persist._fileSeparator`, `/` for a new file).
@@ -55,7 +57,7 @@ Packaging: `npm run "build package"` (vsce). The `esbuild*` scripts produce `out
 - Saving never drops marks because their file doesn't exist on disk (it may exist for a teammate or on another branch).
 - When taskmarks.json changes on disk, the tasks are replaced by the file's (`Persist.reloadIfChangedOnDisk`). A file that can't be read then is never saved over and gets no automatic backup-and-reset: that is only done at startup.
 - The tests run twice: `npm run testAll` on the vscode mock and `npm test` in a real VS Code, where the API objects are read-only. Stub getters with `sinon.stub(obj, 'prop').get(...)` and don't assign to `vscode.*` properties.
-- Mark line tracking runs for every changed document and for every task that has marks in it (`Helper.documentChanged`), not only for the active editor and the active task. It works from each change's range and inserted text (`mapMarkLines`), not from line-count differences.
+- Mark line tracking runs for every changed document and for every task that has marks in it (`Helper.documentChanged` → `MarkTracker.documentChanged`), not only for the active editor and the active task. It works from each change's range and inserted text (`mapMarkLines`), not from line-count differences.
 - `Task.files` only holds files with marks. Code that changes a file's marks directly has to call `Task.syncFile(file)` afterwards.
 
 ## Repo notes

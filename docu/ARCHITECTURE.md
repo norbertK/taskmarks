@@ -9,10 +9,12 @@ The extension is organized into three layers:
 ```
 src/
 ├── extension.ts          # Entry point, command registration
-├── Helper.ts             # VS Code event coordination
-├── DecoratorHelper.ts    # Editor gutter icons
+├── Commands.ts           # The commands (toggle, next / previous, lists, tasks, clipboard)
+├── Helper.ts             # Wiring: load, editor and file events, status bar, save
+├── MarkTracker.ts        # Moves marks with edits, restores them on undo
+├── DecoratorHelper.ts    # Editor gutter icons, jump to a line
 │
-├── TaskManager.ts        # Singleton task orchestrator
+├── TaskManager.ts        # Singleton: all tasks and the active one
 │
 ├── Task.ts               # Task with array of files
 ├── File.ts               # File with array of marks
@@ -24,6 +26,7 @@ src/
 │
 └── core/                 # Pure modules (no VS Code deps)
     ├── navigation.ts     # Mark navigation logic
+    ├── errors.ts         # Message and stack of whatever was thrown
     ├── serialization.ts  # JSON format conversion
     ├── migration.ts      # taskmarks.json versions + upgrade
     ├── lineAdjustment.ts # Move/remove marks on edits
@@ -31,8 +34,8 @@ src/
 ```
 
 **Layers:**
-- **VS Code Integration**: `extension.ts`, `Helper.ts`, `DecoratorHelper.ts`
-- **Business Logic**: `TaskManager.ts`
+- **VS Code Integration**: `extension.ts`, `Commands.ts`, `Helper.ts`, `MarkTracker.ts`, `DecoratorHelper.ts`
+- **Business Logic**: `TaskManager.ts` (no `vscode` import: tasks, the active task, rename, delete)
 - **Data Structures**: `Task.ts`, `File.ts`, `Mark.ts` (`File` and `Mark` import neither `vscode` nor the helpers; `Task` only uses `PathHelper` to make paths workspace-relative)
 - **Persistence**: `Persist.ts`, `PathHelper.ts`
 - **Pure Core**: `core/*.ts` (testable without VS Code)
@@ -48,7 +51,11 @@ classDiagram
     Task "1" --> "0..1" File : _activeFile
     File "1" --> "*" Mark : _marks
     
+    Commands ..> Helper : taskManager, refresh, save, reportError
+    Commands ..> DecoratorHelper : uses
+    Commands ..> Persist : clipboard
     Helper ..> TaskManager : uses
+    Helper ..> MarkTracker : uses
     Helper ..> DecoratorHelper : uses
     Helper ..> Persist : uses
     
@@ -59,11 +66,11 @@ classDiagram
         -_instance: TaskManager
         -_activeTask: Task
         -_allTasks: Task[]
-        -_statusBarItem: StatusBarItem
         +instance: TaskManager
         +useActiveTask(name): Task
-        +nextMark(line): void
-        +previousMark(line): void
+        +replaceTasks(persistTasks, activeTaskName): void
+        +renameTask(oldName, newName): boolean
+        +delete(name): void
     }
     
     class Task {
@@ -100,6 +107,7 @@ When a user presses `Ctrl+Alt+M`:
 sequenceDiagram
     participant VSCode as VS Code
     participant Ext as extension.ts
+    participant C as Commands
     participant H as Helper
     participant TM as TaskManager
     participant T as Task
@@ -108,17 +116,19 @@ sequenceDiagram
     participant DH as DecoratorHelper
 
     VSCode->>Ext: toggleMark command
-    Ext->>H: toggleMark()
-    H->>TM: activeTask
-    TM-->>H: Task
-    H->>T: toggle(filename, line, label)
+    Ext->>C: toggleMark()
+    C->>H: taskManager.activeTask
+    H-->>C: Task
+    C->>T: toggle(filename, line, label)
     T->>F: toggleTaskMark(mark)
     T->>T: syncFile(file)
     F->>F: splice or push Mark
+    C->>H: save()
     H->>P: saveTaskmarksJson()
     P->>P: JSON.stringify()
     P->>P: writeFileSync()
-    H->>DH: refresh(editor, lineNumbers)
+    C->>H: triggerChangeActiveFile()
+    H->>DH: refresh(editor, lineNumbers) for every visible editor
     DH->>VSCode: setDecorations()
 ```
 
@@ -139,7 +149,7 @@ flowchart LR
     F --> G[Persist.saveTaskmarksJson]
 ```
 
-**Code location**: `Helper.documentChanged()` calls `mapMarkLines()` from `core/lineAdjustment.ts`, once per task (`Helper.adjustMarks()`).
+**Code location**: `Helper.documentChanged()` hands the event to `MarkTracker.documentChanged()`, which calls `mapMarkLines()` from `core/lineAdjustment.ts` once per task (`MarkTracker.adjustMarks()`) and says whether any mark changed. Only then does `Helper` refresh the editors and save.
 
 **Which changes are seen:** VS Code reports the changes of every open document, so the marks of a file are adjusted in **every task** and whether or not the file is in the active editor: typing, rename and replace across files, format on save, and the reload of an open file that changed on disk (reported as one change that replaces the lines that differ, so marks strictly inside that block are removed). A file that changes while it is **not open** in VS Code (a pull or checkout of a closed file, another program) is not reported at all. Its marks keep their line numbers; fixing that would need the text of the marked line in taskmarks.json, i.e. a new format version.
 
@@ -156,19 +166,19 @@ Rules for one change (`mapLineThroughChange`):
 
 Marks that land outside the document or on a line another mark already has are removed. Removal is by `Mark` object, not by line number.
 
-**Undo:** when a single-change edit removes marks, `Helper` keeps a `MarkRemoval` (start position, replaced and inserted line counts, the removed marks) per task and file path, at most 20 each. The path is the key, not the `File`: a file that loses its last mark leaves its task, and `Task.getOrCreateFile()` brings it back for the restored marks. On a change with `reason === Undo`, `findUndoneRemoval()` looks for a removal the undo exactly reverses (same start position, line counts swapped) and the marks are added back at their old lines. Redo needs no handling: it is the same delete again. The list lives in memory only.
+**Undo:** when a single-change edit removes marks, `MarkTracker` keeps a `MarkRemoval` (start position, replaced and inserted line counts, the removed marks) per task and file path, at most 20 each. The path is the key, not the `File`: a file that loses its last mark leaves its task, and `Task.getOrCreateFile()` brings it back for the restored marks. On a change with `reason === Undo`, `findUndoneRemoval()` looks for a removal the undo exactly reverses (same start position, line counts swapped) and the marks are added back at their old lines. Redo needs no handling: it is the same delete again. The list lives in memory only.
 
 ---
 
 ## Navigation Across Files
 
-`Task.files` is a plain `File[]` and holds only files that have marks, in the order they got their first mark. `Task.syncFile(file)` keeps it that way: it adds a file with its first mark and removes it with its last. `toggle()` and `mergeFilesWithPersistFiles()` call it themselves; code that changes a file's marks directly (the change handler in `Helper`) has to call it.
+`Task.files` is a plain `File[]` and holds only files that have marks, in the order they got their first mark. `Task.syncFile(file)` keeps it that way: it adds a file with its first mark and removes it with its last. `toggle()` and `mergeFilesWithPersistFiles()` call it themselves; code that changes a file's marks directly (`MarkTracker`) has to call it.
 
 `Task.activeFile` is the file in the active editor, set by `use()` on every editor change. It is only the starting point for next / previous: the gutter icons are set for every visible editor (`Helper.refresh()`), and edits are tracked for every open document. While it has no marks it is not part of `files`. When it gets a mark, the same `File` object is added, so the editor and the task never work on two objects for one path.
 
 There is no stored cursor: the position is always derived from `activeFile`. If the active file has no marks, navigation starts at the first (next) or last (previous) file of the task.
 
-**Navigation logic** (in `TaskManager`):
+**Navigation logic** (in `Commands.nextMark()` / `Commands.nextDocument()`):
 1. `findNextMark()` looks for the next marked line in the active file
 2. If none found → `nextDocument()` calls `findNextFileWithMarks(files, indexOfActiveFile)` from `core/navigation.ts`
 3. That walks the array once from the file after the active one, wrapping around, skips files without marks, and checks the active file last (so a task with marks in one file wraps to that file's first mark)
@@ -258,7 +268,7 @@ In memory, file paths have the separator of the system VS Code runs on (`normali
 
 Saving does not check whether a marked file exists. The file may exist for a teammate or on another branch, and taskmarks.json is shared. Stale entries stay until the marks are removed by hand.
 
-Such files stay in `Task.files`, so everything that opens files has to leave them out (`PathHelper.fileExists`): next / previous across files (`TaskManager._filesOnDisk`) and the bookmark list (`Helper.getMarkQuickPickItems`).
+Such files stay in `Task.files`, so everything that opens files has to leave them out (`PathHelper.fileExists`): next / previous across files (`Commands.filesOnDisk`) and the bookmark list (`Commands.getMarkQuickPickItems`).
 
 ### Changes from outside (pull, checkout, editing the file)
 
@@ -316,16 +326,16 @@ sequenceDiagram
 
 | Command | Keybinding | Handler |
 |---------|------------|---------|
-| `toggleMark` | `Ctrl+Alt+M` | `Helper.toggleMark()` |
-| `nextMark` | `Ctrl+Alt+N` | `Helper.nextMark()` |
-| `previousMark` | `Ctrl+Alt+P` | `Helper.previousMark()` |
-| `selectTask` | `Ctrl+Alt+T` | `Helper.selectTask()` |
-| `createTask` | - | `Helper.createTask()` |
-| `renameTask` | - | `Helper.renameTask()` |
-| `deleteTask` | - | `Helper.deleteTask()` |
-| `selectMarkFromList` | - | `Helper.selectMarkFromList()` |
-| `copyToClipboard` | - | `Helper.copyToClipboard()` |
-| `pasteFromClipboard` | - | `Helper.pasteFromClipboard()` |
+| `toggleMark` | `Ctrl+Alt+M` | `Commands.toggleMark()` |
+| `nextMark` | `Ctrl+Alt+N` | `Commands.nextMark()` |
+| `previousMark` | `Ctrl+Alt+P` | `Commands.previousMark()` |
+| `selectTask` | `Ctrl+Alt+T` | `Commands.selectTask()` |
+| `createTask` | - | `Commands.createTask()` |
+| `renameTask` | - | `Commands.renameTask()` |
+| `deleteTask` | - | `Commands.deleteTask()` |
+| `selectMarkFromList` | - | `Commands.selectMarkFromList()` |
+| `copyToClipboard` | - | `Commands.copyToClipboard()` |
+| `pasteFromClipboard` | - | `Commands.pasteFromClipboard()` |
 
 ---
 
@@ -384,9 +394,9 @@ normalizePath(filepath, fromChar, toChar): string
 
 1. **Singleton TaskManager**: Single source of truth for all task state
 2. **No navigation cursor**: prev/next across files is computed from the active file, so it cannot drift from the editor
-3. **Relative paths**: Stored paths are workspace-relative for portability. A file outside the (first) workspace folder can't be stored that way, so `Helper.toggleMark()` refuses to set a mark there
+3. **Relative paths**: Stored paths are workspace-relative for portability. A file outside the (first) workspace folder can't be stored that way, so `Commands.toggleMark()` refuses to set a mark there
 4. **Auto-save on document save**: Marks persist automatically
 5. **Line tracking**: Marks adjust when lines are inserted/deleted above them
 6. **Pure core modules**: Business logic separated from VS Code APIs for testability
-7. **UI stays in `Helper`**: the entries of "Select Bookmark from List" are built in `Helper.getMarkQuickPickItems()`, fresh on every call (one `openTextDocument` per file). Each entry carries its `Mark`, so the jump uses the mark's current line instead of text parsed back from the entry
-8. **Commands await and report**: every command in `Helper` is `async`, awaits its prompts and reports errors with `Helper.reportError` instead of throwing. Cancelling a prompt changes and saves nothing; "Delete Task" asks before bookmarks are lost
+7. **UI stays out of the model**: `TaskManager`, `Task`, `File` and `Mark` don't import `vscode`. The status bar is set in `Helper.refresh()`, next / previous are in `Commands`, and the entries of "Select Bookmark from List" are built in `Commands.getMarkQuickPickItems()`, fresh on every call (one `openTextDocument` per file). Each entry carries its `Mark`, so the jump uses the mark's current line instead of text parsed back from the entry
+8. **Commands await and report**: every command in `Commands` is `async`, awaits its prompts and reports errors with `Helper.reportError` instead of throwing. Cancelling a prompt changes and saves nothing; "Delete Task" asks before bookmarks are lost
