@@ -2,15 +2,13 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
-## [Unreleased]
+## [1.3.0] - 2026-10-08
 
 ### Added
 - Breakpoints per task: with the new setting `taskmarks.breakpointsPerTask` (default off), selecting another task stores the breakpoints that are set with the task you leave, removes them and sets the breakpoints of the selected task. They are stored per user in VS Code's storage for the workspace, not in taskmarks.json. Only breakpoints in files of the workspace folder are handled; function breakpoints and breakpoints in other files stay as they are. "Delete Task" also asks before the breakpoints of a task are lost
 - Command "Taskmarks: Share Breakpoints of Active Task": puts a copy of the breakpoints that are set into taskmarks.json, for the team. Run it again to update the copy
 - Command "Taskmarks: Load Shared Breakpoints of Active Task": sets the breakpoints the task shares, in addition to your own. Shared breakpoints are never set without this command
-
-- With `taskmarks.enableLabel`, a bookmark on the line that declares a method, function, class ... is offered that name as its label. Enter takes it, typing replaces it, and clearing the box sets a bookmark without label. It needs a language support for the file that knows its symbols (what the Outline view shows)
-- A label that its line contains anyway, like such a method name, is not shown again at the end of the line. It is still used in "Select Bookmark from List"
+- With `taskmarks.enableLabel`, the line of a new bookmark is highlighted while the input box asks for its label, and what you type is shown at the end of that line. The input box has a title that names the line. Before, nothing happened near the cursor, so the box at the top of the window was easy to miss
 
 ### Changed
 - taskmarks.json has file format 3 while a task shares breakpoints, and format 2 otherwise. Taskmarks 1.2.0 and older load a format 3 file with its bookmarks, but don't save changes; "Share Breakpoints of Active Task" says so before the first breakpoints are shared

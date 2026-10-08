@@ -24,14 +24,15 @@ describe('Commands', () => {
 		let previousBasePath: string;
 		let saveTaskmarksJson: sinon.SinonStub;
 		let refresh: sinon.SinonStub;
+		let showLabelInput: sinon.SinonStub;
+		let hideLabelInput: sinon.SinonStub;
 		let showInformationMessage: sinon.SinonSpy;
 		let showInputBox: sinon.SinonSpy;
 		let enableLabel: boolean;
 		let labelAnswer: string | undefined;
+		// set to let the input box fail
+		let labelInputError: Error | undefined;
 		let activeEditor: vscode.TextEditor | undefined;
-		// what the language support of the file answers when it is asked for the symbols of the document
-		let symbols: () => Promise<unknown>;
-		let executeCommand: sinon.SinonSpy;
 
 		function fakeEditor(fileName: string, line: number): vscode.TextEditor {
 			return { selection: { active: { line } }, document: { fileName, uri: { fsPath: fileName } } } as unknown as vscode.TextEditor;
@@ -68,6 +69,8 @@ describe('Commands', () => {
 
 			saveTaskmarksJson = sinon.stub(Persist, 'saveTaskmarksJson');
 			refresh = sinon.stub(DecoratorHelper, 'refresh');
+			showLabelInput = sinon.stub(DecoratorHelper, 'showLabelInput');
+			hideLabelInput = sinon.stub(DecoratorHelper, 'hideLabelInput');
 			showInformationMessage = sinon.fake();
 			sinon.replace(vscode.window, 'showInformationMessage', showInformationMessage as any);
 			setEnableLabel(false);
@@ -76,11 +79,9 @@ describe('Commands', () => {
 				'getConfiguration',
 				sinon.fake.returns({ get: (setting: string) => (setting === 'taskmarks.enableLabel' ? enableLabel : undefined) }) as any
 			);
-			showInputBox = sinon.fake(() => Promise.resolve(labelAnswer));
+			labelInputError = undefined;
+			showInputBox = sinon.fake(() => (labelInputError ? Promise.reject(labelInputError) : Promise.resolve(labelAnswer)));
 			sinon.replace(vscode.window, 'showInputBox', showInputBox as any);
-			symbols = () => Promise.resolve(undefined);
-			executeCommand = sinon.fake(() => symbols());
-			sinon.replace(vscode.commands, 'executeCommand', executeCommand as any);
 		});
 
 		afterEach(() => {
@@ -163,47 +164,50 @@ describe('Commands', () => {
 			expect(saveTaskmarksJson.calledOnce).to.be.true;
 		});
 
-		it('should offer the name of the method that is declared in the line as label', async () => {
-			symbols = () =>
-				Promise.resolve([
-					{
-						name: 'Commands',
-						selectionRange: { start: { line: 1, character: 13 } },
-						children: [{ name: 'toggleMark', selectionRange: { start: { line: 4, character: 1 } } }],
-					},
-				]);
-			setEnableLabel(true, 'toggleMark');
-			setActiveEditor(fakeEditor(fileInWorkspace, 4));
-			await Commands.toggleMark();
-			await inputBoxAnswered();
-			expect(executeCommand.firstCall.args[0]).to.equal('vscode.executeDocumentSymbolProvider');
-			expect(showInputBox.firstCall.args[0].value).to.equal('toggleMark');
-			expect(task.getFile(reducedPath)?.allPersistMarks).to.deep.equal([{ lineNumber: 4, label: 'toggleMark' }]);
-		});
-
-		it('should offer no label in a line that declares nothing', async () => {
-			symbols = () => Promise.resolve([{ name: 'toggleMark', selectionRange: { start: { line: 3, character: 1 } } }]);
+		it('should highlight the line while it asks for the label, and say in the title which line it is', async () => {
 			setEnableLabel(true, 'look here');
 			setActiveEditor(fakeEditor(fileInWorkspace, 4));
 			await Commands.toggleMark();
 			await inputBoxAnswered();
-			expect(showInputBox.firstCall.args[0].value).to.equal('');
+			expect(showLabelInput.calledOnceWithExactly(fileInWorkspace, 4, '')).to.be.true;
+			expect(showLabelInput.calledBefore(showInputBox as any)).to.be.true;
+			expect(showInputBox.firstCall.args[0].title).to.equal('Taskmarks: label for the new bookmark in line 5');
+			expect(hideLabelInput.calledOnce).to.be.true;
 		});
 
-		it('should still ask for a label when the symbols of the file can not be read', async () => {
-			symbols = () => Promise.reject(new Error('no such file'));
+		it('should show in the line what is typed into the label input', async () => {
 			setEnableLabel(true, 'look here');
 			setActiveEditor(fakeEditor(fileInWorkspace, 4));
 			await Commands.toggleMark();
 			await inputBoxAnswered();
-			expect(showInputBox.firstCall.args[0].value).to.equal('');
-			expect(task.getFile(reducedPath)?.allPersistMarks).to.deep.equal([{ lineNumber: 4, label: 'look here' }]);
+			// VS Code calls this with every change of the text
+			expect(showInputBox.firstCall.args[0].validateInput('loo')).to.be.undefined;
+			expect(showLabelInput.lastCall.calledWithExactly(fileInWorkspace, 4, 'loo')).to.be.true;
 		});
 
-		it('should not ask for the symbols when labels are off', async () => {
+		it('should remove the highlight when the label input is cancelled', async () => {
+			setEnableLabel(true, undefined);
 			setActiveEditor(fakeEditor(fileInWorkspace, 4));
 			await Commands.toggleMark();
-			expect(executeCommand.calledWith('vscode.executeDocumentSymbolProvider')).to.be.false;
+			await inputBoxAnswered();
+			expect(hideLabelInput.calledOnce).to.be.true;
+		});
+
+		it('should remove the highlight when the label input fails', async () => {
+			labelInputError = new Error('no input');
+			sinon.stub(Helper, 'reportError');
+			setEnableLabel(true, 'look here');
+			setActiveEditor(fakeEditor(fileInWorkspace, 4));
+			await Commands.toggleMark();
+			expect(hideLabelInput.calledOnce).to.be.true;
+			expect(task.hasMarks).to.be.false;
+		});
+
+		it('should not highlight a line when labels are off', async () => {
+			setActiveEditor(fakeEditor(fileInWorkspace, 4));
+			await Commands.toggleMark();
+			expect(showLabelInput.called).to.be.false;
+			expect(hideLabelInput.called).to.be.false;
 		});
 
 		it('should set a mark without label when the label input is left empty', async () => {

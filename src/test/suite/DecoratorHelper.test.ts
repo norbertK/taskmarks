@@ -8,10 +8,8 @@ import { PathHelper } from '../../PathHelper';
 describe('DecoratorHelper', () => {
 	let previousBasePath: string;
 
-	// lines: the text of the document, by line number
-	function fakeEditor(lines: string[] = []) {
-		const document = { lineCount: lines.length, lineAt: (line: number) => ({ text: lines[line] }) };
-		return { selection: undefined as unknown, revealRange: sinon.fake(), setDecorations: sinon.fake(), document };
+	function fakeEditor() {
+		return { selection: undefined as unknown, revealRange: sinon.fake(), setDecorations: sinon.fake() };
 	}
 
 	beforeEach(() => {
@@ -45,16 +43,6 @@ describe('DecoratorHelper', () => {
 			const editor = fakeEditor();
 			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, marks, true);
 			expect(shownLabels(editor)).to.deep.equal(['look here', undefined]);
-		});
-
-		it('should not show a label that its line contains anyway', () => {
-			const editor = fakeEditor(['class Jobs {', '\tprivate void JobSaveEventHandler(JobsConfiguration jobConfig)', '\t{', '\t\tSave();']);
-			const methodMarks = [
-				{ lineNumber: 1, label: 'JobSaveEventHandler' },
-				{ lineNumber: 3, label: 'JobSaveEventHandler' },
-			];
-			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, methodMarks, true);
-			expect(shownLabels(editor)).to.deep.equal([undefined, 'JobSaveEventHandler']);
 		});
 
 		it('should show no labels when they are switched off', () => {
@@ -125,6 +113,7 @@ describe('DecoratorHelper', () => {
 	describe('initDecorator', () => {
 		it('should create the gutter icon from the image of the extension and register it for disposal', () => {
 			const previousDecorationType = (DecoratorHelper as any)._vscTextEditorDecorationType;
+			const previousLabelInputDecorationType = (DecoratorHelper as any)._labelInputDecorationType;
 			const decorationType = { dispose: sinon.fake() };
 			const createTextEditorDecorationType = sinon.fake.returns(decorationType);
 			sinon.replace(vscode.window, 'createTextEditorDecorationType', createTextEditorDecorationType as any);
@@ -133,14 +122,63 @@ describe('DecoratorHelper', () => {
 
 			DecoratorHelper.initDecorator(context);
 
-			expect(createTextEditorDecorationType.calledOnce).to.be.true;
+			// one for the bookmarks, one for the line of a bookmark that is waiting for its label
+			expect(createTextEditorDecorationType.calledTwice).to.be.true;
 			expect(createTextEditorDecorationType.firstCall.args[0].gutterIconPath).to.equal('/extension/images/bookmark.svg');
-			expect(subscriptions).to.deep.equal([decorationType]);
+			expect(createTextEditorDecorationType.secondCall.args[0].isWholeLine).to.be.true;
+			expect(subscriptions).to.deep.equal([decorationType, decorationType]);
 
 			const editor = fakeEditor();
 			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, [{ lineNumber: 1, label: '' }], true);
 			expect(editor.setDecorations.firstCall.args[0]).to.equal(decorationType);
 			(DecoratorHelper as any)._vscTextEditorDecorationType = previousDecorationType;
+			(DecoratorHelper as any)._labelInputDecorationType = previousLabelInputDecorationType;
+		});
+	});
+
+	describe('showLabelInput / hideLabelInput', () => {
+		const labelInputDecorationType = { dispose: sinon.fake() };
+		let previousDecorationType: unknown;
+		let editorOfFile: ReturnType<typeof fakeEditor>;
+		let otherEditor: ReturnType<typeof fakeEditor>;
+
+		function shownText(editor: ReturnType<typeof fakeEditor>): string | undefined {
+			return editor.setDecorations.lastCall.args[1][0].renderOptions.after.contentText;
+		}
+
+		beforeEach(() => {
+			previousDecorationType = (DecoratorHelper as any)._labelInputDecorationType;
+			(DecoratorHelper as any)._labelInputDecorationType = labelInputDecorationType;
+			editorOfFile = { ...fakeEditor(), document: { uri: { fsPath: '/workspace/src/a.ts' } } } as ReturnType<typeof fakeEditor>;
+			otherEditor = { ...fakeEditor(), document: { uri: { fsPath: '/workspace/src/b.ts' } } } as ReturnType<typeof fakeEditor>;
+			sinon.stub(vscode.window, 'visibleTextEditors').get(() => [editorOfFile, otherEditor]);
+		});
+
+		afterEach(() => {
+			(DecoratorHelper as any)._labelInputDecorationType = previousDecorationType;
+		});
+
+		it('should ask for the label behind the line, as long as nothing is typed', () => {
+			DecoratorHelper.showLabelInput('/workspace/src/a.ts', 7, '');
+			expect(editorOfFile.setDecorations.calledOnce).to.be.true;
+			expect(editorOfFile.setDecorations.firstCall.args[0]).to.equal(labelInputDecorationType);
+			expect(shownText(editorOfFile)).to.equal('← label?');
+		});
+
+		it('should show behind the line what is typed', () => {
+			DecoratorHelper.showLabelInput('/workspace/src/a.ts', 7, 'look here');
+			expect(shownText(editorOfFile)).to.equal('← label: look here');
+		});
+
+		it('should leave the editors of other files alone', () => {
+			DecoratorHelper.showLabelInput('/workspace/src/a.ts', 7, 'look here');
+			expect(otherEditor.setDecorations.called).to.be.false;
+		});
+
+		it('should remove it from all visible editors', () => {
+			DecoratorHelper.hideLabelInput();
+			expect(editorOfFile.setDecorations.calledOnceWithExactly(labelInputDecorationType, [])).to.be.true;
+			expect(otherEditor.setDecorations.calledOnceWithExactly(labelInputDecorationType, [])).to.be.true;
 		});
 	});
 });

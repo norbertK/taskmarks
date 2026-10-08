@@ -2,7 +2,7 @@
 	"name": "taskmarks",
 	"displayName": "Taskmarks",
 	"description": "Little helper for teams to navigate through files. Persists bookmarks for different tasks.",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"publisher": "NorbertKlein",
 	"contributors": [
 		"Klein Norbert",
