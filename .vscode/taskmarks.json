@@ -1,67 +1,20 @@
 {
   "version": 2,
-  "activeTaskName": "eNewOne",
+  "activeTaskName": "Taskmarks testmarks",
   "persistTasks": [
     {
-      "name": "default",
-      "persistFiles": []
-    },
-    {
-      "name": "taskMarks",
+      "name": "Taskmarks testmarks",
       "persistFiles": [
         {
-          "filepath": "\\package.json",
+          "filepath": "/src/taskmarks.test.txt",
           "persistMarks": [
             {
-              "lineNumber": 47,
-              "label": "test 07 - edited - twice"
-            },
-            {
-              "lineNumber": 71,
-              "label": "test 08"
-            },
-            {
-              "lineNumber": 112,
-              "label": "test 06"
-            }
-          ]
-        },
-        {
-          "filepath": "\\src\\taskmarks.test.txt",
-          "persistMarks": [
-            {
-              "lineNumber": 20,
-              "label": "test 05"
-            },
-            {
-              "lineNumber": 38,
-              "label": "test 03"
-            }
-          ]
-        },
-        {
-          "filepath": "\\src\\TaskManager.ts",
-          "persistMarks": [
-            {
-              "lineNumber": 21,
-              "label": "test 04"
-            }
-          ]
-        },
-        {
-          "filepath": "\\src\\Helper.ts",
-          "persistMarks": [
-            {
-              "lineNumber": 324,
-              "label": "test 02"
+              "lineNumber": 13,
+              "label": "tt 01"
             }
           ]
         }
       ]
-    },
-    {
-      "name": "eNewOne",
-      "persistFiles": []
     }
   ]
 }

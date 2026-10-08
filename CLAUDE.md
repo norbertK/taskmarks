@@ -35,7 +35,7 @@ Packaging: `npm run "build package"` (vsce). The `esbuild*` scripts produce `out
 - `src/Persist.ts`, `src/PathHelper.ts`: load/save/reload `taskmarks.json`, backups, path handling, the storage location (`taskmarks.useGlobalTaskmarksJson`).
 - `src/core/*.ts`: pure logic (navigation, serialization, migration, lineAdjustment, paths). **Must not import `vscode`.** Put new logic here when it can live without VS Code, and test it here.
 - `src/test/suite/*.test.ts`: unit tests. `src/test/mock/vscode.mock.ts` is injected for `require('vscode')` by `src/test/mocha-setup.ts`.
-- `docu/`: ARCHITECTURE.md plus PlantUML diagrams.
+- `docu/`: ARCHITECTURE.md (with its Mermaid diagrams).
 
 ## Conventions
 
