@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Helper } from './Helper';
-import { Commands } from './Commands';
+import { Commands, type LineMenuTarget } from './Commands';
 
 export function activate(context: vscode.ExtensionContext) {
 	const outputChannel = vscode.window.createOutputChannel('Taskmarks Errors');
@@ -44,6 +44,17 @@ export function activate(context: vscode.ExtensionContext) {
 		Commands.editLabel();
 	});
 	context.subscriptions.push(editLabelDisposable);
+
+	// the two entries in the menu of the line numbers get the line that was clicked
+	let toggleMarkAtLineDisposable = vscode.commands.registerCommand('taskmarks.toggleMarkAtLine', (target?: LineMenuTarget) => {
+		Commands.toggleMarkAtLine(target);
+	});
+	context.subscriptions.push(toggleMarkAtLineDisposable);
+
+	let editLabelAtLineDisposable = vscode.commands.registerCommand('taskmarks.editLabelAtLine', (target?: LineMenuTarget) => {
+		Commands.editLabelAtLine(target);
+	});
+	context.subscriptions.push(editLabelAtLineDisposable);
 
 	let copyToClipboardDisposable = vscode.commands.registerCommand('taskmarks.copyToClipboard', () => {
 		Commands.copyToClipboard();

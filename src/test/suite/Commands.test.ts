@@ -66,7 +66,11 @@ describe('Commands', () => {
 			showInformationMessage = sinon.fake();
 			sinon.replace(vscode.window, 'showInformationMessage', showInformationMessage as any);
 			setEnableLabel(false);
-			sinon.replace(vscode.workspace, 'getConfiguration', sinon.fake.returns({ get: () => enableLabel }) as any);
+			sinon.replace(
+				vscode.workspace,
+				'getConfiguration',
+				sinon.fake.returns({ get: (setting: string) => (setting === 'taskmarks.enableLabel' ? enableLabel : undefined) }) as any
+			);
 			showInputBox = sinon.fake(() => Promise.resolve(labelAnswer));
 			sinon.replace(vscode.window, 'showInputBox', showInputBox as any);
 		});
@@ -96,7 +100,7 @@ describe('Commands', () => {
 			const editor = fakeEditor(fileInWorkspace, 4);
 			setActiveEditor(editor);
 			await Commands.toggleMark();
-			expect(refresh.calledOnceWithExactly(editor, [4])).to.be.true;
+			expect(refresh.calledOnceWithExactly(editor, [{ lineNumber: 4, label: '' }], true)).to.be.true;
 			expect(task.activeFile).to.equal(task.getFile(reducedPath));
 		});
 
@@ -107,7 +111,7 @@ describe('Commands', () => {
 			await Commands.toggleMark();
 			expect(task.files.length).to.equal(0);
 			expect(saveTaskmarksJson.calledTwice).to.be.true;
-			expect(refresh.lastCall.calledWithExactly(editor, [])).to.be.true;
+			expect(refresh.lastCall.calledWithExactly(editor, [], true)).to.be.true;
 		});
 
 		it('should refuse a file outside the workspace folder', async () => {
@@ -802,6 +806,8 @@ describe('Commands', () => {
 		const commands: [string, () => Promise<void>][] = [
 			['toggleMark', () => Commands.toggleMark()],
 			['editLabel', () => Commands.editLabel()],
+			['toggleMarkAtLine', () => Commands.toggleMarkAtLine()],
+			['editLabelAtLine', () => Commands.editLabelAtLine()],
 			['nextMark', () => Commands.nextMark()],
 			['previousMark', () => Commands.previousMark()],
 			['selectMarkFromList', () => Commands.selectMarkFromList()],
@@ -845,6 +851,7 @@ describe('Commands', () => {
 		let cursorLine: number;
 		// what the user types into the input box, undefined: cancelled
 		let typed: string | undefined;
+		let refresh: sinon.SinonStub;
 
 		beforeEach(() => {
 			previousBasePath = PathHelper.basePath;
@@ -864,6 +871,7 @@ describe('Commands', () => {
 			showInformationMessage = sinon.fake();
 			sinon.replace(vscode.window, 'showInformationMessage', showInformationMessage as any);
 			saveTaskmarksJson = sinon.stub(Persist, 'saveTaskmarksJson');
+			refresh = sinon.stub(Helper, 'refresh');
 		});
 
 		afterEach(() => {
@@ -883,6 +891,8 @@ describe('Commands', () => {
 				{ lineNumber: 8, label: '' },
 			]);
 			expect(saveTaskmarksJson.calledOnce).to.be.true;
+			// the label is shown behind its line
+			expect(refresh.calledOnce).to.be.true;
 		});
 
 		it('should give a label to a bookmark that has none', async () => {
@@ -906,6 +916,7 @@ describe('Commands', () => {
 			await Commands.editLabel();
 			expect(task.getFile('/src/a.ts')?.getMark(4)?.label).to.equal('old label');
 			expect(saveTaskmarksJson.called).to.be.false;
+			expect(refresh.called).to.be.false;
 		});
 
 		it('should not save when the label is left as it is', async () => {
@@ -950,6 +961,131 @@ describe('Commands', () => {
 			await Commands.editLabel();
 
 			expect(showInputBox.called).to.be.false;
+		});
+	});
+
+	describe('menu of the line numbers', () => {
+		const fileA = '/workspace/src/a.ts';
+		const fileB = '/workspace/src/b.ts';
+		let taskManager: TaskManager;
+		let task: Task;
+		let previousBasePath: string;
+		let saveTaskmarksJson: sinon.SinonStub;
+		let refresh: sinon.SinonStub;
+		let showInformationMessage: sinon.SinonSpy;
+		let showInputBox: sinon.SinonSpy;
+		let enableLabel: boolean;
+		let typed: string | undefined;
+		let hasActiveEditor: boolean;
+
+		// what VS Code hands to the command: the line counted from 1 and the document
+		function clicked(fsPath: string, lineNumber: number) {
+			return { lineNumber, uri: { fsPath } as vscode.Uri };
+		}
+
+		beforeEach(() => {
+			previousBasePath = PathHelper.basePath;
+			PathHelper.basePath = '/workspace';
+			taskManager = TaskManager.instance;
+			(Helper as any)._taskManager = taskManager;
+			taskManager.delete('lineMenu');
+			task = taskManager.useActiveTask('lineMenu');
+			task.toggle(fileA, 4, 'old label');
+
+			// the cursor is somewhere else: in line 20 of a.ts
+			hasActiveEditor = true;
+			sinon.stub(vscode.window, 'activeTextEditor').get(() => (hasActiveEditor ? { selection: { active: { line: 20 } }, document: { fileName: fileA, uri: { fsPath: fileA } } } : undefined));
+			enableLabel = false;
+			typed = undefined;
+			sinon.replace(
+				vscode.workspace,
+				'getConfiguration',
+				sinon.fake.returns({ get: (setting: string) => (setting === 'taskmarks.enableLabel' ? enableLabel : undefined) }) as any
+			);
+			showInputBox = sinon.fake(() => Promise.resolve(typed));
+			sinon.replace(vscode.window, 'showInputBox', showInputBox as any);
+			showInformationMessage = sinon.fake();
+			sinon.replace(vscode.window, 'showInformationMessage', showInformationMessage as any);
+			saveTaskmarksJson = sinon.stub(Persist, 'saveTaskmarksJson');
+			refresh = sinon.stub(Helper, 'refresh');
+		});
+
+		afterEach(() => {
+			sinon.restore();
+			taskManager.delete('lineMenu');
+			PathHelper.basePath = previousBasePath;
+		});
+
+		describe('toggleMarkAtLine', () => {
+			it('should set a mark on the clicked line, not on the line of the cursor', async () => {
+				await Commands.toggleMarkAtLine(clicked(fileA, 11));
+
+				expect(task.getFile('/src/a.ts')?.lineNumbers).to.deep.equal([4, 10]);
+				expect(saveTaskmarksJson.calledOnce).to.be.true;
+				expect(refresh.calledOnce).to.be.true;
+			});
+
+			it('should remove the mark of the clicked line', async () => {
+				await Commands.toggleMarkAtLine(clicked(fileA, 5));
+				expect(task.files.length).to.equal(0);
+			});
+
+			it('should set the mark in the clicked file, also if another file is in the active editor', async () => {
+				await Commands.toggleMarkAtLine(clicked(fileB, 1));
+				expect(task.getFile('/src/b.ts')?.lineNumbers).to.deep.equal([0]);
+				expect(task.getFile('/src/a.ts')?.lineNumbers).to.deep.equal([4]);
+			});
+
+			it('should ask for a label when labels are enabled', async () => {
+				enableLabel = true;
+				typed = 'from the menu';
+
+				await Commands.toggleMarkAtLine(clicked(fileA, 11));
+
+				expect(task.getFile('/src/a.ts')?.getMark(10)?.label).to.equal('from the menu');
+			});
+
+			it('should refuse a file outside the workspace folder', async () => {
+				await Commands.toggleMarkAtLine(clicked('/elsewhere/x.ts', 1));
+
+				expect(showInformationMessage.calledOnceWithExactly('Taskmarks: bookmarks can only be set in files inside the workspace folder.')).to.be.true;
+				expect(saveTaskmarksJson.called).to.be.false;
+			});
+
+			it('should use the line of the cursor when it is run without a clicked line', async () => {
+				await Commands.toggleMarkAtLine();
+				expect(task.getFile('/src/a.ts')?.lineNumbers).to.deep.equal([4, 20]);
+			});
+
+			it('should do nothing without a clicked line and without an editor', async () => {
+				hasActiveEditor = false;
+				await Commands.toggleMarkAtLine();
+				expect(saveTaskmarksJson.called).to.be.false;
+			});
+		});
+
+		describe('editLabelAtLine', () => {
+			it('should change the label of the mark on the clicked line', async () => {
+				typed = 'new label';
+
+				await Commands.editLabelAtLine(clicked(fileA, 5));
+
+				expect(showInputBox.firstCall.args[0].value).to.equal('old label');
+				expect(task.getFile('/src/a.ts')?.getMark(4)?.label).to.equal('new label');
+				expect(saveTaskmarksJson.calledOnce).to.be.true;
+			});
+
+			it('should say so when the clicked line has no bookmark', async () => {
+				await Commands.editLabelAtLine(clicked(fileA, 6));
+
+				expect(showInformationMessage.calledOnceWithExactly('Taskmarks: there is no bookmark in this line.')).to.be.true;
+				expect(showInputBox.called).to.be.false;
+			});
+
+			it('should say so when the line is only marked in another file', async () => {
+				await Commands.editLabelAtLine(clicked(fileB, 5));
+				expect(showInformationMessage.calledOnceWithExactly('Taskmarks: there is no bookmark in this line.')).to.be.true;
+			});
 		});
 	});
 });

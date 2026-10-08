@@ -13,15 +13,15 @@
           "filepath": "\\package.json",
           "persistMarks": [
             {
-              "lineNumber": 42,
-              "label": "test 07 - edited"
+              "lineNumber": 47,
+              "label": "test 07 - edited - twice"
             },
             {
-              "lineNumber": 66,
+              "lineNumber": 71,
               "label": "test 08"
             },
             {
-              "lineNumber": 107,
+              "lineNumber": 112,
               "label": "test 06"
             }
           ]

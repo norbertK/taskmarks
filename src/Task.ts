@@ -1,6 +1,7 @@
 import { File } from './File';
 import { PathHelper } from './PathHelper';
 import type { IPersistTask } from './types';
+import type { LabelConflictChoice } from './core/labels';
 
 export class Task {
 	private _name: string;
@@ -30,15 +31,20 @@ export class Task {
 		return this._files;
 	}
 
-	mergeFilesWithPersistFiles(persistTaskToMerge: IPersistTask): void {
+	mergeFilesWithPersistFiles(persistTaskToMerge: IPersistTask, labelConflict: LabelConflictChoice = 'keep'): void {
 		if (!persistTaskToMerge?.persistFiles) {
 			return;
 		}
 		for (const persistFile of persistTaskToMerge.persistFiles) {
 			const file = this.getOrCreateFile(persistFile.filepath);
-			file.mergeMarks(persistFile.persistMarks);
+			file.mergeMarks(persistFile.persistMarks, labelConflict);
 			this.syncFile(file);
 		}
+	}
+
+	// how many marks of the other task have another label than the mark this task has on that line
+	countLabelConflicts(persistTask: IPersistTask): number {
+		return persistTask.persistFiles.reduce((count, persistFile) => count + (this.getFile(persistFile.filepath)?.countLabelConflicts(persistFile.persistMarks) ?? 0), 0);
 	}
 
 	lineHasMark(filename: string, lineNumber: number): boolean {

@@ -45,6 +45,7 @@ Packaging: `npm run "build package"` (vsce). The `esbuild*` scripts produce `out
 - Errors: catch and report with `Helper.reportError({ message: Helper.getErrorMessage(error) })` (goes to the "Taskmarks Errors" output channel).
 - Mark line numbers are 0-based (taken from `selection.active.line`).
 - Stored file paths are workspace-relative with a leading separator (e.g. `\src\a.ts`). On load, `normalizeFilePaths` converts them to the current OS separator; on save they get back the separator the file uses (`Persist._fileSeparator`, `/` for a new file).
+- `Helper.refresh()` is the one place that shows state in VS Code: status bar, gutter icons and labels of all visible editors, and the context key `taskmarks.markedLines` that the line number menu in `package.json` uses. Call it after anything that changes marks, labels or the active task.
 - User-visible changes go into `CHANGELOG.md` (Keep a Changelog style, issue links like `[#45](...)`).
 
 ## Persistence rules that are easy to break

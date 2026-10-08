@@ -1,5 +1,6 @@
 import { Task } from './Task';
 import type { IPersistTask } from './types';
+import type { LabelConflictChoice } from './core/labels';
 
 export class TaskManager {
 	private static _instance: TaskManager;
@@ -56,9 +57,15 @@ export class TaskManager {
 		this.useActiveTask(activeTaskName);
 	}
 
-	addTask(iPersistTask: IPersistTask): void {
+	// merges the marks into the task with that name, a new task if there is none
+	addTask(iPersistTask: IPersistTask, labelConflict: LabelConflictChoice = 'keep'): void {
 		const task = this._addTaskByNameIfMissing(iPersistTask.name);
-		task.mergeFilesWithPersistFiles(iPersistTask);
+		task.mergeFilesWithPersistFiles(iPersistTask, labelConflict);
+	}
+
+	// how many marks of the task have another label than the mark on that line in the task with the same name
+	countLabelConflicts(iPersistTask: IPersistTask): number {
+		return this._allTasks.find((task) => task.name === iPersistTask.name)?.countLabelConflicts(iPersistTask) ?? 0;
 	}
 
 	// after deleting the active task, the default task is active - a new, empty one if the default task itself was deleted

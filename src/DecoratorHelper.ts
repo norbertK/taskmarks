@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { PathHelper } from './PathHelper';
+import type { IPersistMark } from './types';
 
 export abstract class DecoratorHelper {
 	private static _vscTextEditorDecorationType: vscode.TextEditorDecorationType;
@@ -13,11 +14,22 @@ export abstract class DecoratorHelper {
 		context.subscriptions.push(this._vscTextEditorDecorationType);
 	}
 
-	static refresh(editor: vscode.TextEditor, lineNumbers: number[]): void {
-		const ranges = lineNumbers.map((lineNumber) => {
-			return new vscode.Range(lineNumber, 0, lineNumber, 0);
+	// the gutter icon for every mark and, with showLabels, the label of a mark as faded text behind its line
+	static refresh(editor: vscode.TextEditor, marks: IPersistMark[], showLabels: boolean): void {
+		const decorations: vscode.DecorationOptions[] = marks.map(({ lineNumber, label }) => {
+			// at the end of the line (VS Code cuts the column down to the length of the line): that is where the label goes
+			const range = new vscode.Range(lineNumber, Number.MAX_SAFE_INTEGER, lineNumber, Number.MAX_SAFE_INTEGER);
+			if (!showLabels || !label) {
+				return { range };
+			}
+			return {
+				range,
+				renderOptions: {
+					after: { contentText: label, color: new vscode.ThemeColor('editorCodeLens.foreground'), fontStyle: 'italic', margin: '0 0 0 3em' },
+				},
+			};
 		});
-		editor.setDecorations(this._vscTextEditorDecorationType, ranges);
+		editor.setDecorations(this._vscTextEditorDecorationType, decorations);
 	}
 
 	// puts the cursor on the line and scrolls it into view - in the active editor, if no other one is given

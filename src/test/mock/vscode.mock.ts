@@ -33,6 +33,7 @@ export const vscode = {
 	},
 	Range: sinon.fake(),
 	Selection: sinon.fake(),
+	ThemeColor: sinon.fake(),
 	TextEditorRevealType: { Default: 0, InCenter: 1, InCenterIfOutsideViewport: 2, AtTop: 3 },
 	TextDocumentChangeReason: { Undo: 1, Redo: 2 },
 	RelativePattern: sinon.fake(),
@@ -49,7 +50,8 @@ export const vscode = {
 
 	workspace: {
 		workspaceFolders: [],
-		getConfiguration: sinon.fake(),
+		getConfiguration: sinon.fake.returns({ get: sinon.fake() }),
+		onDidChangeConfiguration: sinon.fake(),
 		onDidChangeWorkspaceFolders: sinon.fake(),
 		onDidSaveTextDocument: sinon.fake(),
 		onDidChangeTextDocument: sinon.fake(),

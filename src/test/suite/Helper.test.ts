@@ -48,7 +48,7 @@ describe('Helper', () => {
 
 			await Helper.taskmarksFileChanged();
 
-			expect(refresh.calledOnceWithExactly(editor, [8])).to.be.true;
+			expect(refresh.calledOnceWithExactly(editor, [{ lineNumber: 8, label: '' }], true)).to.be.true;
 			expect(taskManager.activeTask.activeFile).to.equal(taskManager.activeTask.getFile('/src/a.ts'));
 			expect((MarkTracker as any)._markRemovals.size).to.equal(0);
 		});
@@ -137,6 +137,10 @@ describe('Helper', () => {
 		let taskManager: TaskManager;
 		let previousBasePath: string;
 		let decorate: sinon.SinonStub;
+		const marksOfA = [
+			{ lineNumber: 3, label: 'look here' },
+			{ lineNumber: 9, label: '' },
+		];
 
 		function editorFor(fsPath: string): vscode.TextEditor {
 			return { document: { fileName: fsPath, uri: { fsPath } } } as unknown as vscode.TextEditor;
@@ -149,7 +153,7 @@ describe('Helper', () => {
 			(Helper as any)._taskManager = taskManager;
 			taskManager.useActiveTask('refresh-other').toggle('/workspace/src/b.ts', 7, '');
 			const active = taskManager.useActiveTask('refresh-active');
-			active.toggle('/workspace/src/a.ts', 3, '');
+			active.toggle('/workspace/src/a.ts', 3, 'look here');
 			active.toggle('/workspace/src/a.ts', 9, '');
 			decorate = sinon.stub(DecoratorHelper, 'refresh');
 		});
@@ -169,8 +173,8 @@ describe('Helper', () => {
 			Helper.refresh();
 
 			expect(decorate.calledTwice).to.be.true;
-			expect(decorate.calledWithExactly(left, [3, 9])).to.be.true;
-			expect(decorate.calledWithExactly(right, [3, 9])).to.be.true;
+			expect(decorate.calledWithExactly(left, marksOfA, true)).to.be.true;
+			expect(decorate.calledWithExactly(right, marksOfA, true)).to.be.true;
 		});
 
 		it('should clear an editor whose file has no marks in the active task', () => {
@@ -180,8 +184,42 @@ describe('Helper', () => {
 
 			Helper.refresh();
 
-			expect(decorate.calledWithExactly(withMarks, [3, 9])).to.be.true;
-			expect(decorate.calledWithExactly(marksOnlyInOtherTask, [])).to.be.true;
+			expect(decorate.calledWithExactly(withMarks, marksOfA, true)).to.be.true;
+			expect(decorate.calledWithExactly(marksOnlyInOtherTask, [], true)).to.be.true;
+		});
+
+		it('should tell VS Code the marked lines of the visible editors, counted from 1, for the menu of the line numbers', () => {
+			taskManager.activeTask.toggle('/workspace/src/b.ts', 3, '');
+			taskManager.activeTask.toggle('/workspace/src/b.ts', 20, '');
+			sinon.stub(vscode.window, 'visibleTextEditors').get(() => [editorFor('/workspace/src/a.ts'), editorFor('/workspace/src/b.ts'), editorFor('/workspace/src/c.ts')]);
+			const executeCommand = sinon.fake();
+			sinon.replace(vscode.commands, 'executeCommand', executeCommand as any);
+
+			Helper.refresh();
+
+			expect(executeCommand.calledOnceWithExactly('setContext', 'taskmarks.markedLines', [4, 10, 21])).to.be.true;
+		});
+
+		it('should tell VS Code that no line is marked when no visible editor has marks', () => {
+			sinon.stub(vscode.window, 'visibleTextEditors').get(() => [editorFor('/workspace/src/c.ts')]);
+			const executeCommand = sinon.fake();
+			sinon.replace(vscode.commands, 'executeCommand', executeCommand as any);
+
+			Helper.refresh();
+
+			expect(executeCommand.calledOnceWithExactly('setContext', 'taskmarks.markedLines', [])).to.be.true;
+		});
+
+		it('should not show the labels when taskmarks.showLabelInEditor is off', () => {
+			const editor = editorFor('/workspace/src/a.ts');
+			sinon.stub(vscode.window, 'visibleTextEditors').get(() => [editor]);
+			const get = sinon.fake.returns(false);
+			sinon.replace(vscode.workspace, 'getConfiguration', sinon.fake.returns({ get }) as any);
+
+			Helper.refresh();
+
+			expect(get.calledOnceWithExactly('taskmarks.showLabelInEditor')).to.be.true;
+			expect(decorate.calledOnceWithExactly(editor, marksOfA, false)).to.be.true;
 		});
 
 		it('should show the name of the active task in the status bar', () => {
@@ -293,6 +331,7 @@ describe('Helper', () => {
 			sinon.replace(vscode.window, 'onDidChangeVisibleTextEditors', eventNamed('visibleEditors') as any);
 			sinon.replace(vscode.workspace, 'onDidSaveTextDocument', eventNamed('documentSaved') as any);
 			sinon.replace(vscode.workspace, 'onDidChangeTextDocument', eventNamed('documentChanged') as any);
+			sinon.replace(vscode.workspace, 'onDidChangeConfiguration', eventNamed('configuration') as any);
 			watcher = { onDidChange: sinon.fake(), onDidCreate: sinon.fake(), dispose: sinon.fake() };
 			createFileSystemWatcher = sinon.fake.returns(watcher);
 			sinon.replace(vscode.workspace, 'createFileSystemWatcher', createFileSystemWatcher as any);
@@ -328,9 +367,9 @@ describe('Helper', () => {
 
 			expect(subscriptions).to.include(statusBarItem);
 			expect(subscriptions).to.include(watcher);
-			// the status bar item, the watcher and the four event listeners
-			expect(subscriptions.length).to.equal(6);
-			expect(Object.keys(listeners).sort()).to.deep.equal(['activeEditor', 'documentChanged', 'documentSaved', 'visibleEditors']);
+			// the status bar item, the watcher and the five event listeners
+			expect(subscriptions.length).to.equal(7);
+			expect(Object.keys(listeners).sort()).to.deep.equal(['activeEditor', 'configuration', 'documentChanged', 'documentSaved', 'visibleEditors']);
 		});
 
 		it('should use the file of an editor that becomes the active one', () => {
@@ -349,6 +388,17 @@ describe('Helper', () => {
 
 			listeners.visibleEditors([]);
 
+			expect(refresh.calledOnce).to.be.true;
+		});
+
+		it('should show the marks again when a setting of Taskmarks changes, and only then', () => {
+			Helper.init(context, outputChannel);
+			const refresh = sinon.stub(Helper, 'refresh');
+
+			listeners.configuration({ affectsConfiguration: (section: string) => section === 'editor' });
+			expect(refresh.called).to.be.false;
+
+			listeners.configuration({ affectsConfiguration: (section: string) => section === 'taskmarks' });
 			expect(refresh.calledOnce).to.be.true;
 		});
 

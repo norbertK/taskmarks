@@ -23,16 +23,38 @@ describe('DecoratorHelper', () => {
 	});
 
 	describe('refresh', () => {
+		const marks = [
+			{ lineNumber: 3, label: 'look here' },
+			{ lineNumber: 9, label: '' },
+		];
+
+		function shownLabels(editor: ReturnType<typeof fakeEditor>): (string | undefined)[] {
+			return editor.setDecorations.firstCall.args[1].map((decoration: vscode.DecorationOptions) => decoration.renderOptions?.after?.contentText);
+		}
+
 		it('should set one decoration per marked line', () => {
 			const editor = fakeEditor();
-			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, [3, 9]);
+			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, marks, true);
 			expect(editor.setDecorations.calledOnce).to.be.true;
+			expect(editor.setDecorations.firstCall.args[1].length).to.equal(2);
+		});
+
+		it('should show the label of a mark behind its line, nothing for a mark without label', () => {
+			const editor = fakeEditor();
+			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, marks, true);
+			expect(shownLabels(editor)).to.deep.equal(['look here', undefined]);
+		});
+
+		it('should show no labels when they are switched off', () => {
+			const editor = fakeEditor();
+			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, marks, false);
+			expect(shownLabels(editor)).to.deep.equal([undefined, undefined]);
 			expect(editor.setDecorations.firstCall.args[1].length).to.equal(2);
 		});
 
 		it('should remove all decorations for an empty list', () => {
 			const editor = fakeEditor();
-			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, []);
+			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, [], true);
 			expect(editor.setDecorations.firstCall.args[1]).to.deep.equal([]);
 		});
 	});
@@ -104,7 +126,7 @@ describe('DecoratorHelper', () => {
 			expect(subscriptions).to.deep.equal([decorationType]);
 
 			const editor = fakeEditor();
-			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, [1]);
+			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, [{ lineNumber: 1, label: '' }], true);
 			expect(editor.setDecorations.firstCall.args[0]).to.equal(decorationType);
 			(DecoratorHelper as any)._vscTextEditorDecorationType = previousDecorationType;
 		});

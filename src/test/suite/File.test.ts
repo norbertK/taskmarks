@@ -197,6 +197,32 @@ describe('File', () => {
 		});
 	});
 
+	describe('mergeMarks with a choice for labels that differ', () => {
+		it('should take the other label or combine both, if told so', () => {
+			const taken = fileWithMark(filePath, 10, 'mine');
+			taken.mergeMarks([{ lineNumber: 10, label: 'theirs' }], 'take');
+			expect(taken.getMark(10)?.label).to.equal('theirs');
+
+			const combined = fileWithMark(filePath, 10, 'mine');
+			combined.mergeMarks([{ lineNumber: 10, label: 'theirs' }], 'combine');
+			expect(combined.getMark(10)?.label).to.equal('mine / theirs');
+		});
+
+		it('should count the marks that have another label on the same line', () => {
+			const file = fileWithMark(filePath, 10, 'mine');
+			file.addMark({ lineNumber: 20, label: '' });
+			file.addMark({ lineNumber: 30, label: 'same' });
+			expect(
+				file.countLabelConflicts([
+					{ lineNumber: 10, label: 'theirs' },
+					{ lineNumber: 20, label: 'theirs' },
+					{ lineNumber: 30, label: 'same' },
+					{ lineNumber: 40, label: 'new' },
+				])
+			).to.equal(1);
+		});
+	});
+
 	describe('removeMarks', () => {
 		it('removes the given mark objects even if another mark now has the same line number', () => {
 			const file = new File(filePath);

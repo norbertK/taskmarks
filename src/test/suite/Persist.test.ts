@@ -27,6 +27,8 @@ describe('Persist', () => {
 	let clipboardText: string;
 	// the button the user clicks in a warning, undefined: the warning is dismissed
 	let warningChoice: string | undefined;
+	// the same for an information message
+	let messageChoice: string | undefined;
 	// the path separator of the system the tests pretend to run on
 	let systemSeparator: '/' | '\\';
 
@@ -81,7 +83,8 @@ describe('Persist', () => {
 		warningChoice = undefined;
 		showWarningMessage = sinon.fake(() => Promise.resolve(warningChoice));
 		sinon.replace(vscode.window, 'showWarningMessage', showWarningMessage as any);
-		showInformationMessage = sinon.fake();
+		messageChoice = undefined;
+		showInformationMessage = sinon.fake(() => Promise.resolve(messageChoice));
 		sinon.replace(vscode.window, 'showInformationMessage', showInformationMessage as any);
 
 		clipboardText = '';
@@ -631,6 +634,136 @@ describe('Persist', () => {
 			expect(pasted).to.be.false;
 			expect(showInformationMessage.calledOnceWithExactly('Taskmarks: the clipboard does not contain a Taskmarks task.')).to.be.true;
 			expect(taskManager.taskNames).to.deep.equal(['default']);
+		});
+	});
+
+	describe('pasteFromClipboard with labels that differ', () => {
+		const question = "Taskmarks: 2 bookmarks have another label in the pasted task 'default' than in yours.";
+		const pastedMessage = "Taskmarks: task 'default' pasted from the clipboard.";
+
+		function labelsOfA(): string[] {
+			return taskManager.activeTask.getFile(fileA)?.allPersistMarks.map((mark) => `${mark.lineNumber}: ${mark.label}`) ?? [];
+		}
+
+		beforeEach(() => {
+			load(
+				taskmarksJson('default', [
+					{
+						name: 'default',
+						persistFiles: [
+							{
+								filepath: fileA,
+								persistMarks: [
+									{ lineNumber: 1, label: 'mine 1' },
+									{ lineNumber: 2, label: 'mine 2' },
+									{ lineNumber: 3, label: '' },
+									{ lineNumber: 4, label: 'same' },
+									{ lineNumber: 5, label: 'only mine' },
+								],
+							},
+						],
+					},
+				])
+			);
+			clipboardText = JSON.stringify({
+				name: 'default',
+				persistFiles: [
+					{
+						filepath: fileA,
+						persistMarks: [
+							{ lineNumber: 1, label: 'theirs 1' },
+							{ lineNumber: 2, label: 'theirs 2' },
+							{ lineNumber: 3, label: 'only theirs' },
+							{ lineNumber: 4, label: 'same' },
+							{ lineNumber: 5, label: '' },
+							{ lineNumber: 6, label: 'new mark' },
+						],
+					},
+				],
+			});
+		});
+
+		it('should ask once, say how many labels differ and offer Combine first', async () => {
+			await Persist.pasteFromClipboard();
+
+			const [message, options, ...buttons] = showInformationMessage.firstCall.args;
+			expect(message).to.equal(question);
+			expect(options.modal).to.be.true;
+			expect(buttons).to.deep.equal(['Combine', 'Keep mine', 'Take theirs']);
+		});
+
+		it('should combine the labels that differ and leave the others alone', async () => {
+			messageChoice = 'Combine';
+
+			expect(await Persist.pasteFromClipboard()).to.be.true;
+
+			expect(labelsOfA()).to.deep.equal(['1: mine 1 / theirs 1', '2: mine 2 / theirs 2', '3: only theirs', '4: same', '5: only mine', '6: new mark']);
+			expect(showInformationMessage.lastCall.args[0]).to.equal(pastedMessage);
+		});
+
+		it('should keep the own labels', async () => {
+			messageChoice = 'Keep mine';
+
+			expect(await Persist.pasteFromClipboard()).to.be.true;
+
+			expect(labelsOfA()).to.deep.equal(['1: mine 1', '2: mine 2', '3: only theirs', '4: same', '5: only mine', '6: new mark']);
+		});
+
+		it('should take the labels of the pasted task', async () => {
+			messageChoice = 'Take theirs';
+
+			expect(await Persist.pasteFromClipboard()).to.be.true;
+
+			expect(labelsOfA()).to.deep.equal(['1: theirs 1', '2: theirs 2', '3: only theirs', '4: same', '5: only mine', '6: new mark']);
+		});
+
+		it('should paste nothing when the question is cancelled', async () => {
+			expect(await Persist.pasteFromClipboard()).to.be.false;
+
+			expect(labelsOfA()).to.deep.equal(['1: mine 1', '2: mine 2', '3: ', '4: same', '5: only mine']);
+			expect(showInformationMessage.calledOnce).to.be.true;
+		});
+
+		it('should not repeat a label when the same task is pasted and combined twice', async () => {
+			messageChoice = 'Combine';
+			await Persist.pasteFromClipboard();
+			await Persist.pasteFromClipboard();
+
+			expect(labelsOfA().slice(0, 2)).to.deep.equal(['1: mine 1 / theirs 1', '2: mine 2 / theirs 2']);
+		});
+
+		it('should say "1 bookmark has" for a single label that differs', async () => {
+			clipboardText = JSON.stringify({ name: 'default', persistFiles: [{ filepath: fileA, persistMarks: [{ lineNumber: 1, label: 'theirs 1' }] }] });
+			await Persist.pasteFromClipboard();
+			expect(showInformationMessage.firstCall.args[0]).to.equal("Taskmarks: 1 bookmark has another label in the pasted task 'default' than in yours.");
+		});
+
+		it('should not ask when the pasted task goes into a new task', async () => {
+			clipboardText = clipboardText.replace('"name":"default"', '"name":"another task"');
+
+			expect(await Persist.pasteFromClipboard()).to.be.true;
+
+			expect(showInformationMessage.calledOnceWithExactly("Taskmarks: task 'another task' pasted from the clipboard.")).to.be.true;
+		});
+
+		it('should not ask when no label differs', async () => {
+			clipboardText = JSON.stringify({
+				name: 'default',
+				persistFiles: [
+					{
+						filepath: fileA,
+						persistMarks: [
+							{ lineNumber: 3, label: 'only theirs' },
+							{ lineNumber: 4, label: 'same' },
+							{ lineNumber: 5, label: '' },
+						],
+					},
+				],
+			});
+
+			expect(await Persist.pasteFromClipboard()).to.be.true;
+
+			expect(showInformationMessage.calledOnceWithExactly(pastedMessage)).to.be.true;
 		});
 	});
 });

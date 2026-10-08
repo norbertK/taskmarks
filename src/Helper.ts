@@ -76,6 +76,16 @@ export abstract class Helper {
 		vscode.window.onDidChangeActiveTextEditor((editor) => this.changeActiveFile(editor), null, context.subscriptions);
 		// an editor that becomes visible without becoming the active one (split view) needs its marks as well
 		vscode.window.onDidChangeVisibleTextEditors(() => this.refresh(), null, context.subscriptions);
+		// taskmarks.showLabelInEditor is used when the marks are shown
+		vscode.workspace.onDidChangeConfiguration(
+			(event) => {
+				if (event.affectsConfiguration('taskmarks')) {
+					this.refresh();
+				}
+			},
+			null,
+			context.subscriptions
+		);
 	}
 
 	// taskmarks.json is shared in a team: it changes with a pull, a checkout or an edit by hand
@@ -145,18 +155,26 @@ export abstract class Helper {
 		this.refresh();
 	}
 
-	// shows the active task: its name in the status bar, its marks in every visible editor (split view shows several files, or one file twice)
+	// shows the active task: its name in the status bar, its marks and their labels in every visible editor (split view shows several files, or one file twice)
 	static refresh(): void {
 		const activeTask = this._taskManager.activeTask;
 		if (this._statusBarItem) {
 			this._statusBarItem.text = 'TaskMarks: ' + activeTask.name;
 			this._statusBarItem.show();
 		}
+		// on, unless the setting says no (it is also missing while the extension is not activated by VS Code, as in tests)
+		const showLabels = vscode.workspace.getConfiguration().get<boolean>('taskmarks.showLabelInEditor') !== false;
+		const markedLines = new Set<number>();
 		for (const editor of vscode.window.visibleTextEditors) {
 			const file = activeTask.getFile(PathHelper.reducePath(editor.document.uri.fsPath));
 			// an editor without marks gets an empty list: it may still show the marks of another task
-			DecoratorHelper.refresh(editor, file ? file.lineNumbers : []);
+			DecoratorHelper.refresh(editor, file ? file.allPersistMarks : [], showLabels);
+			file?.lineNumbers.forEach((lineNumber) => markedLines.add(lineNumber + 1));
 		}
+		// For "Edit Bookmark Label" in the menu of the line numbers, which is only offered on these lines (package.json:
+		// "editorLineNumber in taskmarks.markedLines"). The menu counts lines from 1. There is one list for all visible editors,
+		// so with two files side by side the entry can show up on a line that is only marked in the other file.
+		vscode.commands.executeCommand('setContext', 'taskmarks.markedLines', [...markedLines]);
 	}
 
 	static getErrorMessage(error: unknown) {

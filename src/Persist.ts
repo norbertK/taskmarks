@@ -13,6 +13,7 @@ import {
 	type SerializableTask,
 } from './core/serialization';
 import { CURRENT_VERSION, loadTaskmarksJson, upgradeTask } from './core/migration';
+import type { LabelConflictChoice } from './core/labels';
 
 export abstract class Persist {
 	private static _taskManager: TaskManager;
@@ -151,6 +152,7 @@ export abstract class Persist {
 	}
 
 	// merges the task on the clipboard into the task with the same name (a new task, if there is none)
+	// if marks on the same line have different labels, the user decides once for all of them - or cancels the paste
 	// true if a task was pasted - the caller has to save and to refresh the editor
 	static async pasteFromClipboard(): Promise<boolean> {
 		const clip = await Persist.readClipboard();
@@ -161,8 +163,27 @@ export abstract class Persist {
 		}
 
 		// the task may have been copied on a system with the other path separator
-		this._taskManager.addTask(normalizeTaskFilePaths(persistedTask, PathHelper.inactivePathChar, PathHelper.activePathChar));
-		vscode.window.showInformationMessage(`Taskmarks: task '${persistedTask.name}' pasted from the clipboard.`);
+		const pastedTask = normalizeTaskFilePaths(persistedTask, PathHelper.inactivePathChar, PathHelper.activePathChar);
+
+		let labelConflict: LabelConflictChoice = 'keep';
+		const conflicts = this._taskManager.countLabelConflicts(pastedTask);
+		if (conflicts > 0) {
+			// the first button is the default of a modal message
+			const choices: Record<string, LabelConflictChoice> = { 'Combine': 'combine', 'Keep mine': 'keep', 'Take theirs': 'take' };
+			const bookmarks = conflicts === 1 ? '1 bookmark has' : `${conflicts} bookmarks have`;
+			const answer = await vscode.window.showInformationMessage(
+				`Taskmarks: ${bookmarks} another label in the pasted task '${pastedTask.name}' than in yours.`,
+				{ modal: true, detail: 'Combine puts both labels into one: "mine / theirs".' },
+				...Object.keys(choices)
+			);
+			if (answer === undefined) {
+				return false;
+			}
+			labelConflict = choices[answer];
+		}
+
+		this._taskManager.addTask(pastedTask, labelConflict);
+		vscode.window.showInformationMessage(`Taskmarks: task '${pastedTask.name}' pasted from the clipboard.`);
 		return true;
 	}
 

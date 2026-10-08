@@ -23,7 +23,7 @@ Marks move with the code when you insert or delete lines. If the marked line its
 
 ## Commands and keyboard shortcuts
 
-On macOS use `Cmd` instead of `Ctrl`.
+On macOS use `Cmd` instead of `Ctrl`. A right-click on a line number (or next to it, where the bookmark icon is) also offers **Toggle Bookmark (Taskmarks)** and, on a line with a bookmark, **Edit Bookmark Label (Taskmarks)**.
 
 | Command                                                   | Shortcut     | What it does                                                                         |
 | --------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------ |
@@ -46,6 +46,7 @@ In `.vscode/taskmarks.json` in your workspace. Commit it if your team should sha
 ## Extension Settings
 
 - `taskmarks.enableLabel` (default `false`) - ask for a label when setting a mark. The label is shown in **Select Bookmark from List** instead of the text of the line. **Edit Label of Bookmark at Current Position** changes a label later, also while this setting is off.
+- `taskmarks.showLabelInEditor` (default `true`) - show the label of a mark as faded text at the end of its line.
 - `taskmarks.useGlobalTaskmarksJson` (default `false`) - keep the marks out of the project: in a `taskmarks.json` in VS Code's own storage for this workspace instead of `.vscode/taskmarks.json`. A local `.vscode/taskmarks.json` that already exists is still used. (Up to 1.0.1 this was one file for all workspaces. Its content is taken over the first time a workspace is opened.)
 
 ## Credits

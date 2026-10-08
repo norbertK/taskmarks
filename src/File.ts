@@ -1,5 +1,6 @@
 import type { IPersistMark } from './types';
 import { Mark } from './Mark';
+import { isLabelConflict, mergeLabels, type LabelConflictChoice } from './core/labels';
 
 export class File {
 	private _filepath: string;
@@ -31,17 +32,22 @@ export class File {
 	}
 
 	// adds a mark for every line that has none yet and keeps the marks sorted by line
-	// on a line that already has a mark, only a missing label is taken over
-	mergeMarks(persistMarks: IPersistMark[]): void {
+	// on a line that already has a mark, a missing label is taken over; for two labels that differ, labelConflict decides
+	mergeMarks(persistMarks: IPersistMark[], labelConflict: LabelConflictChoice = 'keep'): void {
 		for (const { lineNumber, label } of persistMarks) {
 			const existing = this._marks.find((mark) => mark.lineNumber === lineNumber);
 			if (!existing) {
 				this._marks.push(new Mark(lineNumber, label));
-			} else if (!existing.label && label) {
-				existing.label = label;
+			} else {
+				existing.label = mergeLabels(existing.label, label, labelConflict);
 			}
 		}
 		this._marks.sort((first, second) => first.lineNumber - second.lineNumber);
+	}
+
+	// how many of the marks have another label than the mark this file has on that line
+	countLabelConflicts(persistMarks: IPersistMark[]): number {
+		return persistMarks.filter(({ lineNumber, label }) => isLabelConflict(this.getMark(lineNumber)?.label ?? '', label)).length;
 	}
 
 	addMark(persistMark: IPersistMark): void {

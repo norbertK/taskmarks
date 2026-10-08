@@ -26,6 +26,7 @@ src/
 │
 └── core/                 # Pure modules (no VS Code deps)
     ├── navigation.ts     # Mark navigation logic
+    ├── labels.ts         # Labels of two marks on one line: conflict, combine
     ├── errors.ts         # Message and stack of whatever was thrown
     ├── serialization.ts  # JSON format conversion
     ├── migration.ts      # taskmarks.json versions + upgrade
@@ -128,7 +129,7 @@ sequenceDiagram
     P->>P: JSON.stringify()
     P->>P: writeFileSync()
     C->>H: triggerChangeActiveFile()
-    H->>DH: refresh(editor, lineNumbers) for every visible editor
+    H->>DH: refresh(editor, marks, showLabels) for every visible editor
     DH->>VSCode: setDecorations()
 ```
 
@@ -260,6 +261,23 @@ flowchart TD
     B -->|ok, current| F[load]
 ```
 
+### Labels
+
+A label belongs to one mark (`IPersistMark.label`, `''` for none). It is set when a mark is toggled (only asked for with `taskmarks.enableLabel`) and changed with `Commands.editLabel()`.
+
+Where it is shown: as the entry text in "Select Bookmark from List", and as faded text at the end of the marked line (`DecoratorHelper.refresh()`, an `after` decoration; `taskmarks.showLabelInEditor`). It can't be shown on hovering the gutter icon: VS Code shows the hover text of an extension's decoration only over text, never over its gutter icon.
+
+When marks are merged into a line that already has a mark (`File.mergeMarks`, rules in `core/labels.ts`): a mark without label takes over the other label, and a label is never removed. If both have a label and the labels differ, the caller's `LabelConflictChoice` decides: `keep` (default; used for load and for undo), `take` or `combine` ("mine / theirs", without repeating a label that is already contained). "Paste Task from Clipboard" counts these conflicts first (`TaskManager.countLabelConflicts`) and asks once for all of them; cancelling the question cancels the paste.
+
+### Menu of the line numbers
+
+A gutter icon is a decoration; an extension can't attach a menu or a click to it. What VS Code offers (since 1.78, hence `engines.vscode`) is the menu `editor/lineNumber/context` for a right-click on a line number or in the margin next to it, where the icon is. `package.json` puts two commands there, both hidden from the command palette because they need the clicked line:
+
+- `taskmarks.toggleMarkAtLine` on every line,
+- `taskmarks.editLabelAtLine` only where `editorLineNumber in taskmarks.markedLines` holds.
+
+VS Code calls them with `{ lineNumber, uri }` (`LineMenuTarget`), the line counted from 1. `taskmarks.markedLines` is a context key that `Helper.refresh()` sets to the marked lines (from 1) of all visible editors together. It is one list for the window, so with two files side by side "Edit Bookmark Label" can be offered on a line that is only marked in the other file; the command then says that the line has no bookmark.
+
 ### Path separators
 
 In memory, file paths have the separator of the system VS Code runs on (`normalizeFilePaths` on load). In the file they keep the separator the file already uses (`detectFileSeparator`, the one more paths have; `Persist._fileSeparator`), and a new file is written with `/`. Otherwise a team on Windows and macOS / Linux would rewrite every path with every save. This is not a new format version: every version since 0.8 reads both separators.
@@ -328,6 +346,8 @@ sequenceDiagram
 |---------|------------|---------|
 | `toggleMark` | `Ctrl+Alt+M` | `Commands.toggleMark()` |
 | `editLabel` | - | `Commands.editLabel()` |
+| `toggleMarkAtLine` | right-click on a line number | `Commands.toggleMarkAtLine(target)` |
+| `editLabelAtLine` | right-click on a line number with a mark | `Commands.editLabelAtLine(target)` |
 | `nextMark` | `Ctrl+Alt+N` | `Commands.nextMark()` |
 | `previousMark` | `Ctrl+Alt+P` | `Commands.previousMark()` |
 | `selectTask` | `Ctrl+Alt+T` | `Commands.selectTask()` |

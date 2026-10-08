@@ -14,19 +14,50 @@ export interface MarkQuickPickItem extends vscode.QuickPickItem {
 	mark: Mark;
 }
 
+// What VS Code hands to a command of the line number menu (editor/lineNumber/context in package.json):
+// the line that was right-clicked, counted from 1, and its document.
+export interface LineMenuTarget {
+	lineNumber: number;
+	uri: vscode.Uri;
+}
+
+// a line (counted from 0) of a file (full path)
+interface LinePosition {
+	fullName: string;
+	line: number;
+}
+
 // The commands of the extension (see extension.ts). Each one awaits its prompts and reports errors instead of throwing;
 // cancelling a prompt changes and saves nothing.
 export abstract class Commands {
+	// the line of the cursor in the active editor
+	private static cursorPosition(): LinePosition | undefined {
+		const activeTextEditor = vscode.window.activeTextEditor;
+		return activeTextEditor ? { fullName: activeTextEditor.document.fileName, line: activeTextEditor.selection.active.line } : undefined;
+	}
+
+	// the line that was right-clicked - the line of the cursor, if the command is run in another way (a keybinding of the user)
+	private static menuPosition(target: LineMenuTarget | undefined): LinePosition | undefined {
+		return target?.uri ? { fullName: target.uri.fsPath, line: target.lineNumber - 1 } : Commands.cursorPosition();
+	}
+
 	static async toggleMark(): Promise<void> {
+		await Commands.toggleMarkAt(Commands.cursorPosition());
+	}
+
+	// "Toggle Bookmark" in the menu of the line numbers
+	static async toggleMarkAtLine(target?: LineMenuTarget): Promise<void> {
+		await Commands.toggleMarkAt(Commands.menuPosition(target));
+	}
+
+	private static async toggleMarkAt(position: LinePosition | undefined): Promise<void> {
 		try {
-			const activeTextEditor = vscode.window.activeTextEditor;
-			if (!activeTextEditor) {
+			if (!position) {
 				return;
 			}
 			const activeTask = Helper.taskManager.activeTask;
-			const activeLine = activeTextEditor.selection.active.line;
+			const { fullName, line: activeLine } = position;
 
-			const fullName = activeTextEditor.document.fileName;
 			if (!PathHelper.isInWorkspace(fullName)) {
 				// such a path can't be stored workspace-relative, the mark would be lost with the next reload
 				vscode.window.showInformationMessage('Taskmarks: bookmarks can only be set in files inside the workspace folder.');
@@ -56,13 +87,21 @@ export abstract class Commands {
 
 	// changes the label of the bookmark in the line of the cursor - also while taskmarks.enableLabel is off: the command is asked for
 	static async editLabel(): Promise<void> {
+		await Commands.editLabelAt(Commands.cursorPosition());
+	}
+
+	// "Edit Bookmark Label" in the menu of the line numbers
+	static async editLabelAtLine(target?: LineMenuTarget): Promise<void> {
+		await Commands.editLabelAt(Commands.menuPosition(target));
+	}
+
+	private static async editLabelAt(position: LinePosition | undefined): Promise<void> {
 		try {
-			const activeTextEditor = vscode.window.activeTextEditor;
-			if (!activeTextEditor) {
+			if (!position) {
 				return;
 			}
-			const file = Helper.taskManager.activeTask.getFile(PathHelper.reducePath(activeTextEditor.document.fileName));
-			const mark = file?.getMark(activeTextEditor.selection.active.line);
+			const file = Helper.taskManager.activeTask.getFile(PathHelper.reducePath(position.fullName));
+			const mark = file?.getMark(position.line);
 			if (!mark) {
 				vscode.window.showInformationMessage('Taskmarks: there is no bookmark in this line.');
 				return;
@@ -76,6 +115,8 @@ export abstract class Commands {
 				return;
 			}
 			mark.label = label;
+			// the label is shown behind its line
+			Helper.refresh();
 			Helper.save();
 		} catch (error: unknown) {
 			Helper.reportError({ message: Helper.getErrorMessage(error) });

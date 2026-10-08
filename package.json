@@ -10,7 +10,7 @@
 		"Brent Whitehead"
 	],
 	"engines": {
-		"vscode": "^1.76.0"
+		"vscode": "^1.78.0"
 	},
 	"license": "(MIT OR Apache-2.0)",
 	"icon": "images/taskmarks-icon.png",
@@ -33,12 +33,40 @@
 					"default": false,
 					"description": "Enable your own label for marks."
 				},
+				"taskmarks.showLabelInEditor": {
+					"type": "boolean",
+					"default": true,
+					"description": "Show the label of a bookmark as faded text at the end of its line."
+				},
 				"taskmarks.useGlobalTaskmarksJson": {
 					"type": "boolean",
 					"default": false,
 					"description": "Keep taskmarks.json in VS Code's storage for this workspace instead of .vscode/taskmarks.json (a .vscode/taskmarks.json that already exists is still used)."
 				}
 			}
+		},
+		"menus": {
+			"editor/lineNumber/context": [
+				{
+					"command": "taskmarks.toggleMarkAtLine",
+					"group": "taskmarks@1"
+				},
+				{
+					"command": "taskmarks.editLabelAtLine",
+					"group": "taskmarks@2",
+					"when": "editorLineNumber in taskmarks.markedLines"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "taskmarks.toggleMarkAtLine",
+					"when": "false"
+				},
+				{
+					"command": "taskmarks.editLabelAtLine",
+					"when": "false"
+				}
+			]
 		},
 		"keybindings": [
 			{
@@ -90,6 +118,14 @@
 			{
 				"command": "taskmarks.editLabel",
 				"title": "Taskmarks: Edit Label of Bookmark at Current Position"
+			},
+			{
+				"command": "taskmarks.toggleMarkAtLine",
+				"title": "Toggle Bookmark (Taskmarks)"
+			},
+			{
+				"command": "taskmarks.editLabelAtLine",
+				"title": "Edit Bookmark Label (Taskmarks)"
 			},
 			{
 				"command": "taskmarks.nextMark",
