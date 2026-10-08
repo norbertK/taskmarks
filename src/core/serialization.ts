@@ -28,10 +28,7 @@ export interface SerializableTaskManager {
  * Convert a task to its persist format.
  * The fileExistsCheck callback allows the caller to inject file existence checking.
  */
-export function taskToPersistTask(
-	task: SerializableTask,
-	fileExistsCheck: (filepath: string) => boolean = () => true
-): IPersistTask {
+export function taskToPersistTask(task: SerializableTask, fileExistsCheck: (filepath: string) => boolean = () => true): IPersistTask {
 	const persistTask: IPersistTask = {
 		name: task.name,
 		persistFiles: [],
@@ -96,11 +93,7 @@ export function serializeTaskManager(
 /**
  * Normalize file paths in persist data (convert path separators).
  */
-export function normalizeFilePaths(
-	persistTaskManager: IPersistTaskManager,
-	fromChar: string,
-	toChar: string
-): IPersistTaskManager {
+export function normalizeFilePaths(persistTaskManager: IPersistTaskManager, fromChar: string, toChar: string): IPersistTaskManager {
 	return {
 		...persistTaskManager,
 		persistTasks: persistTaskManager.persistTasks.map((task) => normalizeTaskFilePaths(task, fromChar, toChar)),
@@ -118,7 +111,12 @@ export function normalizeTaskFilePaths(persistTask: IPersistTask, fromChar: stri
 			filepath: file.filepath.replaceAll(fromChar, toChar),
 		})),
 		...(persistTask.persistBreakpoints
-			? { persistBreakpoints: persistTask.persistBreakpoints.map((breakpoint) => ({ ...breakpoint, filepath: breakpoint.filepath.replaceAll(fromChar, toChar) })) }
+			? {
+					persistBreakpoints: persistTask.persistBreakpoints.map((breakpoint) => ({
+						...breakpoint,
+						filepath: breakpoint.filepath.replaceAll(fromChar, toChar),
+					})),
+				}
 			: {}),
 	};
 }

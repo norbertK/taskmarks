@@ -39,7 +39,9 @@ export abstract class Persist {
 
 		if (result.status === 'invalid') {
 			const backupPath = PathHelper.writeBackup('invalid', taskmarksJson);
-			vscode.window.showWarningMessage(`Taskmarks: taskmarks.json could not be read (${result.reason}). Starting empty; the old file was saved as ${backupPath}.`);
+			vscode.window.showWarningMessage(
+				`Taskmarks: taskmarks.json could not be read (${result.reason}). Starting empty; the old file was saved as ${backupPath}.`
+			);
 			taskManager.useActiveTask('default');
 			Persist._syncedTaskmarksJson = Persist.serialize();
 			return;
@@ -103,7 +105,13 @@ export abstract class Persist {
 		return true;
 	}
 
-	private static useLoaded(status: 'ok' | 'newer', fromVersion: number, data: IPersistTaskManager, taskmarksJson: string, activeTaskName: string): void {
+	private static useLoaded(
+		status: 'ok' | 'newer',
+		fromVersion: number,
+		data: IPersistTaskManager,
+		taskmarksJson: string,
+		activeTaskName: string
+	): void {
 		Persist._readOnly = status === 'newer';
 		if (status === 'newer') {
 			vscode.window.showWarningMessage(
@@ -170,7 +178,7 @@ export abstract class Persist {
 		const conflicts = this._taskManager.countLabelConflicts(pastedTask);
 		if (conflicts > 0) {
 			// the first button is the default of a modal message
-			const choices: Record<string, LabelConflictChoice> = { 'Combine': 'combine', 'Keep mine': 'keep', 'Take theirs': 'take' };
+			const choices: Record<string, LabelConflictChoice> = { Combine: 'combine', 'Keep mine': 'keep', 'Take theirs': 'take' };
 			const bookmarks = conflicts === 1 ? '1 bookmark has' : `${conflicts} bookmarks have`;
 			const answer = await vscode.window.showInformationMessage(
 				`Taskmarks: ${bookmarks} another label in the pasted task '${pastedTask.name}' than in yours.`,

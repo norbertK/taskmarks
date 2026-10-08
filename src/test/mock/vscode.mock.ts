@@ -1,4 +1,3 @@
- 
 import * as sinon from 'sinon';
 
 const mockUri = {

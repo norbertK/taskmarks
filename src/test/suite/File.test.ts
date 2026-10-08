@@ -57,7 +57,6 @@ describe('File', () => {
 			expect(file.filepath).to.eql(filePath);
 			expect(file.marks).to.eql([]);
 		});
-
 	});
 
 	describe('addMark', () => {

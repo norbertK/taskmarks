@@ -119,7 +119,10 @@ describe('Persist', () => {
 		});
 
 		it('should load the shared breakpoints of a task, with the paths in the separator of this system', () => {
-			const task: IPersistTask = { ...taskWithMark('default', '\\src\\a.ts', 3), persistBreakpoints: [{ filepath: '\\src\\a.ts', lineNumber: 12, condition: 'x' }] };
+			const task: IPersistTask = {
+				...taskWithMark('default', '\\src\\a.ts', 3),
+				persistBreakpoints: [{ filepath: '\\src\\a.ts', lineNumber: 12, condition: 'x' }],
+			};
 
 			load(taskmarksJson('default', [task], 3));
 
@@ -271,7 +274,9 @@ describe('Persist', () => {
 
 			Persist.saveTaskmarksJson();
 
-			expect(lastSaved().persistTasks).to.deep.equal([{ name: 'default', persistFiles: [], persistBreakpoints: [{ filepath: fileA, lineNumber: 12 }] }]);
+			expect(lastSaved().persistTasks).to.deep.equal([
+				{ name: 'default', persistFiles: [], persistBreakpoints: [{ filepath: fileA, lineNumber: 12 }] },
+			]);
 		});
 
 		it('should create the file with the first mark', () => {
@@ -646,7 +651,12 @@ describe('Persist', () => {
 			await Persist.pasteFromClipboard();
 			await clipboardRead();
 
-			expect(taskManager.allTasks.find((task) => task.name === 'old')?.getFile(fileA)?.hasMark(4)).to.be.true;
+			expect(
+				taskManager.allTasks
+					.find((task) => task.name === 'old')
+					?.getFile(fileA)
+					?.hasMark(4)
+			).to.be.true;
 		});
 
 		it('should convert the paths to the separator of this system', async () => {
@@ -655,7 +665,12 @@ describe('Persist', () => {
 			await Persist.pasteFromClipboard();
 			await clipboardRead();
 
-			expect(taskManager.allTasks.find((task) => task.name === 'pasted')?.getFile('/src/b.ts')?.hasMark(7)).to.be.true;
+			expect(
+				taskManager.allTasks
+					.find((task) => task.name === 'pasted')
+					?.getFile('/src/b.ts')
+					?.hasMark(7)
+			).to.be.true;
 		});
 
 		it('should say that the clipboard is empty', async () => {
@@ -788,7 +803,9 @@ describe('Persist', () => {
 		it('should say "1 bookmark has" for a single label that differs', async () => {
 			clipboardText = JSON.stringify({ name: 'default', persistFiles: [{ filepath: fileA, persistMarks: [{ lineNumber: 1, label: 'theirs 1' }] }] });
 			await Persist.pasteFromClipboard();
-			expect(showInformationMessage.firstCall.args[0]).to.equal("Taskmarks: 1 bookmark has another label in the pasted task 'default' than in yours.");
+			expect(showInformationMessage.firstCall.args[0]).to.equal(
+				"Taskmarks: 1 bookmark has another label in the pasted task 'default' than in yours."
+			);
 		});
 
 		it('should not ask when the pasted task goes into a new task', async () => {

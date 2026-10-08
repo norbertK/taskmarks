@@ -1,11 +1,6 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import {
-	findNextMark,
-	findPreviousMark,
-	findNextFileWithMarks,
-	findPreviousFileWithMarks,
-} from '../../core/navigation';
+import { findNextMark, findPreviousMark, findNextFileWithMarks, findPreviousFileWithMarks } from '../../core/navigation';
 
 describe('Navigation (pure)', () => {
 	describe('findNextMark', () => {

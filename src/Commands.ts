@@ -148,7 +148,8 @@ export abstract class Commands {
 		try {
 			const activeTextEditor = vscode.window.activeTextEditor;
 			const activeFile = activeTextEditor ? Helper.taskManager.activeTask.activeFile : undefined;
-			const previousLine = activeTextEditor && activeFile ? findPreviousMark(activeTextEditor.selection.active.line, activeFile.lineNumbers) : undefined;
+			const previousLine =
+				activeTextEditor && activeFile ? findPreviousMark(activeTextEditor.selection.active.line, activeFile.lineNumbers) : undefined;
 			if (previousLine !== undefined) {
 				DecoratorHelper.showLine(previousLine);
 			} else {
@@ -285,7 +286,8 @@ export abstract class Commands {
 					`Share the breakpoints of task '${task.name}' in taskmarks.json?`,
 					{
 						modal: true,
-						detail: 'While taskmarks.json holds breakpoints, teammates with Taskmarks 1.2.0 or older see the bookmarks, but their changes are not saved until they update.',
+						detail:
+							'While taskmarks.json holds breakpoints, teammates with Taskmarks 1.2.0 or older see the bookmarks, but their changes are not saved until they update.',
 					},
 					share
 				);
@@ -297,7 +299,9 @@ export abstract class Commands {
 			Helper.save();
 			const count = breakpoints.length === 1 ? '1 breakpoint' : `${breakpoints.length} breakpoints`;
 			vscode.window.showInformationMessage(
-				breakpoints.length > 0 ? `Taskmarks: task '${task.name}' shares ${count} in taskmarks.json.` : `Taskmarks: task '${task.name}' shares no breakpoints anymore.`
+				breakpoints.length > 0
+					? `Taskmarks: task '${task.name}' shares ${count} in taskmarks.json.`
+					: `Taskmarks: task '${task.name}' shares no breakpoints anymore.`
 			);
 		} catch (error: unknown) {
 			Helper.reportError({ message: Helper.getErrorMessage(error) });
@@ -311,7 +315,9 @@ export abstract class Commands {
 			const task = Helper.taskManager.activeTask;
 			const shared = task.sharedBreakpoints.filter((breakpoint) => PathHelper.fileExists(breakpoint.filepath));
 			if (shared.length === 0) {
-				vscode.window.showInformationMessage(`Taskmarks: task '${task.name}' has no shared breakpoints${task.sharedBreakpoints.length > 0 ? ' in files that exist here' : ''}.`);
+				vscode.window.showInformationMessage(
+					`Taskmarks: task '${task.name}' has no shared breakpoints${task.sharedBreakpoints.length > 0 ? ' in files that exist here' : ''}.`
+				);
 				return;
 			}
 			const missing = missingBreakpoints(Breakpoints.current(), shared);

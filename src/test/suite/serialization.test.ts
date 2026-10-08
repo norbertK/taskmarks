@@ -112,7 +112,11 @@ describe('Serialization (pure)', () => {
 	describe('persistTaskToTask with shared breakpoints', () => {
 		it('should take the shared breakpoints over', () => {
 			const breakpoints = [{ filepath: '/a.ts', lineNumber: 9 }];
-			expect(persistTaskToTask({ name: 't', persistFiles: [], persistBreakpoints: breakpoints })).to.deep.equal({ name: 't', files: [], breakpoints });
+			expect(persistTaskToTask({ name: 't', persistFiles: [], persistBreakpoints: breakpoints })).to.deep.equal({
+				name: 't',
+				files: [],
+				breakpoints,
+			});
 			expect(persistTaskToTask({ name: 't', persistFiles: [] })).to.deep.equal({ name: 't', files: [] });
 		});
 	});

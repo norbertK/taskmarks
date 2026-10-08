@@ -98,7 +98,6 @@ describe('TaskManager Tests', () => {
 
 	//   expect(taskManager.activeTask).toEqual(anotherTask);
 	// });
-
 });
 
 import { expect } from 'chai';

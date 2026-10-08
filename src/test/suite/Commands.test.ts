@@ -529,7 +529,11 @@ describe('Commands', () => {
 			task.toggle('/workspace/src/a.ts', 3, 'look here');
 
 			const lines = ['zero', 'one', 'two', 'three'];
-			sinon.replace(vscode.workspace, 'openTextDocument', sinon.fake.resolves({ lineCount: lines.length, lineAt: (line: number) => ({ text: lines[line] }) }) as any);
+			sinon.replace(
+				vscode.workspace,
+				'openTextDocument',
+				sinon.fake.resolves({ lineCount: lines.length, lineAt: (line: number) => ({ text: lines[line] }) }) as any
+			);
 			openAndShow = sinon.stub(DecoratorHelper, 'openAndShow');
 			sinon.stub(PathHelper, 'fileExists').returns(true);
 		});
@@ -582,7 +586,9 @@ describe('Commands', () => {
 			typed = undefined;
 			clicked = undefined;
 			// a list has plain names or entries with a label - the user picks by what is shown
-			showQuickPick = sinon.fake((items: (string | vscode.QuickPickItem)[]) => Promise.resolve(items.find((item) => (typeof item === 'string' ? item : item.label) === picked)));
+			showQuickPick = sinon.fake((items: (string | vscode.QuickPickItem)[]) =>
+				Promise.resolve(items.find((item) => (typeof item === 'string' ? item : item.label) === picked))
+			);
 			sinon.replace(vscode.window, 'showQuickPick', showQuickPick as any);
 			showInputBox = sinon.fake(() => Promise.resolve(typed));
 			sinon.replace(vscode.window, 'showInputBox', showInputBox as any);
@@ -722,7 +728,8 @@ describe('Commands', () => {
 
 				expect(taskManager.activeTask).to.equal(existing);
 				expect(taskManager.taskNames.filter((name) => name === 'cmd-b').length).to.equal(1);
-				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: there is already a task named 'cmd-b'. It is the active task now.")).to.be.true;
+				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: there is already a task named 'cmd-b'. It is the active task now.")).to.be
+					.true;
 				expect(saveTaskmarksJson.calledOnce).to.be.true;
 			});
 		});
@@ -765,7 +772,8 @@ describe('Commands', () => {
 
 				await Commands.deleteTask();
 
-				expect(showWarningMessage.calledOnceWithExactly("Delete task 'cmd-b' with its bookmark and its breakpoint?", { modal: true }, 'Delete')).to.be.true;
+				expect(showWarningMessage.calledOnceWithExactly("Delete task 'cmd-b' with its bookmark and its breakpoint?", { modal: true }, 'Delete')).to.be
+					.true;
 			});
 
 			it('should let the breakpoints of the deleted task go, then show the ones of the active task', async () => {
@@ -987,7 +995,9 @@ describe('Commands', () => {
 			it('should say so when there is nothing to share', async () => {
 				await Commands.shareBreakpoints();
 
-				expect(showInformationMessage.calledOnceWithExactly('Taskmarks: there are no breakpoints in files of the workspace folder that could be shared.')).to.be.true;
+				expect(
+					showInformationMessage.calledOnceWithExactly('Taskmarks: there are no breakpoints in files of the workspace folder that could be shared.')
+				).to.be.true;
 				expect(saveTaskmarksJson.called).to.be.false;
 			});
 
@@ -1077,7 +1087,8 @@ describe('Commands', () => {
 				taskManager.activeTask.sharedBreakpoints = [{ filepath: '/src/teammate.ts', lineNumber: 7 }];
 				await Commands.loadSharedBreakpoints();
 				expect(add.called).to.be.false;
-				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: task 'bp-task' has no shared breakpoints in files that exist here.")).to.be.true;
+				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: task 'bp-task' has no shared breakpoints in files that exist here.")).to.be
+					.true;
 			});
 
 			it('should report an error instead of throwing', async () => {
@@ -1209,7 +1220,9 @@ describe('Commands', () => {
 
 			cursorLine = 4;
 			typed = undefined;
-			sinon.stub(vscode.window, 'activeTextEditor').get(() => ({ selection: { active: { line: cursorLine } }, document: { fileName: fileInWorkspace } }));
+			sinon
+				.stub(vscode.window, 'activeTextEditor')
+				.get(() => ({ selection: { active: { line: cursorLine } }, document: { fileName: fileInWorkspace } }));
 			showInputBox = sinon.fake(() => Promise.resolve(typed));
 			sinon.replace(vscode.window, 'showInputBox', showInputBox as any);
 			showInformationMessage = sinon.fake();
@@ -1282,7 +1295,9 @@ describe('Commands', () => {
 			sinon.restore();
 			showInformationMessage = sinon.fake();
 			sinon.replace(vscode.window, 'showInformationMessage', showInformationMessage as any);
-			sinon.stub(vscode.window, 'activeTextEditor').get(() => ({ selection: { active: { line: 4 } }, document: { fileName: '/workspace/src/b.ts' } }));
+			sinon
+				.stub(vscode.window, 'activeTextEditor')
+				.get(() => ({ selection: { active: { line: 4 } }, document: { fileName: '/workspace/src/b.ts' } }));
 
 			await Commands.editLabel();
 
@@ -1338,7 +1353,9 @@ describe('Commands', () => {
 
 			// the cursor is somewhere else: in line 20 of a.ts
 			hasActiveEditor = true;
-			sinon.stub(vscode.window, 'activeTextEditor').get(() => (hasActiveEditor ? { selection: { active: { line: 20 } }, document: { fileName: fileA, uri: { fsPath: fileA } } } : undefined));
+			sinon
+				.stub(vscode.window, 'activeTextEditor')
+				.get(() => (hasActiveEditor ? { selection: { active: { line: 20 } }, document: { fileName: fileA, uri: { fsPath: fileA } } } : undefined));
 			enableLabel = false;
 			typed = undefined;
 			sinon.replace(

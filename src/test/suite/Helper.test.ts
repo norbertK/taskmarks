@@ -16,7 +16,10 @@ describe('Helper', () => {
 		let refresh: sinon.SinonStub;
 		let reportError: sinon.SinonStub;
 		let previousBasePath: string;
-		const editor = { selection: { active: { line: 0 } }, document: { fileName: '/workspace/src/a.ts', uri: { fsPath: '/workspace/src/a.ts' } } } as unknown as vscode.TextEditor;
+		const editor = {
+			selection: { active: { line: 0 } },
+			document: { fileName: '/workspace/src/a.ts', uri: { fsPath: '/workspace/src/a.ts' } },
+		} as unknown as vscode.TextEditor;
 
 		beforeEach(() => {
 			previousBasePath = PathHelper.basePath;
@@ -43,7 +46,10 @@ describe('Helper', () => {
 
 		it('should show the marks of the reloaded tasks in the editor and forget the removed marks', async () => {
 			sinon.stub(Persist, 'reloadIfChangedOnDisk').callsFake(() => {
-				taskManager.replaceTasks([{ name: 'file-changed', persistFiles: [{ filepath: '/src/a.ts', persistMarks: [{ lineNumber: 8, label: '' }] }] }], 'file-changed');
+				taskManager.replaceTasks(
+					[{ name: 'file-changed', persistFiles: [{ filepath: '/src/a.ts', persistMarks: [{ lineNumber: 8, label: '' }] }] }],
+					'file-changed'
+				);
 				return Promise.resolve(true);
 			});
 
@@ -214,7 +220,9 @@ describe('Helper', () => {
 		it('should tell VS Code the marked lines of the visible editors, counted from 1, for the menu of the line numbers', () => {
 			taskManager.activeTask.toggle('/workspace/src/b.ts', 3, '');
 			taskManager.activeTask.toggle('/workspace/src/b.ts', 20, '');
-			sinon.stub(vscode.window, 'visibleTextEditors').get(() => [editorFor('/workspace/src/a.ts'), editorFor('/workspace/src/b.ts'), editorFor('/workspace/src/c.ts')]);
+			sinon
+				.stub(vscode.window, 'visibleTextEditors')
+				.get(() => [editorFor('/workspace/src/a.ts'), editorFor('/workspace/src/b.ts'), editorFor('/workspace/src/c.ts')]);
 			const executeCommand = sinon.fake();
 			sinon.replace(vscode.commands, 'executeCommand', executeCommand as any);
 

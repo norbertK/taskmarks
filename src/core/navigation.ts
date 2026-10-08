@@ -37,7 +37,9 @@ export function findNextFileWithMarks<T extends { filepath: string; lineNumbers:
 	files: T[],
 	currentIndex: number
 ): { filepath: string; lineNumber: number } | undefined {
-	if (files.length === 0) {return undefined;}
+	if (files.length === 0) {
+		return undefined;
+	}
 
 	let index = (currentIndex + 1) % files.length;
 	const startIndex = index;
@@ -63,7 +65,9 @@ export function findPreviousFileWithMarks<T extends { filepath: string; lineNumb
 	files: T[],
 	currentIndex: number
 ): { filepath: string; lineNumber: number } | undefined {
-	if (files.length === 0) {return undefined;}
+	if (files.length === 0) {
+		return undefined;
+	}
 
 	let index = (Math.max(currentIndex, 0) - 1 + files.length) % files.length;
 	const startIndex = index;

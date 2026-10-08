@@ -49,7 +49,10 @@ export class Task {
 
 	// how many marks of the other task have another label than the mark this task has on that line
 	countLabelConflicts(persistTask: IPersistTask): number {
-		return persistTask.persistFiles.reduce((count, persistFile) => count + (this.getFile(persistFile.filepath)?.countLabelConflicts(persistFile.persistMarks) ?? 0), 0);
+		return persistTask.persistFiles.reduce(
+			(count, persistFile) => count + (this.getFile(persistFile.filepath)?.countLabelConflicts(persistFile.persistMarks) ?? 0),
+			0
+		);
 	}
 
 	lineHasMark(filename: string, lineNumber: number): boolean {

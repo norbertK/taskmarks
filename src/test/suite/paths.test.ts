@@ -1,11 +1,6 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import {
-	detectPathCharacters,
-	getFullPath,
-	reducePath,
-	isInsideBasePath,
-} from '../../core/paths';
+import { detectPathCharacters, getFullPath, reducePath, isInsideBasePath } from '../../core/paths';
 
 describe('Paths (pure)', () => {
 	describe('detectPathCharacters', () => {

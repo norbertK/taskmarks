@@ -130,7 +130,15 @@ describe('migration', () => {
 						...v1Labels.persistTasks[0],
 						persistBreakpoints: [
 							{ filepath: '\\src\\Task.ts', lineNumber: 12 },
-							{ filepath: '\\src\\Task.ts', lineNumber: 30, column: 8, enabled: false, condition: 'name === undefined', hitCondition: '3', logMessage: 'name: {name}' },
+							{
+								filepath: '\\src\\Task.ts',
+								lineNumber: 30,
+								column: 8,
+								enabled: false,
+								condition: 'name === undefined',
+								hitCondition: '3',
+								logMessage: 'name: {name}',
+							},
 						],
 					},
 				],
@@ -147,7 +155,13 @@ describe('migration', () => {
 			const messy = {
 				version: 3,
 				activeTaskName: 'default',
-				persistTasks: [{ name: 'default', persistFiles: [], persistBreakpoints: [{ filepath: '\\a.ts', lineNumber: 1 }, { lineNumber: 2 }, { filepath: '\\a.ts', lineNumber: -1 }, 'x', null] }],
+				persistTasks: [
+					{
+						name: 'default',
+						persistFiles: [],
+						persistBreakpoints: [{ filepath: '\\a.ts', lineNumber: 1 }, { lineNumber: 2 }, { filepath: '\\a.ts', lineNumber: -1 }, 'x', null],
+					},
+				],
 			};
 			const result = loadTaskmarksJson(JSON.stringify(messy));
 			expect(result.status).to.equal('ok');
@@ -196,7 +210,13 @@ describe('migration', () => {
 			const messy = {
 				activeTaskName: 'default',
 				persistTasks: [
-					{ name: 'default', persistFiles: [{ filepath: '\\a.ts', persistMarks: [{ lineNumber: 1 }, { lineNumber: -3 }, 'x', { lineNumber: 2.5 }] }, { persistMarks: [] }] },
+					{
+						name: 'default',
+						persistFiles: [
+							{ filepath: '\\a.ts', persistMarks: [{ lineNumber: 1 }, { lineNumber: -3 }, 'x', { lineNumber: 2.5 }] },
+							{ persistMarks: [] },
+						],
+					},
 					{ persistFiles: [] },
 					null,
 				],
@@ -247,7 +267,9 @@ describe('migration', () => {
 
 	describe('line numbers that can not be lines', () => {
 		it('drops negative and fractional line numbers of an old file', () => {
-			const result = loadTaskmarksJson(JSON.stringify({ activeTaskName: 'default', tasks: [{ name: 'default', files: [{ filepath: '\\a.ts', marks: [3, -1, 1.5] }] }] }));
+			const result = loadTaskmarksJson(
+				JSON.stringify({ activeTaskName: 'default', tasks: [{ name: 'default', files: [{ filepath: '\\a.ts', marks: [3, -1, 1.5] }] }] })
+			);
 			expect(result.status).to.equal('ok');
 			expect((result as any).data.persistTasks[0].persistFiles[0].persistMarks).to.deep.equal([{ lineNumber: 3, label: '' }]);
 		});
