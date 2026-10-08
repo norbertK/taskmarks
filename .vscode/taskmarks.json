@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "activeTaskName": "taskMarks",
+  "activeTaskName": "eNewOne",
   "persistTasks": [
     {
       "name": "default",
@@ -58,6 +58,10 @@
           ]
         }
       ]
+    },
+    {
+      "name": "eNewOne",
+      "persistFiles": []
     }
   ]
 }

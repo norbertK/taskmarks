@@ -115,4 +115,46 @@ describe('extension', () => {
 			expect(Number(major) > 1 || Number(minor) >= 78, packageJson.engines.vscode).to.be.true;
 		});
 	});
+
+	describe('keyboard shortcuts', () => {
+		const packageJson = JSON.parse(readFileSync(join(__dirname, '..', '..', '..', 'package.json')).toString());
+		const keybindings: { command: string; key: string; mac?: string; when?: string }[] = packageJson.contributes.keybindings;
+
+		it('should only bind commands that exist', () => {
+			const declared: string[] = packageJson.contributes.commands.map((command: { command: string }) => command.command);
+			keybindings.forEach((keybinding) => expect(declared, keybinding.command).to.include(keybinding.command));
+		});
+
+		// Ctrl+Alt is AltGr on Windows: Ctrl+Alt+M would take away the µ of a German keyboard, Ctrl+Alt+N the ń of a Polish one
+		it('should not use Ctrl+Alt, which is AltGr on Windows', () => {
+			keybindings.forEach((keybinding) => {
+				const modifiers = keybinding.key.split('+').slice(0, -1);
+				expect(modifiers.includes('ctrl') && modifiers.includes('alt'), keybinding.key).to.be.false;
+			});
+		});
+
+		// Alt+Shift+letter types a character on a Mac (Option+Shift+L is Ò), and Cmd+Option+T is "Close Other Editors" there.
+		// Ctrl+Option is fine on a Mac: it has no AltGr.
+		it('should use Ctrl+Option with the same letter on macOS', () => {
+			keybindings.forEach((keybinding) => {
+				const letter = keybinding.key.split('+').pop();
+				expect(keybinding.mac, keybinding.command).to.equal(`ctrl+alt+${letter}`);
+			});
+		});
+
+		it('should give every shortcut to one command only', () => {
+			const keys = keybindings.map((keybinding) => keybinding.key);
+			expect(new Set(keys).size).to.equal(keys.length);
+		});
+
+		it('should have shortcuts for toggle, next, previous, the task list and the bookmark list', () => {
+			expect(Object.fromEntries(keybindings.map((keybinding) => [keybinding.command, keybinding.key]))).to.deep.equal({
+				'taskmarks.toggleMark': 'alt+shift+m',
+				'taskmarks.nextMark': 'alt+shift+n',
+				'taskmarks.previousMark': 'alt+shift+p',
+				'taskmarks.selectTask': 'alt+shift+t',
+				'taskmarks.selectMarkFromList': 'alt+shift+l',
+			});
+		});
+	});
 });

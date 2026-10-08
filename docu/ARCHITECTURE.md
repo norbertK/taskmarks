@@ -102,7 +102,7 @@ classDiagram
 
 ## Data Flow: Toggle Bookmark
 
-When a user presses `Ctrl+Alt+M`:
+When a user presses `Alt+Shift+M`:
 
 ```mermaid
 sequenceDiagram
@@ -177,7 +177,7 @@ Marks that land outside the document or on a line another mark already has are r
 
 `Task.activeFile` is the file in the active editor, set by `use()` on every editor change. It is only the starting point for next / previous: the gutter icons are set for every visible editor (`Helper.refresh()`), and edits are tracked for every open document. While it has no marks it is not part of `files`. When it gets a mark, the same `File` object is added, so the editor and the task never work on two objects for one path.
 
-There is no stored cursor: the position is always derived from `activeFile`. If the active file has no marks, navigation starts at the first (next) or last (previous) file of the task.
+There is no stored cursor: the position is always derived from `activeFile`. If the active file has no marks, navigation starts at the first (next) or last (previous) file of the task. The same happens when no text editor is active (all editors closed, or the active tab is not a text file): there is no cursor to start from, although `activeFile` still names the file that was used last.
 
 **Navigation logic** (in `Commands.nextMark()` / `Commands.nextDocument()`):
 1. `findNextMark()` looks for the next marked line in the active file
@@ -248,7 +248,7 @@ interface IPersistMark {
 | 0 | 0.8.17 | `tasks[].files[].lineNumbers: number[]` |
 | 0 | 0.8.21 | `persistTasks[].persistFiles[].lineNumbers: number[]` |
 | 1 | 0.8.23 – 1.0.0 | `persistTasks[].persistFiles[].persistMarks: {lineNumber, label}[]` |
-| 2 | 1.0.1 – 1.1.0 | version 1 + `"version": 2` |
+| 2 | 1.0.1 – 1.2.0 | version 1 + `"version": 2` |
 
 What `Persist.initAndLoad` does with the result of `loadTaskmarksJson()`:
 
@@ -344,17 +344,17 @@ sequenceDiagram
 
 | Command | Keybinding | Handler |
 |---------|------------|---------|
-| `toggleMark` | `Ctrl+Alt+M` | `Commands.toggleMark()` |
+| `toggleMark` | `Alt+Shift+M` | `Commands.toggleMark()` |
 | `editLabel` | - | `Commands.editLabel()` |
 | `toggleMarkAtLine` | right-click on a line number | `Commands.toggleMarkAtLine(target)` |
 | `editLabelAtLine` | right-click on a line number with a mark | `Commands.editLabelAtLine(target)` |
-| `nextMark` | `Ctrl+Alt+N` | `Commands.nextMark()` |
-| `previousMark` | `Ctrl+Alt+P` | `Commands.previousMark()` |
-| `selectTask` | `Ctrl+Alt+T` | `Commands.selectTask()` |
+| `nextMark` | `Alt+Shift+N` | `Commands.nextMark()` |
+| `previousMark` | `Alt+Shift+P` | `Commands.previousMark()` |
+| `selectTask` | `Alt+Shift+T` | `Commands.selectTask()` |
 | `createTask` | - | `Commands.createTask()` |
 | `renameTask` | - | `Commands.renameTask()` |
 | `deleteTask` | - | `Commands.deleteTask()` |
-| `selectMarkFromList` | - | `Commands.selectMarkFromList()` |
+| `selectMarkFromList` | `Alt+Shift+L` | `Commands.selectMarkFromList()` |
 | `copyToClipboard` | - | `Commands.copyToClipboard()` |
 | `pasteFromClipboard` | - | `Commands.pasteFromClipboard()` |
 

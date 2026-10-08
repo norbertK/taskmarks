@@ -124,36 +124,33 @@ export abstract class Commands {
 	}
 
 	// to the next mark below the cursor, from the last mark of a file on to the next file with marks
+	// Without an active text editor (all editors closed, or the active tab is Settings, an image ...) there is no cursor
+	// to start from: then it goes to the first mark of the task.
 	static async nextMark(): Promise<void> {
 		try {
 			const activeTextEditor = vscode.window.activeTextEditor;
-			const activeFile = Helper.taskManager.activeTask.activeFile;
-			if (!activeTextEditor || !activeFile) {
-				return;
-			}
-			const nextLine = findNextMark(activeTextEditor.selection.active.line, activeFile.lineNumbers);
+			const activeFile = activeTextEditor ? Helper.taskManager.activeTask.activeFile : undefined;
+			const nextLine = activeTextEditor && activeFile ? findNextMark(activeTextEditor.selection.active.line, activeFile.lineNumbers) : undefined;
 			if (nextLine !== undefined) {
 				DecoratorHelper.showLine(nextLine);
 			} else {
-				await Commands.nextDocument();
+				await Commands.openNextFile(activeFile);
 			}
 		} catch (error: unknown) {
 			Helper.reportError({ message: Helper.getErrorMessage(error) });
 		}
 	}
 
+	// like nextMark, upwards - without an active text editor to the last mark of the task
 	static async previousMark(): Promise<void> {
 		try {
 			const activeTextEditor = vscode.window.activeTextEditor;
-			const activeFile = Helper.taskManager.activeTask.activeFile;
-			if (!activeTextEditor || !activeFile) {
-				return;
-			}
-			const previousLine = findPreviousMark(activeTextEditor.selection.active.line, activeFile.lineNumbers);
+			const activeFile = activeTextEditor ? Helper.taskManager.activeTask.activeFile : undefined;
+			const previousLine = activeTextEditor && activeFile ? findPreviousMark(activeTextEditor.selection.active.line, activeFile.lineNumbers) : undefined;
 			if (previousLine !== undefined) {
 				DecoratorHelper.showLine(previousLine);
 			} else {
-				await Commands.previousDocument();
+				await Commands.openPreviousFile(activeFile);
 			}
 		} catch (error: unknown) {
 			Helper.reportError({ message: Helper.getErrorMessage(error) });
@@ -162,8 +159,13 @@ export abstract class Commands {
 
 	// to the first mark of the next file with marks, after the last file on to the first one
 	static async nextDocument(): Promise<void> {
+		await Commands.openNextFile(Helper.taskManager.activeTask.activeFile);
+	}
+
+	// currentFile undefined: there is no file to start from, so the first file with marks is opened
+	private static async openNextFile(currentFile: File | undefined): Promise<void> {
 		const files = Commands.filesOnDisk();
-		const target = findNextFileWithMarks(files, Commands.activeFileIndex(files));
+		const target = findNextFileWithMarks(files, currentFile ? files.indexOf(currentFile) : -1);
 		if (target) {
 			await DecoratorHelper.openAndShow(target.filepath, target.lineNumber);
 		}
@@ -171,8 +173,13 @@ export abstract class Commands {
 
 	// to the last mark of the previous file with marks, before the first file on to the last one
 	static async previousDocument(): Promise<void> {
+		await Commands.openPreviousFile(Helper.taskManager.activeTask.activeFile);
+	}
+
+	// currentFile undefined: there is no file to start from, so the last file with marks is opened
+	private static async openPreviousFile(currentFile: File | undefined): Promise<void> {
 		const files = Commands.filesOnDisk();
-		const target = findPreviousFileWithMarks(files, Commands.activeFileIndex(files));
+		const target = findPreviousFileWithMarks(files, currentFile ? files.indexOf(currentFile) : -1);
 		if (target) {
 			await DecoratorHelper.openAndShow(target.filepath, target.lineNumber);
 		}
@@ -182,12 +189,6 @@ export abstract class Commands {
 	// Navigation has to leave them out: such a file can't be opened, and next / previous would never get past it.
 	private static filesOnDisk(): File[] {
 		return Helper.taskManager.activeTask.files.filter((file) => PathHelper.fileExists(file.filepath));
-	}
-
-	// -1 if there is no active file or it is not (or no longer) one of the files
-	private static activeFileIndex(files: File[]): number {
-		const activeFile = Helper.taskManager.activeTask.activeFile;
-		return activeFile ? files.indexOf(activeFile) : -1;
 	}
 
 	// one entry per mark of the task: the label (or the text of the marked line, without indentation), the line number and the file
@@ -259,13 +260,27 @@ export abstract class Commands {
 		return [activeTaskName, ...Helper.taskManager.taskNames.filter((taskName) => taskName !== activeTaskName)];
 	}
 
+	// The list also has an entry to create a task. A name that is typed into the list only filters it:
+	// creating a task for every name that matches none would turn a typing mistake into a new task.
 	static async selectTask(): Promise<void> {
 		try {
-			const taskName = await vscode.window.showQuickPick(Commands.taskNamesActiveFirst(), { placeHolder: 'select Task ' });
-			if (!taskName) {
+			// alwaysShow: still there when the typed text matches no task. Last, so that Enter on the unfiltered list selects a task.
+			const createNewTask: vscode.QuickPickItem = { label: '$(add) Create new task…', alwaysShow: true };
+			const items: vscode.QuickPickItem[] = [
+				...Commands.taskNamesActiveFirst().map((taskName) => ({ label: taskName })),
+				{ label: '', kind: vscode.QuickPickItemKind.Separator },
+				createNewTask,
+			];
+			const picked = await vscode.window.showQuickPick(items, { placeHolder: 'select Task ' });
+			if (!picked) {
 				return;
 			}
-			Helper.taskManager.useActiveTask(taskName);
+			// by object, not by label: a task may have any name
+			if (picked === createNewTask) {
+				await Commands.askForNameAndUseTask();
+				return;
+			}
+			Helper.taskManager.useActiveTask(picked.label);
 			Helper.triggerChangeActiveFile();
 			Helper.save();
 		} catch (error: unknown) {
@@ -297,16 +312,24 @@ export abstract class Commands {
 
 	static async createTask(): Promise<void> {
 		try {
-			const newTaskName = await vscode.window.showInputBox({ prompt: 'Name of the new task', placeHolder: 'e.g. bugfix-login' });
-			if (!newTaskName) {
-				return;
-			}
-			Helper.taskManager.useActiveTask(newTaskName);
-			Helper.triggerChangeActiveFile();
-			Helper.save();
+			await Commands.askForNameAndUseTask();
 		} catch (error: unknown) {
 			Helper.reportError({ message: Helper.getErrorMessage(error) });
 		}
+	}
+
+	// asks for a name and makes the task with that name the active one - a new task, unless there is one with that name already
+	private static async askForNameAndUseTask(): Promise<void> {
+		const newTaskName = await vscode.window.showInputBox({ prompt: 'Name of the new task', placeHolder: 'e.g. bugfix-login' });
+		if (!newTaskName) {
+			return;
+		}
+		if (Helper.taskManager.taskNames.includes(newTaskName)) {
+			vscode.window.showInformationMessage(`Taskmarks: there is already a task named '${newTaskName}'. It is the active task now.`);
+		}
+		Helper.taskManager.useActiveTask(newTaskName);
+		Helper.triggerChangeActiveFile();
+		Helper.save();
 	}
 
 	static async deleteTask(): Promise<void> {

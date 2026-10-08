@@ -33,6 +33,7 @@ export const vscode = {
 	},
 	Range: sinon.fake(),
 	Selection: sinon.fake(),
+	QuickPickItemKind: { Separator: -1, Default: 0 },
 	ThemeColor: sinon.fake(),
 	TextEditorRevealType: { Default: 0, InCenter: 1, InCenterIfOutsideViewport: 2, AtTop: 3 },
 	TextDocumentChangeReason: { Undo: 1, Redo: 2 },

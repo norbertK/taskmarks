@@ -253,12 +253,39 @@ describe('Commands', () => {
 			expect(openAndShow.calledOnceWithExactly('/a.ts', 9)).to.be.true;
 		});
 
-		it('should do nothing without an active editor', async () => {
-			use('/a.ts', 1);
+		// no text editor is active when all editors are closed, or when the active tab is not a text file (Settings, an image)
+		it('should go to the first mark of the task when no text editor is active', async () => {
+			use('/b.ts', 1);
+			hasActiveEditor = false;
+			await Commands.nextMark();
+			expect(openAndShow.calledOnceWithExactly('/a.ts', 1)).to.be.true;
+			expect(showLine.called).to.be.false;
+		});
+
+		it('should go to the last mark of the task with "previous" when no text editor is active', async () => {
+			use('/b.ts', 1);
+			hasActiveEditor = false;
+			await Commands.previousMark();
+			expect(openAndShow.calledOnceWithExactly('/c.ts', 3)).to.be.true;
+		});
+
+		it('should leave out files that do not exist when no text editor is active', async () => {
+			missingFiles = ['/a.ts', '/c.ts'];
 			hasActiveEditor = false;
 			await Commands.nextMark();
 			await Commands.previousMark();
-			expect(showLine.called).to.be.false;
+			expect(openAndShow.args).to.deep.equal([
+				['/b.ts', 2],
+				['/b.ts', 2],
+			]);
+		});
+
+		it('should do nothing without a text editor when the task has no marks', async () => {
+			taskManager.delete('navigation');
+			task = taskManager.useActiveTask('navigation');
+			hasActiveEditor = false;
+			await Commands.nextMark();
+			await Commands.previousMark();
 			expect(openAndShow.called).to.be.false;
 		});
 
@@ -532,6 +559,9 @@ describe('Commands', () => {
 		let reportError: sinon.SinonStub;
 		let showWarningMessage: sinon.SinonSpy;
 		let showQuickPick: sinon.SinonSpy;
+		let showInputBox: sinon.SinonSpy;
+		let showInformationMessage: sinon.SinonSpy;
+		const createEntry = '$(add) Create new task…';
 		// what the user picks from a list, types into an input box, clicks in a question - undefined: cancelled
 		let picked: string | undefined;
 		let typed: string | undefined;
@@ -549,9 +579,13 @@ describe('Commands', () => {
 			picked = undefined;
 			typed = undefined;
 			clicked = undefined;
-			showQuickPick = sinon.fake(() => Promise.resolve(picked));
+			// a list has plain names or entries with a label - the user picks by what is shown
+			showQuickPick = sinon.fake((items: (string | vscode.QuickPickItem)[]) => Promise.resolve(items.find((item) => (typeof item === 'string' ? item : item.label) === picked)));
 			sinon.replace(vscode.window, 'showQuickPick', showQuickPick as any);
-			sinon.replace(vscode.window, 'showInputBox', sinon.fake(() => Promise.resolve(typed)) as any);
+			showInputBox = sinon.fake(() => Promise.resolve(typed));
+			sinon.replace(vscode.window, 'showInputBox', showInputBox as any);
+			showInformationMessage = sinon.fake();
+			sinon.replace(vscode.window, 'showInformationMessage', showInformationMessage as any);
 			showWarningMessage = sinon.fake(() => Promise.resolve(clicked));
 			sinon.replace(vscode.window, 'showWarningMessage', showWarningMessage as any);
 			saveTaskmarksJson = sinon.stub(Persist, 'saveTaskmarksJson');
@@ -566,10 +600,57 @@ describe('Commands', () => {
 		});
 
 		describe('selectTask', () => {
+			function offered(): vscode.QuickPickItem[] {
+				return showQuickPick.firstCall.args[0];
+			}
+
 			it('should offer the active task first', async () => {
 				await Commands.selectTask();
-				expect(showQuickPick.firstCall.args[0][0]).to.equal('cmd-a');
-				expect(showQuickPick.firstCall.args[0]).to.include('cmd-b');
+				expect(offered()[0].label).to.equal('cmd-a');
+				expect(offered().map((item) => item.label)).to.include('cmd-b');
+			});
+
+			it('should offer to create a new task as the last entry, also while the list is filtered', async () => {
+				await Commands.selectTask();
+				const last = offered()[offered().length - 1];
+				expect(last.label).to.equal(createEntry);
+				expect(last.alwaysShow).to.be.true;
+				// only the entry for a new task stays when the typed text matches no task
+				expect(offered().filter((item) => item.alwaysShow).length).to.equal(1);
+			});
+
+			it('should ask for the name and create the task when that entry is picked', async () => {
+				picked = createEntry;
+				typed = 'cmd-new';
+
+				await Commands.selectTask();
+
+				expect(showInputBox.calledOnce).to.be.true;
+				expect(taskManager.activeTask.name).to.equal('cmd-new');
+				expect(refresh.calledOnce).to.be.true;
+				expect(saveTaskmarksJson.calledOnce).to.be.true;
+			});
+
+			it('should change nothing when the name for the new task is not entered', async () => {
+				picked = createEntry;
+
+				await Commands.selectTask();
+
+				expect(taskManager.activeTask.name).to.equal('cmd-a');
+				expect(taskManager.taskNames).to.not.include('cmd-new');
+				expect(saveTaskmarksJson.called).to.be.false;
+			});
+
+			it('should not take a task for the entry, even if it has the same name', async () => {
+				taskManager.useActiveTask(createEntry);
+				taskManager.useActiveTask('cmd-a');
+				picked = createEntry;
+
+				await Commands.selectTask();
+				taskManager.delete(createEntry);
+
+				// the first entry with that label is the task
+				expect(showInputBox.called).to.be.false;
 			});
 
 			it('should make the picked task the active one, show its marks and save', async () => {
@@ -611,6 +692,24 @@ describe('Commands', () => {
 				await Commands.createTask();
 				expect(taskManager.activeTask.name).to.equal('cmd-a');
 				expect(saveTaskmarksJson.called).to.be.false;
+			});
+
+			it('should not say anything about a task that is new', async () => {
+				typed = 'cmd-new';
+				await Commands.createTask();
+				expect(showInformationMessage.called).to.be.false;
+			});
+
+			it('should switch to a task that already has that name, and say so', async () => {
+				const existing = taskManager.allTasks.find((task) => task.name === 'cmd-b');
+				typed = 'cmd-b';
+
+				await Commands.createTask();
+
+				expect(taskManager.activeTask).to.equal(existing);
+				expect(taskManager.taskNames.filter((name) => name === 'cmd-b').length).to.equal(1);
+				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: there is already a task named 'cmd-b'. It is the active task now.")).to.be.true;
+				expect(saveTaskmarksJson.calledOnce).to.be.true;
 			});
 		});
 

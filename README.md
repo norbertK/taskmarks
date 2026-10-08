@@ -14,34 +14,36 @@ _A first shot of a demo - a better one will follow._
 
 ## Getting started
 
-1. Put the cursor on a line and press `Ctrl+Alt+M` - a bookmark appears next to the line number. Your marks belong to the task shown in the status bar (`TaskMarks: default` at the start).
-2. Set more marks, in as many files as you like. `Ctrl+Alt+N` / `Ctrl+Alt+P` jump to the next / previous mark, also across files.
+1. Put the cursor on a line and press `Alt+Shift+M` - a bookmark appears next to the line number. Your marks belong to the task shown in the status bar (`TaskMarks: default` at the start).
+2. Set more marks, in as many files as you like. `Alt+Shift+N` / `Alt+Shift+P` jump to the next / previous mark, also across files.
 3. Starting on something else? Run **Taskmarks: Create new Task** - the new task starts empty, the marks of the old one are kept.
-4. `Ctrl+Alt+T` switches between tasks, and the marks of the selected task come back.
+4. `Alt+Shift+T` switches between tasks, and the marks of the selected task come back.
 
 Marks move with the code when you insert or delete lines. If the marked line itself is deleted, the mark goes too - and comes back with Undo.
 
 ## Commands and keyboard shortcuts
 
-On macOS use `Cmd` instead of `Ctrl`. A right-click on a line number (or next to it, where the bookmark icon is) also offers **Toggle Bookmark (Taskmarks)** and, on a line with a bookmark, **Edit Bookmark Label (Taskmarks)**.
+On macOS use `Ctrl+Option` instead of `Alt+Shift`, with the same letters. All shortcuts can be changed in **Keyboard Shortcuts**. A right-click on a line number (or next to it, where the bookmark icon is) also offers **Toggle Bookmark (Taskmarks)** and, on a line with a bookmark, **Edit Bookmark Label (Taskmarks)**.
 
-| Command                                                   | Shortcut     | What it does                                                                         |
-| --------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------ |
-| **Taskmarks: Toggle Bookmark at Current Position**        | `Ctrl+Alt+M` | Set or remove a mark on the current line                                             |
-| **Taskmarks: Edit Label of Bookmark at Current Position** |              | Change, add or remove the label of the mark on the current line                      |
-| **Taskmarks: Find next Bookmark**                         | `Ctrl+Alt+N` | Jump to the next mark, continuing in the next file                                   |
-| **Taskmarks: Find previous Bookmark**                     | `Ctrl+Alt+P` | Jump to the previous mark, continuing in the previous file                           |
-| **Taskmarks: Select Active Task**                         | `Ctrl+Alt+T` | Switch to another task                                                               |
-| **Taskmarks: Select Bookmark from List**                  |              | List all marks of the active task and jump to the selected one                       |
-| **Taskmarks: Create new Task**                            |              | Create a new, empty task and make it active                                          |
-| **Taskmarks: Rename Task**                                |              | Rename a task (from the task list)                                                   |
-| **Taskmarks: Delete Task**                                |              | Delete a task and its marks (from the task list)                                     |
-| **Taskmarks: Copy Active Task to Clipboard**              |              | Copy the active task, e.g. to send it to a co-worker                                 |
-| **Taskmarks: Paste Task from Clipboard**                  |              | Add a copied task; if a task with the same name exists, the marks are merged into it |
+| Command                                                   | Shortcut      | What it does                                                                         |
+| --------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------ |
+| **Taskmarks: Toggle Bookmark at Current Position**        | `Alt+Shift+M` | Set or remove a mark on the current line                                             |
+| **Taskmarks: Edit Label of Bookmark at Current Position** |               | Change, add or remove the label of the mark on the current line                      |
+| **Taskmarks: Find next Bookmark**                         | `Alt+Shift+N` | Jump to the next mark, continuing in the next file                                   |
+| **Taskmarks: Find previous Bookmark**                     | `Alt+Shift+P` | Jump to the previous mark, continuing in the previous file                           |
+| **Taskmarks: Select Active Task**                         | `Alt+Shift+T` | Switch to another task, or create one (last entry of the list)                       |
+| **Taskmarks: Select Bookmark from List**                  | `Alt+Shift+L` | List all marks of the active task and jump to the selected one                       |
+| **Taskmarks: Create new Task**                            |               | Create a new, empty task and make it active                                          |
+| **Taskmarks: Rename Task**                                |               | Rename a task (from the task list)                                                   |
+| **Taskmarks: Delete Task**                                |               | Delete a task and its marks (from the task list)                                     |
+| **Taskmarks: Copy Active Task to Clipboard**              |               | Copy the active task, e.g. to send it to a co-worker                                 |
+| **Taskmarks: Paste Task from Clipboard**                  |               | Add a copied task; if a task with the same name exists, the marks are merged into it |
 
 ## Where the marks are stored
 
 In `.vscode/taskmarks.json` in your workspace. Commit it if your team should share the tasks, or add it to `.gitignore` if they are yours only. When Taskmarks upgrades an older file, it keeps the old one as `taskmarks.json.v<n>.bak`.
+
+The shortcuts work wherever the focus is, except in the integrated terminal: it hands most key combinations to the shell. To use them there too, add the commands to the VS Code setting `terminal.integrated.commandsToSkipShell`, for example `taskmarks.nextMark`, `taskmarks.previousMark` and `taskmarks.selectTask`.
 
 ## Extension Settings
 
@@ -56,13 +58,14 @@ In `.vscode/taskmarks.json` in your workspace. Commit it if your team should sha
 
 ## Done since latest version
 
-- more tests
 - edit labels
+- show labels
+- more tests
+- Better shortcuts that work outside edit mode (eg 'goto next' or 'Select Active Task' should work always)
 
 ## Ideas / Future
 
 - Better demo GIF (shorter, re-recorded)
-- Better shortcuts that work outside edit mode (eg 'goto next' or 'Select Active Task' should work always)
 - Add debug points (breakpoints) to task - would be taskmarks.json version 3
 
 ## Known Issues
