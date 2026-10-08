@@ -1,72 +1,72 @@
 {
-  "version": 2,
-  "activeTaskName": "taskMarks",
-  "persistTasks": [
-    {
-      "name": "default",
-      "persistFiles": []
-    },
-    {
-      "name": "taskMarks",
-      "persistFiles": [
-        {
-          "filepath": "\\package.json",
-          "persistMarks": [
-            {
-              "lineNumber": 41,
-              "label": ""
-            },
-            {
-              "lineNumber": 65,
-              "label": ""
-            },
-            {
-              "lineNumber": 106,
-              "label": ""
-            }
-          ]
-        },
-        {
-          "filepath": "\\src\\taskmarks.test.txt",
-          "persistMarks": [
-            {
-              "lineNumber": 20,
-              "label": ""
-            },
-            {
-              "lineNumber": 38,
-              "label": ""
-            }
-          ]
-        },
-        {
-          "filepath": "\\src\\TaskManager.ts",
-          "persistMarks": [
-            {
-              "lineNumber": 21,
-              "label": ""
-            }
-          ]
-        },
-        {
-          "filepath": "\\.vscode\\taskmarks.json",
-          "persistMarks": [
-            {
-              "lineNumber": 29,
-              "label": ""
-            }
-          ]
-        },
-        {
-          "filepath": "\\src\\Helper.ts",
-          "persistMarks": [
-            {
-              "lineNumber": 324,
-              "label": ""
-            }
-          ]
-        }
-      ]
-    }
-  ]
+	"version": 2,
+	"activeTaskName": "taskMarks",
+	"persistTasks": [
+		{
+			"name": "default",
+			"persistFiles": []
+		},
+		{
+			"name": "taskMarks",
+			"persistFiles": [
+				{
+					"filepath": "\\package.json",
+					"persistMarks": [
+						{
+							"lineNumber": 41,
+							"label": "test 07"
+						},
+						{
+							"lineNumber": 65,
+							"label": "test 08"
+						},
+						{
+							"lineNumber": 106,
+							"label": "test 06"
+						}
+					]
+				},
+				{
+					"filepath": "\\src\\taskmarks.test.txt",
+					"persistMarks": [
+						{
+							"lineNumber": 20,
+							"label": "test 05"
+						},
+						{
+							"lineNumber": 38,
+							"label": "test 03"
+						}
+					]
+				},
+				{
+					"filepath": "\\src\\TaskManager.ts",
+					"persistMarks": [
+						{
+							"lineNumber": 21,
+							"label": "test 04"
+						}
+					]
+				},
+				{
+					"filepath": "\\src\\Helper.ts",
+					"persistMarks": [
+						{
+							"lineNumber": 324,
+							"label": "test 02"
+						}
+					]
+				},
+				{
+					"filepath": "\\.vscode\\taskmarks.json",
+					"persistMarks": [
+						{
+							"lineNumber": 29,
+							"label": "test 01"
+						}
+					]
+				}
+			]
+		}
+	]
 }
