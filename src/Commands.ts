@@ -54,6 +54,34 @@ export abstract class Commands {
 		}
 	}
 
+	// changes the label of the bookmark in the line of the cursor - also while taskmarks.enableLabel is off: the command is asked for
+	static async editLabel(): Promise<void> {
+		try {
+			const activeTextEditor = vscode.window.activeTextEditor;
+			if (!activeTextEditor) {
+				return;
+			}
+			const file = Helper.taskManager.activeTask.getFile(PathHelper.reducePath(activeTextEditor.document.fileName));
+			const mark = file?.getMark(activeTextEditor.selection.active.line);
+			if (!mark) {
+				vscode.window.showInformationMessage('Taskmarks: there is no bookmark in this line.');
+				return;
+			}
+			const label = await vscode.window.showInputBox({
+				prompt: 'Label for this bookmark (shown in "Select Bookmark from List"). Leave empty for a bookmark without label.',
+				value: mark.label,
+			});
+			// Escape cancels, Enter on the emptied box removes the label
+			if (label === undefined || label === mark.label) {
+				return;
+			}
+			mark.label = label;
+			Helper.save();
+		} catch (error: unknown) {
+			Helper.reportError({ message: Helper.getErrorMessage(error) });
+		}
+	}
+
 	// to the next mark below the cursor, from the last mark of a file on to the next file with marks
 	static async nextMark(): Promise<void> {
 		try {

@@ -327,6 +327,7 @@ sequenceDiagram
 | Command | Keybinding | Handler |
 |---------|------------|---------|
 | `toggleMark` | `Ctrl+Alt+M` | `Commands.toggleMark()` |
+| `editLabel` | - | `Commands.editLabel()` |
 | `nextMark` | `Ctrl+Alt+N` | `Commands.nextMark()` |
 | `previousMark` | `Ctrl+Alt+P` | `Commands.previousMark()` |
 | `selectTask` | `Ctrl+Alt+T` | `Commands.selectTask()` |

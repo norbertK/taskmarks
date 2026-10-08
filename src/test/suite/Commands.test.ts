@@ -801,6 +801,7 @@ describe('Commands', () => {
 	describe('errors', () => {
 		const commands: [string, () => Promise<void>][] = [
 			['toggleMark', () => Commands.toggleMark()],
+			['editLabel', () => Commands.editLabel()],
 			['nextMark', () => Commands.nextMark()],
 			['previousMark', () => Commands.previousMark()],
 			['selectMarkFromList', () => Commands.selectMarkFromList()],
@@ -830,6 +831,125 @@ describe('Commands', () => {
 				await command();
 				expect(reportError.calledOnceWithExactly({ message: 'no tasks' })).to.be.true;
 			});
+		});
+	});
+
+	describe('editLabel', () => {
+		const fileInWorkspace = '/workspace/src/a.ts';
+		let taskManager: TaskManager;
+		let task: Task;
+		let previousBasePath: string;
+		let saveTaskmarksJson: sinon.SinonStub;
+		let showInformationMessage: sinon.SinonSpy;
+		let showInputBox: sinon.SinonSpy;
+		let cursorLine: number;
+		// what the user types into the input box, undefined: cancelled
+		let typed: string | undefined;
+
+		beforeEach(() => {
+			previousBasePath = PathHelper.basePath;
+			PathHelper.basePath = '/workspace';
+			taskManager = TaskManager.instance;
+			(Helper as any)._taskManager = taskManager;
+			taskManager.delete('editLabel');
+			task = taskManager.useActiveTask('editLabel');
+			task.toggle(fileInWorkspace, 4, 'old label');
+			task.toggle(fileInWorkspace, 8, '');
+
+			cursorLine = 4;
+			typed = undefined;
+			sinon.stub(vscode.window, 'activeTextEditor').get(() => ({ selection: { active: { line: cursorLine } }, document: { fileName: fileInWorkspace } }));
+			showInputBox = sinon.fake(() => Promise.resolve(typed));
+			sinon.replace(vscode.window, 'showInputBox', showInputBox as any);
+			showInformationMessage = sinon.fake();
+			sinon.replace(vscode.window, 'showInformationMessage', showInformationMessage as any);
+			saveTaskmarksJson = sinon.stub(Persist, 'saveTaskmarksJson');
+		});
+
+		afterEach(() => {
+			sinon.restore();
+			taskManager.delete('editLabel');
+			PathHelper.basePath = previousBasePath;
+		});
+
+		it('should offer the current label and store the new one', async () => {
+			typed = 'new label';
+
+			await Commands.editLabel();
+
+			expect(showInputBox.firstCall.args[0].value).to.equal('old label');
+			expect(task.getFile('/src/a.ts')?.allPersistMarks).to.deep.equal([
+				{ lineNumber: 4, label: 'new label' },
+				{ lineNumber: 8, label: '' },
+			]);
+			expect(saveTaskmarksJson.calledOnce).to.be.true;
+		});
+
+		it('should give a label to a bookmark that has none', async () => {
+			cursorLine = 8;
+			typed = 'now with label';
+
+			await Commands.editLabel();
+
+			expect(showInputBox.firstCall.args[0].value).to.equal('');
+			expect(task.getFile('/src/a.ts')?.getMark(8)?.label).to.equal('now with label');
+		});
+
+		it('should remove the label when the box is emptied', async () => {
+			typed = '';
+			await Commands.editLabel();
+			expect(task.getFile('/src/a.ts')?.getMark(4)?.label).to.equal('');
+			expect(saveTaskmarksJson.calledOnce).to.be.true;
+		});
+
+		it('should change nothing when the input is cancelled', async () => {
+			await Commands.editLabel();
+			expect(task.getFile('/src/a.ts')?.getMark(4)?.label).to.equal('old label');
+			expect(saveTaskmarksJson.called).to.be.false;
+		});
+
+		it('should not save when the label is left as it is', async () => {
+			typed = 'old label';
+			await Commands.editLabel();
+			expect(saveTaskmarksJson.called).to.be.false;
+		});
+
+		it('should say so when the line has no bookmark', async () => {
+			cursorLine = 5;
+
+			await Commands.editLabel();
+
+			expect(showInformationMessage.calledOnceWithExactly('Taskmarks: there is no bookmark in this line.')).to.be.true;
+			expect(showInputBox.called).to.be.false;
+		});
+
+		it('should say so in a file without bookmarks', async () => {
+			sinon.restore();
+			showInformationMessage = sinon.fake();
+			sinon.replace(vscode.window, 'showInformationMessage', showInformationMessage as any);
+			sinon.stub(vscode.window, 'activeTextEditor').get(() => ({ selection: { active: { line: 4 } }, document: { fileName: '/workspace/src/b.ts' } }));
+
+			await Commands.editLabel();
+
+			expect(showInformationMessage.calledOnceWithExactly('Taskmarks: there is no bookmark in this line.')).to.be.true;
+		});
+
+		it('should work while labels are not enabled', async () => {
+			sinon.replace(vscode.workspace, 'getConfiguration', sinon.fake.returns({ get: () => false }) as any);
+			typed = 'new label';
+			await Commands.editLabel();
+			expect(task.getFile('/src/a.ts')?.getMark(4)?.label).to.equal('new label');
+		});
+
+		it('should do nothing without an active editor', async () => {
+			sinon.restore();
+			sinon.stub(vscode.window, 'activeTextEditor').get(() => undefined);
+			showInputBox = sinon.fake();
+			sinon.replace(vscode.window, 'showInputBox', showInputBox as any);
+
+			await Commands.editLabel();
+
+			expect(showInputBox.called).to.be.false;
 		});
 	});
 });

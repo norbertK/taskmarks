@@ -40,6 +40,11 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 	context.subscriptions.push(toggleMarkDisposable);
 
+	let editLabelDisposable = vscode.commands.registerCommand('taskmarks.editLabel', () => {
+		Commands.editLabel();
+	});
+	context.subscriptions.push(editLabelDisposable);
+
 	let copyToClipboardDisposable = vscode.commands.registerCommand('taskmarks.copyToClipboard', () => {
 		Commands.copyToClipboard();
 	});

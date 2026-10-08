@@ -48,6 +48,10 @@ export class File {
 		this.mergeMarks([persistMark]);
 	}
 
+	getMark(lineNumber: number): Mark | undefined {
+		return this._marks.find((mark) => mark.lineNumber === lineNumber);
+	}
+
 	hasMark(lineNumber: number): boolean {
 		return this._marks.some((mark) => mark.lineNumber === lineNumber);
 	}

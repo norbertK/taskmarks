@@ -16,6 +16,7 @@ describe('extension', () => {
 		'createTask',
 		'deleteTask',
 		'toggleMark',
+		'editLabel',
 		'copyToClipboard',
 		'pasteFromClipboard',
 		'nextMark',

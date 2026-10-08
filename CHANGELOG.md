@@ -2,6 +2,11 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Command "Taskmarks: Edit Label of Bookmark at Current Position": change, add or remove the label of an existing bookmark. Works whether or not `taskmarks.enableLabel` is on
+
 ## [1.1.0] - 2026-10-07
 
 ### Fixed

@@ -2,10 +2,11 @@
 	"name": "taskmarks",
 	"displayName": "Taskmarks",
 	"description": "Little helper for teams to navigate through files. Persists bookmarks for different tasks.",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"publisher": "NorbertKlein",
 	"contributors": [
 		"Klein Norbert",
+		"Claude",
 		"Brent Whitehead"
 	],
 	"engines": {
@@ -85,6 +86,10 @@
 			{
 				"command": "taskmarks.toggleMark",
 				"title": "Taskmarks: Toggle Bookmark at Current Position"
+			},
+			{
+				"command": "taskmarks.editLabel",
+				"title": "Taskmarks: Edit Label of Bookmark at Current Position"
 			},
 			{
 				"command": "taskmarks.nextMark",

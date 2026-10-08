@@ -73,6 +73,14 @@ describe('File', () => {
 		});
 	});
 
+	describe('getMark', () => {
+		it('should return the mark of a line, undefined if the line has none', () => {
+			const file = fileWithMark(filePath, 10, 'Test label');
+			expect(file.getMark(10)?.label).to.eql('Test label');
+			expect(file.getMark(11)).to.be.undefined;
+		});
+	});
+
 	describe('hasMark', () => {
 		it('should return true if a mark with the given line number exists in the file', () => {
 			const filePath = '/path/to/file.txt';
