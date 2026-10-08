@@ -38,6 +38,11 @@
 					"default": true,
 					"description": "Show the label of a bookmark as faded text at the end of its line."
 				},
+				"taskmarks.breakpointsPerTask": {
+					"type": "boolean",
+					"default": false,
+					"description": "Keep breakpoints per task: selecting another task stores the breakpoints that are set with the task you leave, removes them and sets the breakpoints of the selected task. They are stored per user, not in taskmarks.json. Only breakpoints in files of the workspace folder are handled."
+				},
 				"taskmarks.useGlobalTaskmarksJson": {
 					"type": "boolean",
 					"default": false,
@@ -147,6 +152,14 @@
 			{
 				"command": "taskmarks.pasteFromClipboard",
 				"title": "Taskmarks: Paste Task from Clipboard"
+			},
+			{
+				"command": "taskmarks.shareBreakpoints",
+				"title": "Taskmarks: Share Breakpoints of Active Task"
+			},
+			{
+				"command": "taskmarks.loadSharedBreakpoints",
+				"title": "Taskmarks: Load Shared Breakpoints of Active Task"
 			}
 		]
 	},

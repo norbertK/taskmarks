@@ -12,6 +12,7 @@ src/
 ├── Commands.ts           # The commands (toggle, next / previous, lists, tasks, clipboard)
 ├── Helper.ts             # Wiring: load, editor and file events, status bar, save
 ├── MarkTracker.ts        # Moves marks with edits, restores them on undo
+├── Breakpoints.ts        # Breakpoints per task (per user), reads and sets VS Code's breakpoints
 ├── DecoratorHelper.ts    # Editor gutter icons, jump to a line
 │
 ├── TaskManager.ts        # Singleton: all tasks and the active one
@@ -31,11 +32,12 @@ src/
     ├── serialization.ts  # JSON format conversion
     ├── migration.ts      # taskmarks.json versions + upgrade
     ├── lineAdjustment.ts # Move/remove marks on edits
+    ├── breakpoints.ts    # Breakpoints as data: validate, sort, compare, move on edits
     └── paths.ts          # Path utilities
 ```
 
 **Layers:**
-- **VS Code Integration**: `extension.ts`, `Commands.ts`, `Helper.ts`, `MarkTracker.ts`, `DecoratorHelper.ts`
+- **VS Code Integration**: `extension.ts`, `Commands.ts`, `Helper.ts`, `MarkTracker.ts`, `Breakpoints.ts`, `DecoratorHelper.ts`
 - **Business Logic**: `TaskManager.ts` (no `vscode` import: tasks, the active task, rename, delete)
 - **Data Structures**: `Task.ts`, `File.ts`, `Mark.ts` (`File` and `Mark` import neither `vscode` nor the helpers; `Task` only uses `PathHelper` to make paths workspace-relative)
 - **Persistence**: `Persist.ts`, `PathHelper.ts`
@@ -57,6 +59,8 @@ classDiagram
     Commands ..> Persist : clipboard
     Helper ..> TaskManager : uses
     Helper ..> MarkTracker : uses
+    Helper ..> Breakpoints : init, showActiveTask, documentChanged
+    Commands ..> Breakpoints : current, add, taskRenamed, taskDeleted
     Helper ..> DecoratorHelper : uses
     Helper ..> Persist : uses
     
@@ -78,6 +82,7 @@ classDiagram
         -_name: string
         -_files: File[]
         -_activeFile: File
+        +sharedBreakpoints: IPersistBreakpoint[]
         +toggle(filename, line, label): void
         +use(path): File
         +syncFile(file): void
@@ -195,7 +200,7 @@ Data is stored in `.vscode/taskmarks.json` (or, with `taskmarks.useGlobalTaskmar
 
 ```typescript
 interface IPersistTaskManager {
-    version?: number;        // 2 since 1.0.1, missing in older files
+    version?: number;        // 2 since 1.0.1 (3 while a task shares breakpoints), missing in older files
     activeTaskName: string;
     persistTasks: IPersistTask[];
 }
@@ -203,6 +208,7 @@ interface IPersistTaskManager {
 interface IPersistTask {
     name: string;
     persistFiles: IPersistFile[];
+    persistBreakpoints?: IPersistBreakpoint[];   // only while the task shares breakpoints (version 3)
 }
 
 interface IPersistFile {
@@ -213,6 +219,16 @@ interface IPersistFile {
 interface IPersistMark {
     lineNumber: number;
     label: string;
+}
+
+interface IPersistBreakpoint {
+    filepath: string;        // as in IPersistFile
+    lineNumber: number;
+    column?: number;         // the rest only if it differs from VS Code's default
+    enabled?: false;
+    condition?: string;
+    hitCondition?: string;
+    logMessage?: string;
 }
 ```
 
@@ -248,7 +264,10 @@ interface IPersistMark {
 | 0 | 0.8.17 | `tasks[].files[].lineNumbers: number[]` |
 | 0 | 0.8.21 | `persistTasks[].persistFiles[].lineNumbers: number[]` |
 | 1 | 0.8.23 – 1.0.0 | `persistTasks[].persistFiles[].persistMarks: {lineNumber, label}[]` |
-| 2 | 1.0.1 – 1.2.0 | version 1 + `"version": 2` |
+| 2 | since 1.0.1 | version 1 + `"version": 2` |
+| 3 | after 1.2.0, only while a task shares breakpoints | version 2 + `persistTasks[].persistBreakpoints: {filepath, lineNumber, ...}[]` |
+
+`CURRENT_VERSION` (3) is the newest format that is read. What is written is `versionToWrite()`: 3 if a task has shared breakpoints, otherwise 2 (`VERSION_WITHOUT_BREAKPOINTS`). A version that doesn't know a format loads it read-only, so writing 3 always would stop every teammate on 1.2.0 or older from saving, also in teams that never share a breakpoint. Version 3 only adds a field, so a version 2 file is not upgraded and gets no backup.
 
 What `Persist.initAndLoad` does with the result of `loadTaskmarksJson()`:
 
@@ -257,8 +276,8 @@ flowchart TD
     A[loadTaskmarksJson] --> B{status}
     B -->|invalid| C[backup taskmarks.json.invalid.bak<br/>warn, start with 'default']
     B -->|newer| D[load known fields<br/>warn, read-only: never save]
-    B -->|ok, older version| E[backup taskmarks.json.v&lt;n&gt;.bak<br/>load; next save writes version 2]
-    B -->|ok, current| F[load]
+    B -->|ok, version 0 or 1| E[backup taskmarks.json.v&lt;n&gt;.bak<br/>load; next save writes version 2]
+    B -->|ok, version 2 or 3| F[load]
 ```
 
 ### Labels
@@ -268,6 +287,29 @@ A label belongs to one mark (`IPersistMark.label`, `''` for none). It is set whe
 Where it is shown: as the entry text in "Select Bookmark from List", and as faded text at the end of the marked line (`DecoratorHelper.refresh()`, an `after` decoration; `taskmarks.showLabelInEditor`). It can't be shown on hovering the gutter icon: VS Code shows the hover text of an extension's decoration only over text, never over its gutter icon.
 
 When marks are merged into a line that already has a mark (`File.mergeMarks`, rules in `core/labels.ts`): a mark without label takes over the other label, and a label is never removed. If both have a label and the labels differ, the caller's `LabelConflictChoice` decides: `keep` (default; used for load and for undo), `take` or `combine` ("mine / theirs", without repeating a label that is already contained). "Paste Task from Clipboard" counts these conflicts first (`TaskManager.countLabelConflicts`) and asks once for all of them; cancelling the question cancels the paste.
+
+### Breakpoints
+
+VS Code has one list of breakpoints for the window (`vscode.debug.breakpoints`). Taskmarks handles the source breakpoints in files of the workspace folder; function breakpoints and breakpoints in other files are never read, removed or stored.
+
+**Per task, per user** (`Breakpoints.ts`, setting `taskmarks.breakpointsPerTask`, default off). `Breakpoints.showActiveTask()` is called whenever another task may be the active one (`Helper.triggerChangeActiveFile()`: task selected, created, deleted, tasks reloaded) and when a setting changes:
+
+```mermaid
+flowchart LR
+    A[showActiveTask] --> B{setting on?}
+    B -->|No| Z[forget the shown task, touch nothing]
+    B -->|Yes| C{shown task == active task?}
+    C -->|Yes| Y[Done]
+    C -->|none yet| X[the breakpoints that are set belong to the active task]
+    C -->|No| D[store VS Code's breakpoints under the shown task]
+    D --> E[remove them, set the stored ones of the active task]
+```
+
+They are stored in `context.workspaceState`: `taskmarks.breakpoints` (by task name) and `taskmarks.breakpointsTask` (the task VS Code's breakpoints belong to). Not in taskmarks.json: that file is shared, breakpoints change all the time, and a pull would replace one's own. Because they are stored by name, `Commands.renameTask()` and `deleteTask()` call `Breakpoints.taskRenamed()` / `taskDeleted()`; a deleted task takes its breakpoints with it, so "Delete Task" also asks when the task has breakpoints. The name of the shown task is stored because the active task of the next session comes from taskmarks.json, which a teammate may have saved last. If the two differ at startup, the switch waits a second: VS Code hands the breakpoints of the last session to an extension only some time after it starts to listen (`onDidChangeBreakpoints`, which is why `init` registers a listener that does nothing).
+
+**Shared with the team** (`Task.sharedBreakpoints`, `persistBreakpoints` in taskmarks.json). A copy that only two commands touch: "Share Breakpoints of Active Task" replaces it with the breakpoints that are set (and asks first when that makes the file version 3, or when it would remove the shared ones because none is set), "Load Shared Breakpoints of Active Task" sets the shared ones in addition to the own ones, leaving out locations that already have a breakpoint and files that don't exist here. Both work whether or not the setting is on. Loading the file, a reload after a pull and a task switch never set shared breakpoints by themselves. A pasted task brings its shared breakpoints along; they are added to the ones the task already shares.
+
+**Edits.** VS Code moves the breakpoints it shows. The stored ones of the tasks that are not shown and the shared ones of all tasks are only line numbers, so `Breakpoints.documentChanged()` moves them with `moveBreakpoints()` (`core/breakpoints.ts`), by the same rules as marks. A breakpoint whose line is deleted is removed; there is no undo for it.
 
 ### Menu of the line numbers
 
@@ -303,7 +345,7 @@ Unsaved changes are rare, because every change is saved at once: they exist afte
 
 After a reload all `Task`, `File` and `Mark` objects are new. `Helper.taskmarksFileChanged()` therefore uses the active editor's file again and clears the remembered mark removals (undo).
 
-To add a version 3 (e.g. breakpoints per task): raise `CURRENT_VERSION`, add the new optional fields to the types and to `upgradeTask`, and add a test with a version 2 file.
+To add a version 4: raise `CURRENT_VERSION`, add the new optional fields to the types and to `upgradeTask`, decide in `versionToWrite` when it has to be written, and add a test with a version 3 file.
 
 ---
 
@@ -330,6 +372,7 @@ sequenceDiagram
     P->>P: loadTaskmarksJson() (upgrade old versions)
     P->>P: normalizeFilePaths()
     P->>TM: replaceTasks()
+    H->>H: Breakpoints.init(context, name of the active task)
     H->>DH: initDecorator(context)
     H->>H: initEditorChangeHandlers()
     H->>H: initSaveHandler()
@@ -357,6 +400,8 @@ sequenceDiagram
 | `selectMarkFromList` | `Alt+Shift+L` | `Commands.selectMarkFromList()` |
 | `copyToClipboard` | - | `Commands.copyToClipboard()` |
 | `pasteFromClipboard` | - | `Commands.pasteFromClipboard()` |
+| `shareBreakpoints` | - | `Commands.shareBreakpoints()` |
+| `loadSharedBreakpoints` | - | `Commands.loadSharedBreakpoints()` |
 
 ---
 
@@ -386,7 +431,9 @@ detectFileSeparator(persistTaskManager): '/' | '\\' | undefined
 ### core/migration.ts
 
 ```typescript
-CURRENT_VERSION = 2
+CURRENT_VERSION = 3              // newest format that is read
+VERSION_WITHOUT_BREAKPOINTS = 2
+versionToWrite(persistTasks): number   // 3 if a task shares breakpoints, else 2
 loadTaskmarksJson(json): { status: 'ok' | 'newer', data, fromVersion } | { status: 'invalid', reason }
 upgradeTask(value): IPersistTask | undefined   // also used for clipboard paste
 detectVersion(raw): number
@@ -396,7 +443,18 @@ detectVersion(raw): number
 
 ```typescript
 mapLineThroughChange(line, change: TextChange): number | undefined
-mapMarkLines(lines, changes: TextChange[], newLineCount): (number | undefined)[]
+mapLines(lines, changes: TextChange[]): (number | undefined)[]
+mapMarkLines(lines, changes: TextChange[], newLineCount): (number | undefined)[]   // mapLines + one mark per line, inside the document
+```
+
+### core/breakpoints.ts
+
+```typescript
+toBreakpoint(value): IPersistBreakpoint | undefined   // from parsed JSON or the values of a VS Code breakpoint
+sameLocation(a, b): boolean                            // file, line and column
+sortBreakpoints(breakpoints): IPersistBreakpoint[]
+missingBreakpoints(own, others): IPersistBreakpoint[]
+moveBreakpoints(breakpoints, filepath, changes, newLineCount): IPersistBreakpoint[] | undefined
 ```
 
 ### core/paths.ts

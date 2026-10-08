@@ -31,6 +31,7 @@ Packaging: `npm run "build package"` (vsce). The `esbuild*` scripts produce `out
 - `src/Commands.ts`: the commands with their UIs (prompts, lists, messages). They use `Helper.taskManager`, `Helper.refresh()`, `Helper.save()`.
 - `src/Helper.ts`: wiring. Loads the tasks, listens to VS Code events (active and visible editors, save, text change, changes of taskmarks.json), shows marks and status bar, saves.
 - `src/MarkTracker.ts`: moves and removes marks when a document changes, restores them on undo.
+- `src/Breakpoints.ts`: breakpoints per task. Stores them per user (`context.workspaceState`, by task name) and swaps VS Code's breakpoints when the active task changes (setting `taskmarks.breakpointsPerTask`).
 - `src/TaskManager.ts` (singleton) → `Task` → `File[]` → `Mark`: the in-memory model. No `vscode` import in these four.
 - `src/Persist.ts`, `src/PathHelper.ts`: load/save/reload `taskmarks.json`, backups, path handling, the storage location (`taskmarks.useGlobalTaskmarksJson`).
 - `src/core/*.ts`: pure logic (navigation, serialization, migration, lineAdjustment, paths). **Must not import `vscode`.** Put new logic here when it can live without VS Code, and test it here.
@@ -41,7 +42,7 @@ Packaging: `npm run "build package"` (vsce). The `esbuild*` scripts produce `out
 
 - Formatting: tabs, single quotes, semicolons, print width 150, trailing commas es5 (`.prettierrc.json`).
 - Tests: mocha `describe`/`it` imported from `'mocha'`, `expect` from chai, sinon for fakes. The vscode mock is minimal: if code under test uses a new VS Code API, add a fake for it to the mock.
-- `Helper`, `Commands`, `MarkTracker`, `Persist` and `PathHelper` are abstract classes with only static state, and `TaskManager` is a singleton. State carries over between tests, so reset it explicitly.
+- `Helper`, `Commands`, `MarkTracker`, `Breakpoints`, `Persist` and `PathHelper` are abstract classes with only static state, and `TaskManager` is a singleton. State carries over between tests, so reset it explicitly.
 - Errors: catch and report with `Helper.reportError({ message: Helper.getErrorMessage(error) })` (goes to the "Taskmarks Errors" output channel).
 - Mark line numbers are 0-based (taken from `selection.active.line`).
 - Stored file paths are workspace-relative with a leading separator (e.g. `\src\a.ts`). On load, `normalizeFilePaths` converts them to the current OS separator; on save they get back the separator the file uses (`Persist._fileSeparator`, `/` for a new file).
@@ -50,7 +51,7 @@ Packaging: `npm run "build package"` (vsce). The `esbuild*` scripts produce `out
 
 ## Persistence rules that are easy to break
 
-- File format version is `CURRENT_VERSION` in `src/core/migration.ts` (currently 2). Every old format must stay loadable. To change the format, bump the version, extend `upgradeTask` and the types in `src/types.ts`, add a migration test with a file in the previous format, and update the versions table in ARCHITECTURE.md.
+- `CURRENT_VERSION` in `src/core/migration.ts` (currently 3) is the newest file format that is read. Version 3 is version 2 plus the shared breakpoints of a task (`persistBreakpoints`) and is only written while a task has some (`versionToWrite`); otherwise the file stays version 2, so that teammates on an older Taskmarks can still save. Every old format must stay loadable. To change the format, bump the version, extend `upgradeTask` and the types in `src/types.ts`, add a migration test with a file in the previous format, and update the versions table in ARCHITECTURE.md.
 - A file from a newer version is loaded **read-only** (`Persist._readOnly`) and is never saved over.
 - Before an upgrade, or before replacing an invalid file, the old file is copied to `taskmarks.json.<suffix>.bak`. An existing backup is never overwritten.
 - No `taskmarks.json` is created while the active task is `default` and has no marks (so the extension doesn't create files in projects that don't use it).
@@ -59,6 +60,8 @@ Packaging: `npm run "build package"` (vsce). The `esbuild*` scripts produce `out
 - When taskmarks.json changes on disk, the tasks are replaced by the file's (`Persist.reloadIfChangedOnDisk`). A file that can't be read then is never saved over and gets no automatic backup-and-reset: that is only done at startup.
 - The tests run twice: `npm run testAll` on the vscode mock and `npm test` in a real VS Code, where the API objects are read-only. Stub getters with `sinon.stub(obj, 'prop').get(...)` and don't assign to `vscode.*` properties.
 - Mark line tracking runs for every changed document and for every task that has marks in it (`Helper.documentChanged` → `MarkTracker.documentChanged`), not only for the active editor and the active task. It works from each change's range and inserted text (`mapMarkLines`), not from line-count differences.
+- Breakpoints per task are per user and never go into taskmarks.json. What a task shares (`Task.sharedBreakpoints`) is a copy that only "Share Breakpoints of Active Task" writes and only "Load Shared Breakpoints of Active Task" sets in VS Code. Loading or reloading the file must not set breakpoints.
+- Only source breakpoints in files of the workspace folder are read, removed or stored. Leave all others alone.
 - `Task.files` only holds files with marks. Code that changes a file's marks directly has to call `Task.syncFile(file)` afterwards.
 
 ## Repo notes

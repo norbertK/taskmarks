@@ -2,15 +2,50 @@
 import * as sinon from 'sinon';
 
 const mockUri = {
-	file: sinon.fake(() => {
+	file: sinon.fake((fsPath?: string) => {
 		return {
 			toString: sinon.fake.returns('file:///path/to/document.txt'),
 			scheme: 'file',
 			path: '/path/to/document.txt',
+			fsPath,
 		};
 	}),
 	parse: sinon.fake(),
 };
+
+class Position {
+	constructor(
+		public line: number,
+		public character: number
+	) {}
+}
+
+class Location {
+	range: { start: Position; end: Position };
+	constructor(
+		public uri: unknown,
+		position: Position
+	) {
+		this.range = { start: position, end: position };
+	}
+}
+
+class SourceBreakpoint {
+	constructor(
+		public location: Location,
+		public enabled = true,
+		public condition?: string,
+		public hitCondition?: string,
+		public logMessage?: string
+	) {}
+}
+
+class FunctionBreakpoint {
+	constructor(public functionName: string) {}
+}
+
+// the breakpoints of the window, as debug.addBreakpoints and debug.removeBreakpoints change them
+const breakpoints: unknown[] = [];
 
 export const vscode = {
 	StatusBarAlignment: {},
@@ -24,7 +59,19 @@ export const vscode = {
 	debug: {
 		onDidTerminateDebugSession: sinon.fake(),
 		startDebugging: sinon.fake(),
+		breakpoints,
+		addBreakpoints: (added: unknown[]) => {
+			breakpoints.push(...added);
+		},
+		removeBreakpoints: (removed: unknown[]) => {
+			removed.forEach((breakpoint) => breakpoints.includes(breakpoint) && breakpoints.splice(breakpoints.indexOf(breakpoint), 1));
+		},
+		onDidChangeBreakpoints: sinon.fake(),
 	},
+	Position,
+	Location,
+	SourceBreakpoint,
+	FunctionBreakpoint,
 	env: {
 		clipboard: {
 			readText: sinon.fake.resolves(''),

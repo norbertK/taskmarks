@@ -3,8 +3,9 @@
  * No VS Code or file system dependencies.
  */
 
-import type { IPersistFile, IPersistMark, IPersistTask, IPersistTaskManager } from '../types';
-import { CURRENT_VERSION } from './migration';
+import type { IPersistBreakpoint, IPersistFile, IPersistMark, IPersistTask, IPersistTaskManager } from '../types';
+import { sortBreakpoints } from './breakpoints';
+import { VERSION_WITHOUT_BREAKPOINTS, versionToWrite } from './migration';
 
 export interface SerializableFile {
 	filepath: string;
@@ -14,6 +15,8 @@ export interface SerializableFile {
 export interface SerializableTask {
 	name: string;
 	files: SerializableFile[];
+	// the breakpoints the task shares with the team
+	breakpoints?: IPersistBreakpoint[];
 }
 
 export interface SerializableTaskManager {
@@ -48,6 +51,11 @@ export function taskToPersistTask(
 		}
 	}
 
+	// no field without breakpoints: the file stays what an older Taskmarks version writes
+	if (task.breakpoints && task.breakpoints.length > 0) {
+		persistTask.persistBreakpoints = sortBreakpoints(task.breakpoints);
+	}
+
 	return persistTask;
 }
 
@@ -64,6 +72,7 @@ export function persistTaskToTask(persistTask: IPersistTask): SerializableTask {
 				label: pm.label,
 			})),
 		})),
+		...(persistTask.persistBreakpoints ? { breakpoints: persistTask.persistBreakpoints } : {}),
 	};
 }
 
@@ -75,10 +84,11 @@ export function serializeTaskManager(
 	tasks: SerializableTask[],
 	fileExistsCheck: (filepath: string) => boolean = () => true
 ): string {
+	const persistTasks = tasks.map((t) => taskToPersistTask(t, fileExistsCheck));
 	const persistTaskManager: IPersistTaskManager = {
-		version: CURRENT_VERSION,
+		version: versionToWrite(persistTasks),
 		activeTaskName,
-		persistTasks: tasks.map((t) => taskToPersistTask(t, fileExistsCheck)),
+		persistTasks,
 	};
 	return JSON.stringify(persistTaskManager, null, '  ');
 }
@@ -107,6 +117,9 @@ export function normalizeTaskFilePaths(persistTask: IPersistTask, fromChar: stri
 			...file,
 			filepath: file.filepath.replaceAll(fromChar, toChar),
 		})),
+		...(persistTask.persistBreakpoints
+			? { persistBreakpoints: persistTask.persistBreakpoints.map((breakpoint) => ({ ...breakpoint, filepath: breakpoint.filepath.replaceAll(fromChar, toChar) })) }
+			: {}),
 	};
 }
 
@@ -139,7 +152,7 @@ export function detectFileSeparator(persistTaskManager: IPersistTaskManager): '/
 export function createDefaultTaskmarksJson(taskName = 'default'): string {
 	return JSON.stringify(
 		{
-			version: CURRENT_VERSION,
+			version: VERSION_WITHOUT_BREAKPOINTS,
 			activeTaskName: taskName,
 			persistTasks: [{ name: taskName, persistFiles: [] }],
 		},

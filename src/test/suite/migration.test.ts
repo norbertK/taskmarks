@@ -1,6 +1,6 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import { CURRENT_VERSION, detectVersion, loadTaskmarksJson, upgradeTask } from '../../core/migration';
+import { CURRENT_VERSION, VERSION_WITHOUT_BREAKPOINTS, detectVersion, loadTaskmarksJson, upgradeTask, versionToWrite } from '../../core/migration';
 
 const v0Marks2018 = {
 	activeTaskName: 'bugfix',
@@ -64,7 +64,7 @@ describe('migration', () => {
 			}
 			expect(result.fromVersion).to.equal(0);
 			expect(result.data).to.eql({
-				version: CURRENT_VERSION,
+				version: VERSION_WITHOUT_BREAKPOINTS,
 				activeTaskName: 'bugfix',
 				persistTasks: [
 					{ name: 'default', persistFiles: [] },
@@ -105,18 +105,54 @@ describe('migration', () => {
 			expect(result.status).to.equal('ok');
 			if (result.status === 'ok') {
 				expect(result.fromVersion).to.equal(1);
-				expect(result.data.version).to.equal(CURRENT_VERSION);
+				expect(result.data.version).to.equal(VERSION_WITHOUT_BREAKPOINTS);
 				expect(result.data.persistTasks[0].persistFiles[0].persistMarks).to.eql([{ lineNumber: 4, label: 'look here' }]);
 			}
 		});
 
-		it('loads a current file unchanged', () => {
-			const current = { version: CURRENT_VERSION, ...v1Labels };
+		it('loads a version 2 file unchanged: it stays version 2 as long as no breakpoints are shared', () => {
+			const version2 = { version: 2, ...v1Labels };
+			const result = loadTaskmarksJson(JSON.stringify(version2));
+			expect(result.status).to.equal('ok');
+			if (result.status === 'ok') {
+				expect(result.fromVersion).to.equal(2);
+				expect(result.data).to.eql(version2);
+				expect(result.data.persistTasks[0]).to.not.have.property('persistBreakpoints');
+			}
+		});
+
+		it('loads a current file with its shared breakpoints unchanged', () => {
+			const current = {
+				version: CURRENT_VERSION,
+				activeTaskName: 'default',
+				persistTasks: [
+					{
+						...v1Labels.persistTasks[0],
+						persistBreakpoints: [
+							{ filepath: '\\src\\Task.ts', lineNumber: 12 },
+							{ filepath: '\\src\\Task.ts', lineNumber: 30, column: 8, enabled: false, condition: 'name === undefined', hitCondition: '3', logMessage: 'name: {name}' },
+						],
+					},
+				],
+			};
 			const result = loadTaskmarksJson(JSON.stringify(current));
 			expect(result.status).to.equal('ok');
 			if (result.status === 'ok') {
-				expect(result.fromVersion).to.equal(CURRENT_VERSION);
+				expect(result.fromVersion).to.equal(3);
 				expect(result.data).to.eql(current);
+			}
+		});
+
+		it('drops broken breakpoints but keeps the rest', () => {
+			const messy = {
+				version: 3,
+				activeTaskName: 'default',
+				persistTasks: [{ name: 'default', persistFiles: [], persistBreakpoints: [{ filepath: '\\a.ts', lineNumber: 1 }, { lineNumber: 2 }, { filepath: '\\a.ts', lineNumber: -1 }, 'x', null] }],
+			};
+			const result = loadTaskmarksJson(JSON.stringify(messy));
+			expect(result.status).to.equal('ok');
+			if (result.status === 'ok') {
+				expect(result.data.persistTasks[0].persistBreakpoints).to.eql([{ filepath: '\\a.ts', lineNumber: 1 }]);
 			}
 		});
 
@@ -174,7 +210,28 @@ describe('migration', () => {
 		});
 	});
 
+	describe('versionToWrite', () => {
+		const task = v1Labels.persistTasks[0];
+
+		it('is version 2 while no task shares breakpoints', () => {
+			expect(versionToWrite([task, { ...task, persistBreakpoints: [] }])).to.equal(2);
+			expect(versionToWrite([])).to.equal(2);
+		});
+
+		it('is version 3 as soon as a task shares breakpoints', () => {
+			expect(versionToWrite([task, { ...task, persistBreakpoints: [{ filepath: '\\a.ts', lineNumber: 1 }] }])).to.equal(3);
+		});
+	});
+
 	describe('upgradeTask', () => {
+		it('keeps the shared breakpoints of a task copied to the clipboard', () => {
+			expect(upgradeTask({ name: 't', persistFiles: [], persistBreakpoints: [{ filepath: '/x.ts', lineNumber: 2, condition: 'a' }] })).to.eql({
+				name: 't',
+				persistFiles: [],
+				persistBreakpoints: [{ filepath: '/x.ts', lineNumber: 2, condition: 'a' }],
+			});
+		});
+
 		it('accepts a task copied to the clipboard by the 2018 version', () => {
 			expect(upgradeTask({ name: 't', files: [{ filepath: '\\x.ts', marks: [2] }] })).to.eql({
 				name: 't',

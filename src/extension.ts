@@ -66,6 +66,16 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(pasteFromClipboardDisposable);
 
+	let shareBreakpointsDisposable = vscode.commands.registerCommand('taskmarks.shareBreakpoints', () => {
+		Commands.shareBreakpoints();
+	});
+	context.subscriptions.push(shareBreakpointsDisposable);
+
+	let loadSharedBreakpointsDisposable = vscode.commands.registerCommand('taskmarks.loadSharedBreakpoints', () => {
+		Commands.loadSharedBreakpoints();
+	});
+	context.subscriptions.push(loadSharedBreakpointsDisposable);
+
 	let nextMarkDisposable = vscode.commands.registerCommand('taskmarks.nextMark', () => {
 		Commands.nextMark();
 	});

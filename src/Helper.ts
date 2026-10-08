@@ -6,6 +6,7 @@ import { Persist } from './Persist';
 import { DecoratorHelper } from './DecoratorHelper';
 import { PathHelper } from './PathHelper';
 import { MarkTracker } from './MarkTracker';
+import { Breakpoints } from './Breakpoints';
 import { getErrorMessage, getErrorStack } from './core/errors';
 
 // Connects the tasks with VS Code: loads them, listens to the events of the editor and of taskmarks.json,
@@ -49,6 +50,7 @@ export abstract class Helper {
 
 			this._taskManager = TaskManager.instance;
 			Persist.initAndLoad(this._taskManager, context);
+			Breakpoints.init(context, () => Helper.taskManager.activeTask.name);
 
 			DecoratorHelper.initDecorator(context);
 			this._statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
@@ -69,6 +71,7 @@ export abstract class Helper {
 	// call when the active task or its files are other objects than before (task selected, created, deleted, tasks reloaded)
 	static triggerChangeActiveFile(): void {
 		this.changeActiveFile(vscode.window.activeTextEditor);
+		Breakpoints.showActiveTask();
 	}
 
 	private static initEditorChangeHandlers(context: vscode.ExtensionContext): void {
@@ -76,11 +79,12 @@ export abstract class Helper {
 		vscode.window.onDidChangeActiveTextEditor((editor) => this.changeActiveFile(editor), null, context.subscriptions);
 		// an editor that becomes visible without becoming the active one (split view) needs its marks as well
 		vscode.window.onDidChangeVisibleTextEditors(() => this.refresh(), null, context.subscriptions);
-		// taskmarks.showLabelInEditor is used when the marks are shown
+		// taskmarks.showLabelInEditor is used when the marks are shown, taskmarks.breakpointsPerTask may have been switched on or off
 		vscode.workspace.onDidChangeConfiguration(
 			(event) => {
 				if (event.affectsConfiguration('taskmarks')) {
 					this.refresh();
+					Breakpoints.showActiveTask();
 				}
 			},
 			null,
@@ -129,8 +133,12 @@ export abstract class Helper {
 
 	static documentChanged(event: vscode.TextDocumentChangeEvent): void {
 		try {
-			if (MarkTracker.documentChanged(event, this._taskManager.allTasks)) {
+			const marksChanged = MarkTracker.documentChanged(event, this._taskManager.allTasks);
+			const sharedBreakpointsChanged = Breakpoints.documentChanged(event, this._taskManager.allTasks);
+			if (marksChanged) {
 				Helper.refresh();
+			}
+			if (marksChanged || sharedBreakpointsChanged) {
 				Helper.save();
 			}
 		} catch (error: unknown) {

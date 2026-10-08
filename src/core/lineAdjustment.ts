@@ -63,16 +63,15 @@ export function mapLineThroughChange(line: number, change: TextChange): number |
 }
 
 /**
- * Map every marked line through all changes of one change event.
- * Returns the new line per input index, or undefined for marks that should be removed.
+ * Map every line through all changes of one change event.
+ * Returns the new line per input index, or undefined for a line that no longer exists on its own.
  *
  * Changes are applied bottom-up, so each change's pre-edit coordinates stay valid.
- * A mark is also removed when it would land outside [0, newLineCount) or on a line an earlier mark already took.
  */
-export function mapMarkLines(lines: number[], changes: TextChange[], newLineCount: number): (number | undefined)[] {
+export function mapLines(lines: number[], changes: TextChange[]): (number | undefined)[] {
 	const bottomUp = [...changes].sort((a, b) => b.startLine - a.startLine || b.startCharacter - a.startCharacter);
 
-	const mapped = lines.map((line) => {
+	return lines.map((line) => {
 		let current: number | undefined = line;
 		for (const change of bottomUp) {
 			if (current === undefined) {
@@ -82,6 +81,16 @@ export function mapMarkLines(lines: number[], changes: TextChange[], newLineCoun
 		}
 		return current;
 	});
+}
+
+/**
+ * Map every marked line through all changes of one change event (see mapLines).
+ * Returns the new line per input index, or undefined for marks that should be removed.
+ *
+ * A mark is also removed when it would land outside [0, newLineCount) or on a line an earlier mark already took.
+ */
+export function mapMarkLines(lines: number[], changes: TextChange[], newLineCount: number): (number | undefined)[] {
+	const mapped = mapLines(lines, changes);
 
 	const taken = new Set<number>();
 	return mapped.map((line) => {

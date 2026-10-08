@@ -4,6 +4,8 @@ import { Helper } from './Helper';
 import { Persist } from './Persist';
 import { DecoratorHelper } from './DecoratorHelper';
 import { PathHelper } from './PathHelper';
+import { Breakpoints } from './Breakpoints';
+import { missingBreakpoints, sortBreakpoints } from './core/breakpoints';
 import { findNextFileWithMarks, findNextMark, findPreviousFileWithMarks, findPreviousMark } from './core/navigation';
 import type { File } from './File';
 import type { Mark } from './Mark';
@@ -254,6 +256,76 @@ export abstract class Commands {
 		}
 	}
 
+	// Puts a copy of the breakpoints that are set into the active task, and with it into taskmarks.json, for the team.
+	// It replaces what the task shared before; without breakpoints the task shares none anymore.
+	static async shareBreakpoints(): Promise<void> {
+		try {
+			const task = Helper.taskManager.activeTask;
+			const breakpoints = sortBreakpoints(Breakpoints.current());
+			const sharedCount = task.sharedBreakpoints.length;
+			if (breakpoints.length === 0 && sharedCount === 0) {
+				vscode.window.showInformationMessage('Taskmarks: there are no breakpoints in files of the workspace folder that could be shared.');
+				return;
+			}
+			if (breakpoints.length === 0) {
+				const remove = 'Remove';
+				const shared = sharedCount === 1 ? '1 breakpoint' : `${sharedCount} breakpoints`;
+				const answer = await vscode.window.showWarningMessage(
+					`Task '${task.name}' shares ${shared}, but none is set here. Remove the shared breakpoints from taskmarks.json?`,
+					{ modal: true },
+					remove
+				);
+				if (answer !== remove) {
+					return;
+				}
+			} else if (!Helper.taskManager.allTasks.some((task) => task.sharedBreakpoints.length > 0)) {
+				// the first shared breakpoints make the file one that older versions don't save
+				const share = 'Share';
+				const answer = await vscode.window.showWarningMessage(
+					`Share the breakpoints of task '${task.name}' in taskmarks.json?`,
+					{
+						modal: true,
+						detail: 'While taskmarks.json holds breakpoints, teammates with Taskmarks 1.2.0 or older see the bookmarks, but their changes are not saved until they update.',
+					},
+					share
+				);
+				if (answer !== share) {
+					return;
+				}
+			}
+			task.sharedBreakpoints = breakpoints;
+			Helper.save();
+			const count = breakpoints.length === 1 ? '1 breakpoint' : `${breakpoints.length} breakpoints`;
+			vscode.window.showInformationMessage(
+				breakpoints.length > 0 ? `Taskmarks: task '${task.name}' shares ${count} in taskmarks.json.` : `Taskmarks: task '${task.name}' shares no breakpoints anymore.`
+			);
+		} catch (error: unknown) {
+			Helper.reportError({ message: Helper.getErrorMessage(error) });
+		}
+	}
+
+	// Sets the breakpoints the active task shares in taskmarks.json, in addition to the ones that are set.
+	// Left out: a location that has a breakpoint already (the own one stays), files that don't exist here.
+	static async loadSharedBreakpoints(): Promise<void> {
+		try {
+			const task = Helper.taskManager.activeTask;
+			const shared = task.sharedBreakpoints.filter((breakpoint) => PathHelper.fileExists(breakpoint.filepath));
+			if (shared.length === 0) {
+				vscode.window.showInformationMessage(`Taskmarks: task '${task.name}' has no shared breakpoints${task.sharedBreakpoints.length > 0 ? ' in files that exist here' : ''}.`);
+				return;
+			}
+			const missing = missingBreakpoints(Breakpoints.current(), shared);
+			Breakpoints.add(missing);
+			vscode.window.showInformationMessage(
+				missing.length > 0
+					? `Taskmarks: ${missing.length} of the ${shared.length} shared breakpoints of task '${task.name}' set.`
+					: `Taskmarks: the shared breakpoints of task '${task.name}' are set already.`
+			);
+		} catch (error: unknown) {
+			Helper.reportError({ message: Helper.getErrorMessage(error) });
+		}
+	}
+
 	// the active task first: it is the one preselected in a list
 	private static taskNamesActiveFirst(): string[] {
 		const activeTaskName = Helper.taskManager.activeTask.name;
@@ -302,6 +374,7 @@ export abstract class Commands {
 				vscode.window.showInformationMessage(`Taskmarks: there is already a task named '${newTaskName}'.`);
 				return;
 			}
+			Breakpoints.taskRenamed(oldTaskName, newTaskName);
 			// the status bar shows the name of the active task
 			Helper.refresh();
 			Helper.save();
@@ -338,18 +411,23 @@ export abstract class Commands {
 			if (!taskName) {
 				return;
 			}
-			// a deleted task can't be brought back, so ask before bookmarks are lost
+			// a deleted task can't be brought back, so ask before bookmarks or breakpoints are lost
 			const task = Helper.taskManager.allTasks.find((task) => task.name === taskName);
 			const markCount = task ? task.files.reduce((count, file) => count + file.marks.length, 0) : 0;
-			if (markCount > 0) {
+			const breakpointCount = Breakpoints.countOfTask(taskName);
+			if (markCount > 0 || breakpointCount > 0) {
 				const deleteIt = 'Delete';
-				const bookmarks = markCount === 1 ? 'its bookmark' : `its ${markCount} bookmarks`;
-				const answer = await vscode.window.showWarningMessage(`Delete task '${taskName}' with ${bookmarks}?`, { modal: true }, deleteIt);
+				const lost = [
+					...(markCount > 0 ? [markCount === 1 ? 'its bookmark' : `its ${markCount} bookmarks`] : []),
+					...(breakpointCount > 0 ? [breakpointCount === 1 ? 'its breakpoint' : `its ${breakpointCount} breakpoints`] : []),
+				];
+				const answer = await vscode.window.showWarningMessage(`Delete task '${taskName}' with ${lost.join(' and ')}?`, { modal: true }, deleteIt);
 				if (answer !== deleteIt) {
 					return;
 				}
 			}
 			Helper.taskManager.delete(taskName);
+			Breakpoints.taskDeleted(taskName);
 			Helper.triggerChangeActiveFile();
 			Helper.save();
 		} catch (error: unknown) {

@@ -21,6 +21,8 @@ describe('extension', () => {
 		'editLabelAtLine',
 		'copyToClipboard',
 		'pasteFromClipboard',
+		'shareBreakpoints',
+		'loadSharedBreakpoints',
 		'nextMark',
 		'previousMark',
 	] as const;

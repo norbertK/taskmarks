@@ -5,6 +5,8 @@ import * as sinon from 'sinon';
 import { Commands } from '../../Commands';
 import { Helper } from '../../Helper';
 import { DecoratorHelper } from '../../DecoratorHelper';
+import { Breakpoints } from '../../Breakpoints';
+import type { IPersistBreakpoint } from '../../types';
 import { PathHelper } from '../../PathHelper';
 import { Persist } from '../../Persist';
 import { Task } from '../../Task';
@@ -661,6 +663,18 @@ describe('Commands', () => {
 				expect(saveTaskmarksJson.calledOnce).to.be.true;
 			});
 
+			it('should show the breakpoints of the picked task', async () => {
+				let shownFor = '';
+				sinon.stub(Breakpoints, 'showActiveTask').callsFake(() => {
+					shownFor = taskManager.activeTask.name;
+				});
+				picked = 'cmd-b';
+
+				await Commands.selectTask();
+
+				expect(shownFor).to.equal('cmd-b');
+			});
+
 			it('should do nothing when the list is dismissed', async () => {
 				await Commands.selectTask();
 				expect(taskManager.activeTask.name).to.equal('cmd-a');
@@ -732,6 +746,38 @@ describe('Commands', () => {
 				await Commands.deleteTask();
 
 				expect(showWarningMessage.calledOnceWithExactly("Delete task 'cmd-b' with its 3 bookmarks?", { modal: true }, 'Delete')).to.be.true;
+			});
+
+			it('should ask before deleting a task with breakpoints', async () => {
+				sinon.stub(Breakpoints, 'countOfTask').callsFake((taskName: string) => (taskName === 'cmd-b' ? 2 : 0));
+				picked = 'cmd-b';
+
+				await Commands.deleteTask();
+
+				expect(showWarningMessage.calledOnceWithExactly("Delete task 'cmd-b' with its 2 breakpoints?", { modal: true }, 'Delete')).to.be.true;
+				expect(taskManager.taskNames).to.include('cmd-b');
+			});
+
+			it('should name bookmarks and breakpoints when the task has both', async () => {
+				sinon.stub(Breakpoints, 'countOfTask').returns(1);
+				taskManager.allTasks.find((task) => task.name === 'cmd-b')!.toggle('/workspace/src/a.ts', 1, '');
+				picked = 'cmd-b';
+
+				await Commands.deleteTask();
+
+				expect(showWarningMessage.calledOnceWithExactly("Delete task 'cmd-b' with its bookmark and its breakpoint?", { modal: true }, 'Delete')).to.be.true;
+			});
+
+			it('should let the breakpoints of the deleted task go, then show the ones of the active task', async () => {
+				const taskDeleted = sinon.stub(Breakpoints, 'taskDeleted');
+				const showActiveTask = sinon.stub(Breakpoints, 'showActiveTask');
+				picked = 'cmd-a';
+
+				await Commands.deleteTask();
+
+				expect(taskDeleted.calledOnceWithExactly('cmd-a')).to.be.true;
+				expect(showActiveTask.calledOnce).to.be.true;
+				expect(taskDeleted.calledBefore(showActiveTask)).to.be.true;
 			});
 
 			it('should keep the task when the question is not answered with Delete', async () => {
@@ -818,6 +864,14 @@ describe('Commands', () => {
 			expect(refresh.calledOnce).to.be.true;
 		});
 
+		it('should keep the breakpoints with the renamed task', async () => {
+			const taskRenamed = sinon.stub(Breakpoints, 'taskRenamed');
+			answer('helper-rename-b', 'helper-rename-c');
+			await Commands.renameTask();
+			await answered();
+			expect(taskRenamed.calledOnceWithExactly('helper-rename-b', 'helper-rename-c')).to.be.true;
+		});
+
 		it('should refuse a name that another task already has and say so', async () => {
 			answer('helper-rename-b', 'helper-rename-a');
 			await Commands.renameTask();
@@ -842,6 +896,197 @@ describe('Commands', () => {
 			await answered();
 			expect(taskManager.taskNames).to.not.include('helper-rename-c');
 			expect(saveTaskmarksJson.called).to.be.false;
+		});
+	});
+
+	describe('shared breakpoints', () => {
+		const fileA = '/src/a.ts';
+		const fileB = '/src/b.ts';
+		let taskManager: TaskManager;
+		let previousBasePath: string;
+		let saveTaskmarksJson: sinon.SinonStub;
+		let showWarningMessage: sinon.SinonSpy;
+		let showInformationMessage: sinon.SinonSpy;
+		// the breakpoints that are set in VS Code
+		let current: IPersistBreakpoint[];
+		let add: sinon.SinonStub;
+		// the button the user clicks in a question, undefined: cancelled
+		let clicked: string | undefined;
+		let filesOnDisk: string[];
+
+		beforeEach(() => {
+			previousBasePath = PathHelper.basePath;
+			PathHelper.basePath = '/workspace';
+			taskManager = TaskManager.instance;
+			(Helper as any)._taskManager = taskManager;
+			taskManager.useActiveTask('bp-other');
+			taskManager.useActiveTask('bp-task');
+
+			current = [];
+			sinon.stub(Breakpoints, 'current').callsFake(() => current);
+			add = sinon.stub(Breakpoints, 'add');
+			filesOnDisk = [fileA, fileB];
+			sinon.stub(PathHelper, 'fileExists').callsFake((filepath: string) => filesOnDisk.includes(filepath));
+			clicked = undefined;
+			showWarningMessage = sinon.fake(() => Promise.resolve(clicked));
+			sinon.replace(vscode.window, 'showWarningMessage', showWarningMessage as any);
+			showInformationMessage = sinon.fake();
+			sinon.replace(vscode.window, 'showInformationMessage', showInformationMessage as any);
+			saveTaskmarksJson = sinon.stub(Persist, 'saveTaskmarksJson');
+		});
+
+		afterEach(() => {
+			sinon.restore();
+			['bp-task', 'bp-other'].forEach((name) => taskManager.delete(name));
+			PathHelper.basePath = previousBasePath;
+		});
+
+		describe('shareBreakpoints', () => {
+			it('should ask before the first breakpoints are shared, as older versions do not save such a file', async () => {
+				current = [{ filepath: fileA, lineNumber: 3 }];
+
+				await Commands.shareBreakpoints();
+
+				expect(showWarningMessage.calledOnce).to.be.true;
+				expect(showWarningMessage.firstCall.args[0]).to.equal("Share the breakpoints of task 'bp-task' in taskmarks.json?");
+				expect(showWarningMessage.firstCall.args[1].modal).to.be.true;
+				expect(showWarningMessage.firstCall.args[1].detail).to.include('1.2.0 or older');
+				expect(taskManager.activeTask.sharedBreakpoints).to.deep.equal([]);
+				expect(saveTaskmarksJson.called).to.be.false;
+			});
+
+			it('should put the breakpoints that are set into the active task, sorted, and save', async () => {
+				current = [
+					{ filepath: fileB, lineNumber: 7, condition: 'x' },
+					{ filepath: fileA, lineNumber: 3 },
+				];
+				clicked = 'Share';
+
+				await Commands.shareBreakpoints();
+
+				expect(taskManager.activeTask.sharedBreakpoints).to.deep.equal([
+					{ filepath: fileA, lineNumber: 3 },
+					{ filepath: fileB, lineNumber: 7, condition: 'x' },
+				]);
+				expect(saveTaskmarksJson.calledOnce).to.be.true;
+				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: task 'bp-task' shares 2 breakpoints in taskmarks.json.")).to.be.true;
+			});
+
+			it('should not ask again while a task shares breakpoints, and replace what the task shared', async () => {
+				taskManager.allTasks.find((task) => task.name === 'bp-other')!.sharedBreakpoints = [{ filepath: fileB, lineNumber: 1 }];
+				taskManager.activeTask.sharedBreakpoints = [{ filepath: fileA, lineNumber: 99 }];
+				current = [{ filepath: fileA, lineNumber: 3 }];
+
+				await Commands.shareBreakpoints();
+
+				expect(showWarningMessage.called).to.be.false;
+				expect(taskManager.activeTask.sharedBreakpoints).to.deep.equal([{ filepath: fileA, lineNumber: 3 }]);
+				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: task 'bp-task' shares 1 breakpoint in taskmarks.json.")).to.be.true;
+			});
+
+			it('should say so when there is nothing to share', async () => {
+				await Commands.shareBreakpoints();
+
+				expect(showInformationMessage.calledOnceWithExactly('Taskmarks: there are no breakpoints in files of the workspace folder that could be shared.')).to.be.true;
+				expect(saveTaskmarksJson.called).to.be.false;
+			});
+
+			it('should ask before the shared breakpoints are removed because none is set', async () => {
+				taskManager.activeTask.sharedBreakpoints = [{ filepath: fileA, lineNumber: 3 }];
+
+				await Commands.shareBreakpoints();
+
+				expect(
+					showWarningMessage.calledOnceWithExactly(
+						"Task 'bp-task' shares 1 breakpoint, but none is set here. Remove the shared breakpoints from taskmarks.json?",
+						{ modal: true },
+						'Remove'
+					)
+				).to.be.true;
+				expect(taskManager.activeTask.sharedBreakpoints).to.deep.equal([{ filepath: fileA, lineNumber: 3 }]);
+				expect(saveTaskmarksJson.called).to.be.false;
+			});
+
+			it('should remove the shared breakpoints when that is confirmed', async () => {
+				taskManager.activeTask.sharedBreakpoints = [
+					{ filepath: fileA, lineNumber: 3 },
+					{ filepath: fileA, lineNumber: 4 },
+				];
+				clicked = 'Remove';
+
+				await Commands.shareBreakpoints();
+
+				expect(showWarningMessage.firstCall.args[0]).to.include('shares 2 breakpoints');
+				expect(taskManager.activeTask.sharedBreakpoints).to.deep.equal([]);
+				expect(saveTaskmarksJson.calledOnce).to.be.true;
+				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: task 'bp-task' shares no breakpoints anymore.")).to.be.true;
+			});
+
+			it('should report an error instead of throwing', async () => {
+				const reportError = sinon.stub(Helper, 'reportError');
+				(Breakpoints.current as sinon.SinonStub).throws(new Error('no breakpoints'));
+				await Commands.shareBreakpoints();
+				expect(reportError.calledOnceWithExactly({ message: 'no breakpoints' })).to.be.true;
+			});
+		});
+
+		describe('loadSharedBreakpoints', () => {
+			it('should set the shared breakpoints that are not set yet and keep the own ones', async () => {
+				taskManager.activeTask.sharedBreakpoints = [
+					{ filepath: fileA, lineNumber: 3, condition: 'theirs' },
+					{ filepath: fileB, lineNumber: 7 },
+				];
+				current = [{ filepath: fileA, lineNumber: 3, condition: 'mine' }];
+
+				await Commands.loadSharedBreakpoints();
+
+				expect(add.calledOnceWithExactly([{ filepath: fileB, lineNumber: 7 }])).to.be.true;
+				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: 1 of the 2 shared breakpoints of task 'bp-task' set.")).to.be.true;
+				expect(saveTaskmarksJson.called).to.be.false;
+			});
+
+			it('should say so when all of them are set already', async () => {
+				taskManager.activeTask.sharedBreakpoints = [{ filepath: fileA, lineNumber: 3 }];
+				current = [{ filepath: fileA, lineNumber: 3 }];
+
+				await Commands.loadSharedBreakpoints();
+
+				expect(add.calledOnceWithExactly([])).to.be.true;
+				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: the shared breakpoints of task 'bp-task' are set already.")).to.be.true;
+			});
+
+			it('should leave out the breakpoints of files that do not exist here', async () => {
+				taskManager.activeTask.sharedBreakpoints = [
+					{ filepath: fileA, lineNumber: 3 },
+					{ filepath: '/src/teammate.ts', lineNumber: 7 },
+				];
+
+				await Commands.loadSharedBreakpoints();
+
+				expect(add.calledOnceWithExactly([{ filepath: fileA, lineNumber: 3 }])).to.be.true;
+				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: 1 of the 1 shared breakpoints of task 'bp-task' set.")).to.be.true;
+			});
+
+			it('should say so when the task shares no breakpoints', async () => {
+				await Commands.loadSharedBreakpoints();
+				expect(add.called).to.be.false;
+				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: task 'bp-task' has no shared breakpoints.")).to.be.true;
+			});
+
+			it('should say so when the task only shares breakpoints of files that do not exist here', async () => {
+				taskManager.activeTask.sharedBreakpoints = [{ filepath: '/src/teammate.ts', lineNumber: 7 }];
+				await Commands.loadSharedBreakpoints();
+				expect(add.called).to.be.false;
+				expect(showInformationMessage.calledOnceWithExactly("Taskmarks: task 'bp-task' has no shared breakpoints in files that exist here.")).to.be.true;
+			});
+
+			it('should report an error instead of throwing', async () => {
+				const reportError = sinon.stub(Helper, 'reportError');
+				taskManager.activeTask.sharedBreakpoints = [{ filepath: fileA, lineNumber: 3 }];
+				add.throws(new Error('no debugger'));
+				await Commands.loadSharedBreakpoints();
+				expect(reportError.calledOnceWithExactly({ message: 'no debugger' })).to.be.true;
+			});
 		});
 	});
 

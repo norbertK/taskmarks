@@ -109,6 +109,14 @@ describe('Serialization (pure)', () => {
 		});
 	});
 
+	describe('persistTaskToTask with shared breakpoints', () => {
+		it('should take the shared breakpoints over', () => {
+			const breakpoints = [{ filepath: '/a.ts', lineNumber: 9 }];
+			expect(persistTaskToTask({ name: 't', persistFiles: [], persistBreakpoints: breakpoints })).to.deep.equal({ name: 't', files: [], breakpoints });
+			expect(persistTaskToTask({ name: 't', persistFiles: [] })).to.deep.equal({ name: 't', files: [] });
+		});
+	});
+
 	describe('serializeTaskManager', () => {
 		it('should serialize to JSON string', () => {
 			const tasks = [
@@ -124,6 +132,29 @@ describe('Serialization (pure)', () => {
 			expect(parsed.version).to.equal(2);
 			expect(parsed.activeTaskName).to.equal('task1');
 			expect(parsed.persistTasks.length).to.equal(1);
+		});
+
+		it('should write the shared breakpoints of a task sorted, and the file as version 3', () => {
+			const tasks = [
+				{ name: 'task1', files: [], breakpoints: [] },
+				{
+					name: 'task2',
+					files: [],
+					breakpoints: [
+						{ filepath: '/b.ts', lineNumber: 1 },
+						{ filepath: '/a.ts', lineNumber: 9, condition: 'x' },
+					],
+				},
+			];
+
+			const parsed = JSON.parse(serializeTaskManager('task1', tasks));
+
+			expect(parsed.version).to.equal(3);
+			expect(parsed.persistTasks[0]).to.deep.equal({ name: 'task1', persistFiles: [] });
+			expect(parsed.persistTasks[1].persistBreakpoints).to.deep.equal([
+				{ filepath: '/a.ts', lineNumber: 9, condition: 'x' },
+				{ filepath: '/b.ts', lineNumber: 1 },
+			]);
 		});
 
 		it('should pretty-print with indentation', () => {
@@ -163,6 +194,13 @@ describe('Serialization (pure)', () => {
 			const result = normalizeTaskFilePaths(task, '\\', '/');
 			expect(result).to.deep.equal({ name: 't', persistFiles: [{ filepath: '/src/a.ts', persistMarks: [{ lineNumber: 1, label: '' }] }] });
 			expect(task.persistFiles[0].filepath).to.equal('\\src\\a.ts');
+		});
+
+		it('should convert the separators in the paths of the shared breakpoints', () => {
+			const task = { name: 't', persistFiles: [], persistBreakpoints: [{ filepath: '\\src\\a.ts', lineNumber: 1, condition: 'a\\b' }] };
+			const result = normalizeTaskFilePaths(task, '\\', '/');
+			expect(result.persistBreakpoints).to.deep.equal([{ filepath: '/src/a.ts', lineNumber: 1, condition: 'a\\b' }]);
+			expect(task.persistBreakpoints[0].filepath).to.equal('\\src\\a.ts');
 		});
 	});
 

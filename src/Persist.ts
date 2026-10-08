@@ -12,7 +12,7 @@ import {
 	taskToPersistTask,
 	type SerializableTask,
 } from './core/serialization';
-import { CURRENT_VERSION, loadTaskmarksJson, upgradeTask } from './core/migration';
+import { CURRENT_VERSION, VERSION_WITHOUT_BREAKPOINTS, loadTaskmarksJson, upgradeTask } from './core/migration';
 import type { LabelConflictChoice } from './core/labels';
 
 export abstract class Persist {
@@ -109,7 +109,8 @@ export abstract class Persist {
 			vscode.window.showWarningMessage(
 				`Taskmarks: taskmarks.json was written by a newer Taskmarks version (file format ${fromVersion}, this version knows ${CURRENT_VERSION}). Marks are loaded, but changes will not be saved. Please update the extension.`
 			);
-		} else if (fromVersion < CURRENT_VERSION && !PathHelper.taskmarksJsonIsNew) {
+		} else if (fromVersion < VERSION_WITHOUT_BREAKPOINTS && !PathHelper.taskmarksJsonIsNew) {
+			// not for version 2: it is still written, unless breakpoints are shared - and they are only added to it
 			PathHelper.writeBackup(`v${fromVersion}`, taskmarksJson);
 		}
 
@@ -132,7 +133,7 @@ export abstract class Persist {
 			return;
 		}
 		const activeTask = this._taskManager.activeTask;
-		if (PathHelper.taskmarksJsonIsNew && activeTask.name === 'default' && !activeTask.hasMarks) {
+		if (PathHelper.taskmarksJsonIsNew && activeTask.name === 'default' && !activeTask.hasMarks && activeTask.sharedBreakpoints.length === 0) {
 			return;
 		}
 
@@ -203,12 +204,14 @@ export abstract class Persist {
 
 	// with a separator the paths are written with it, without they keep the separator of this system
 	private static toSerializableTask(task: Task, separator?: string): SerializableTask {
+		const toPath = (filepath: string) => (separator ? filepath.replaceAll(PathHelper.activePathChar, separator) : filepath);
 		return {
 			name: task.name,
 			files: task.files.map((file) => ({
-				filepath: separator ? file.filepath.replaceAll(PathHelper.activePathChar, separator) : file.filepath,
+				filepath: toPath(file.filepath),
 				marks: file.allPersistMarks,
 			})),
+			breakpoints: task.sharedBreakpoints.map((breakpoint) => ({ ...breakpoint, filepath: toPath(breakpoint.filepath) })),
 		};
 	}
 

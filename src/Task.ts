@@ -1,7 +1,8 @@
 import { File } from './File';
 import { PathHelper } from './PathHelper';
-import type { IPersistTask } from './types';
+import type { IPersistBreakpoint, IPersistTask } from './types';
 import type { LabelConflictChoice } from './core/labels';
+import { missingBreakpoints } from './core/breakpoints';
 
 export class Task {
 	private _name: string;
@@ -9,6 +10,9 @@ export class Task {
 	private _activeFile: File | undefined;
 	// the files with marks, in the order they got their first mark
 	private _files: File[];
+	// The breakpoints the task shares with the team in taskmarks.json: a copy made by "Share Breakpoints of Active Task".
+	// The breakpoints that VS Code shows for the task are kept per user (Breakpoints.ts) and are not part of the task.
+	sharedBreakpoints: IPersistBreakpoint[] = [];
 
 	constructor(name: string) {
 		this._name = name;
@@ -40,6 +44,7 @@ export class Task {
 			file.mergeMarks(persistFile.persistMarks, labelConflict);
 			this.syncFile(file);
 		}
+		this.sharedBreakpoints = [...this.sharedBreakpoints, ...missingBreakpoints(this.sharedBreakpoints, persistTaskToMerge.persistBreakpoints ?? [])];
 	}
 
 	// how many marks of the other task have another label than the mark this task has on that line

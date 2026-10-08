@@ -21,19 +21,24 @@ export abstract class MarkTracker {
 		}
 		const filepath = PathHelper.reducePath(event.document.uri.fsPath);
 		const isUndo = event.reason === vscode.TextDocumentChangeReason.Undo;
-		const changes: TextChange[] = event.contentChanges.map((c) => ({
-			startLine: c.range.start.line,
-			startCharacter: c.range.start.character,
-			endLine: c.range.end.line,
-			endCharacter: c.range.end.character,
-			text: c.text,
-		}));
+		const changes = MarkTracker.textChanges(event);
 
 		let changed = false;
 		for (const task of tasks) {
 			changed = MarkTracker.adjustMarks(task, filepath, changes, event.document.lineCount, isUndo) || changed;
 		}
 		return changed;
+	}
+
+	// the changes of the event as the pure functions in core/lineAdjustment.ts take them
+	static textChanges(event: vscode.TextDocumentChangeEvent): TextChange[] {
+		return event.contentChanges.map((c) => ({
+			startLine: c.range.start.line,
+			startCharacter: c.range.start.character,
+			endLine: c.range.end.line,
+			endCharacter: c.range.end.character,
+			text: c.text,
+		}));
 	}
 
 	// call when the tasks were replaced by new objects: the remembered removals belong to the old ones

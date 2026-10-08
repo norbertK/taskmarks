@@ -38,6 +38,16 @@ On macOS use `Ctrl+Option` instead of `Alt+Shift`, with the same letters. All sh
 | **Taskmarks: Delete Task**                                |               | Delete a task and its marks (from the task list)                                     |
 | **Taskmarks: Copy Active Task to Clipboard**              |               | Copy the active task, e.g. to send it to a co-worker                                 |
 | **Taskmarks: Paste Task from Clipboard**                  |               | Add a copied task; if a task with the same name exists, the marks are merged into it |
+| **Taskmarks: Share Breakpoints of Active Task**           |               | Put a copy of the breakpoints that are set into `taskmarks.json`, for the team       |
+| **Taskmarks: Load Shared Breakpoints of Active Task**     |               | Set the breakpoints the task shares, in addition to your own                         |
+
+## Breakpoints
+
+With the setting `taskmarks.breakpointsPerTask`, every task has its own breakpoints: switching from task "change request 123" to "find bug 456" stores the breakpoints that are set with the first task, removes them and sets the ones of the second. These breakpoints are yours: they are kept in VS Code's storage for the workspace, not in `taskmarks.json`.
+
+To hand breakpoints to your team, run **Taskmarks: Share Breakpoints of Active Task**. It writes a copy of the breakpoints that are set into `taskmarks.json`. A teammate gets them with **Taskmarks: Load Shared Breakpoints of Active Task**, which adds them to their own. Nothing is set without that command, and the copy only changes when someone shares again.
+
+Only breakpoints in files of the workspace folder are handled. While `taskmarks.json` holds shared breakpoints, teammates need a Taskmarks version newer than 1.2.0 to save changes of their bookmarks.
 
 ## Where the marks are stored
 
@@ -49,6 +59,7 @@ The shortcuts work wherever the focus is, except in the integrated terminal: it 
 
 - `taskmarks.enableLabel` (default `false`) - ask for a label when setting a mark. The label is shown in **Select Bookmark from List** instead of the text of the line. **Edit Label of Bookmark at Current Position** changes a label later, also while this setting is off.
 - `taskmarks.showLabelInEditor` (default `true`) - show the label of a mark as faded text at the end of its line.
+- `taskmarks.breakpointsPerTask` (default `false`) - keep breakpoints per task, see [Breakpoints](#breakpoints).
 - `taskmarks.useGlobalTaskmarksJson` (default `false`) - keep the marks out of the project: in a `taskmarks.json` in VS Code's own storage for this workspace instead of `.vscode/taskmarks.json`. A local `.vscode/taskmarks.json` that already exists is still used. (Up to 1.0.1 this was one file for all workspaces. Its content is taken over the first time a workspace is opened.)
 
 ## Credits
@@ -62,11 +73,12 @@ The shortcuts work wherever the focus is, except in the integrated terminal: it 
 - show labels
 - more tests
 - Better shortcuts that work outside edit mode (eg 'goto next' or 'Select Active Task' should work always)
+- Breakpoints per task, and shared with the team
 
 ## Ideas / Future
 
 - Better demo GIF (shorter, re-recorded)
-- Add debug points (breakpoints) to task - would be taskmarks.json version 3
+- if we create a mark on a method name, offer the method-name as label
 
 ## Known Issues
 

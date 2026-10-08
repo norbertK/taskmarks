@@ -279,6 +279,38 @@ describe('Task', () => {
 		});
 	});
 
+	describe('#sharedBreakpoints', () => {
+		it('should have none at the start', () => {
+			expect(new Task('Test').sharedBreakpoints).to.deep.equal([]);
+		});
+
+		it('should take over the shared breakpoints of a merged task that it does not have yet', () => {
+			const task = new Task('Test');
+			task.sharedBreakpoints = [{ filepath: '/a.ts', lineNumber: 3, condition: 'mine' }];
+
+			task.mergeFilesWithPersistFiles({
+				name: 'Test',
+				persistFiles: [],
+				persistBreakpoints: [
+					{ filepath: '/a.ts', lineNumber: 3, condition: 'theirs' },
+					{ filepath: '/a.ts', lineNumber: 8 },
+				],
+			});
+
+			expect(task.sharedBreakpoints).to.deep.equal([
+				{ filepath: '/a.ts', lineNumber: 3, condition: 'mine' },
+				{ filepath: '/a.ts', lineNumber: 8 },
+			]);
+		});
+
+		it('should keep its shared breakpoints when the merged task has none', () => {
+			const task = new Task('Test');
+			task.sharedBreakpoints = [{ filepath: '/a.ts', lineNumber: 3 }];
+			task.mergeFilesWithPersistFiles({ name: 'Test', persistFiles: [] });
+			expect(task.sharedBreakpoints).to.deep.equal([{ filepath: '/a.ts', lineNumber: 3 }]);
+		});
+	});
+
 	describe('#mergeFilesWithPersistFiles', () => {
 		it('should handle undefined persistTask', () => {
 			const task = new Task('Test');

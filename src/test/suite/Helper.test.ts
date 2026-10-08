@@ -4,6 +4,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { Helper } from '../../Helper';
 import { DecoratorHelper } from '../../DecoratorHelper';
+import { Breakpoints } from '../../Breakpoints';
 import { MarkTracker } from '../../MarkTracker';
 import { PathHelper } from '../../PathHelper';
 import { Persist } from '../../Persist';
@@ -53,6 +54,15 @@ describe('Helper', () => {
 			expect((MarkTracker as any)._markRemovals.size).to.equal(0);
 		});
 
+		it('should show the breakpoints of the active task, which may be another one after the reload', async () => {
+			sinon.stub(Persist, 'reloadIfChangedOnDisk').resolves(true);
+			const showActiveTask = sinon.stub(Breakpoints, 'showActiveTask');
+
+			await Helper.taskmarksFileChanged();
+
+			expect(showActiveTask.calledOnce).to.be.true;
+		});
+
 		it('should do nothing when the tasks were not reloaded', async () => {
 			sinon.stub(Persist, 'reloadIfChangedOnDisk').resolves(false);
 
@@ -88,6 +98,7 @@ describe('Helper', () => {
 
 		it('should refresh the editors and save once when marks have changed', () => {
 			const documentChanged = sinon.stub(MarkTracker, 'documentChanged').returns(true);
+			sinon.stub(Breakpoints, 'documentChanged').returns(true);
 
 			Helper.documentChanged(event);
 
@@ -98,11 +109,23 @@ describe('Helper', () => {
 
 		it('should neither refresh nor save when no mark has changed', () => {
 			sinon.stub(MarkTracker, 'documentChanged').returns(false);
+			sinon.stub(Breakpoints, 'documentChanged').returns(false);
 
 			Helper.documentChanged(event);
 
 			expect(refresh.called).to.be.false;
 			expect(saveTaskmarksJson.called).to.be.false;
+		});
+
+		it('should save without a refresh when only shared breakpoints have moved', () => {
+			sinon.stub(MarkTracker, 'documentChanged').returns(false);
+			const documentChanged = sinon.stub(Breakpoints, 'documentChanged').returns(true);
+
+			Helper.documentChanged(event);
+
+			expect(documentChanged.calledOnceWithExactly(event, TaskManager.instance.allTasks)).to.be.true;
+			expect(refresh.called).to.be.false;
+			expect(saveTaskmarksJson.calledOnce).to.be.true;
 		});
 
 		it('should report an error instead of throwing', () => {
@@ -292,6 +315,7 @@ describe('Helper', () => {
 		let createFileSystemWatcher: sinon.SinonSpy;
 		let initAndLoad: sinon.SinonStub;
 		let initDecorator: sinon.SinonStub;
+		let initBreakpoints: sinon.SinonStub;
 		let workspaceFolders: unknown;
 		let previous: { taskManager: unknown; outputChannel: unknown; statusBarItem: unknown; basePath: string; dataFile: unknown };
 
@@ -325,6 +349,7 @@ describe('Helper', () => {
 
 			initAndLoad = sinon.stub(Persist, 'initAndLoad');
 			initDecorator = sinon.stub(DecoratorHelper, 'initDecorator');
+			initBreakpoints = sinon.stub(Breakpoints, 'init');
 			statusBarItem = { text: '', show: sinon.fake(), dispose: sinon.fake() };
 			sinon.replace(vscode.window, 'createStatusBarItem', sinon.fake.returns(statusBarItem) as any);
 			sinon.replace(vscode.window, 'onDidChangeActiveTextEditor', eventNamed('activeEditor') as any);
@@ -400,6 +425,29 @@ describe('Helper', () => {
 
 			listeners.configuration({ affectsConfiguration: (section: string) => section === 'taskmarks' });
 			expect(refresh.calledOnce).to.be.true;
+		});
+
+		it('should hand the breakpoints the name of the task that is active when they ask', () => {
+			Helper.init(context, outputChannel);
+
+			expect(initBreakpoints.calledOnce).to.be.true;
+			expect(initBreakpoints.firstCall.args[0]).to.equal(context);
+			const activeTaskName = initBreakpoints.firstCall.args[1] as () => string;
+			TaskManager.instance.useActiveTask('helper-init-task');
+			expect(activeTaskName()).to.equal('helper-init-task');
+			TaskManager.instance.delete('helper-init-task');
+		});
+
+		it('should show the breakpoints of the active task again when a setting of Taskmarks changes', () => {
+			Helper.init(context, outputChannel);
+			sinon.stub(Helper, 'refresh');
+			const showActiveTask = sinon.stub(Breakpoints, 'showActiveTask');
+
+			listeners.configuration({ affectsConfiguration: (section: string) => section === 'editor' });
+			expect(showActiveTask.called).to.be.false;
+
+			listeners.configuration({ affectsConfiguration: (section: string) => section === 'taskmarks' });
+			expect(showActiveTask.calledOnce).to.be.true;
 		});
 
 		it('should save when a document is saved', () => {

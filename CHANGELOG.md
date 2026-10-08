@@ -2,6 +2,16 @@
 
 All notable changes to the "taskmarks" extension will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Breakpoints per task: with the new setting `taskmarks.breakpointsPerTask` (default off), selecting another task stores the breakpoints that are set with the task you leave, removes them and sets the breakpoints of the selected task. They are stored per user in VS Code's storage for the workspace, not in taskmarks.json. Only breakpoints in files of the workspace folder are handled; function breakpoints and breakpoints in other files stay as they are. "Delete Task" also asks before the breakpoints of a task are lost
+- Command "Taskmarks: Share Breakpoints of Active Task": puts a copy of the breakpoints that are set into taskmarks.json, for the team. Run it again to update the copy
+- Command "Taskmarks: Load Shared Breakpoints of Active Task": sets the breakpoints the task shares, in addition to your own. Shared breakpoints are never set without this command
+
+### Changed
+- taskmarks.json has file format 3 while a task shares breakpoints, and format 2 otherwise. Taskmarks 1.2.0 and older load a format 3 file with its bookmarks, but don't save changes; "Share Breakpoints of Active Task" says so before the first breakpoints are shared
+
 ## [1.2.0] - 2026-10-08
 
 ### Added

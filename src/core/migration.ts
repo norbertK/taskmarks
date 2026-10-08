@@ -9,11 +9,21 @@
  * - v1 (0.8.23 - 1.0.0, no version field): marks with labels
  *     { activeTaskName, persistTasks: [{ name, persistFiles: [{ filepath, persistMarks: [{ lineNumber, label }] }] }] }
  * - v2 (1.0.1): v1 plus "version": 2
+ * - v3: v2 plus the shared breakpoints of a task, persistTasks[].persistBreakpoints: [{ filepath, lineNumber, ... }]
  */
 
-import type { IPersistFile, IPersistMark, IPersistTask, IPersistTaskManager } from '../types';
+import type { IPersistBreakpoint, IPersistFile, IPersistMark, IPersistTask, IPersistTaskManager } from '../types';
+import { toBreakpoint } from './breakpoints';
 
-export const CURRENT_VERSION = 2;
+// the newest format this version reads
+export const CURRENT_VERSION = 3;
+// Version 3 is only written while a task shares breakpoints, version 2 otherwise: an older Taskmarks loads a newer file
+// read-only, so a team that shares no breakpoints doesn't have to update together.
+export const VERSION_WITHOUT_BREAKPOINTS = 2;
+
+export function versionToWrite(persistTasks: IPersistTask[]): number {
+	return persistTasks.some((task) => task.persistBreakpoints && task.persistBreakpoints.length > 0) ? CURRENT_VERSION : VERSION_WITHOUT_BREAKPOINTS;
+}
 
 export type LoadResult =
 	| { status: 'ok'; data: IPersistTaskManager; fromVersion: number }
@@ -52,7 +62,7 @@ function toFile(value: unknown): IPersistFile | undefined {
 }
 
 /**
- * Convert a single task in any known format (v0, v1, v2) to the current task format.
+ * Convert a single task in any known format (v0 - v3) to the current task format.
  * Also used for tasks pasted from the clipboard, which may come from an older version.
  */
 export function upgradeTask(value: unknown): IPersistTask | undefined {
@@ -62,7 +72,14 @@ export function upgradeTask(value: unknown): IPersistTask | undefined {
 	const persistFiles = asArray(value.persistFiles ?? value.files)
 		.map(toFile)
 		.filter((file): file is IPersistFile => file !== undefined);
-	return { name: value.name, persistFiles };
+	const persistTask: IPersistTask = { name: value.name, persistFiles };
+	const persistBreakpoints = asArray(value.persistBreakpoints)
+		.map(toBreakpoint)
+		.filter((breakpoint): breakpoint is IPersistBreakpoint => breakpoint !== undefined);
+	if (persistBreakpoints.length > 0) {
+		persistTask.persistBreakpoints = persistBreakpoints;
+	}
+	return persistTask;
 }
 
 export function detectVersion(raw: Json): number {
@@ -102,6 +119,6 @@ export function loadTaskmarksJson(json: string): LoadResult {
 	const requestedActive = typeof raw.activeTaskName === 'string' ? raw.activeTaskName : '';
 	const activeTaskName = persistTasks.some((task) => task.name === requestedActive) ? requestedActive : persistTasks[0].name;
 
-	const data: IPersistTaskManager = { version: CURRENT_VERSION, activeTaskName, persistTasks };
+	const data: IPersistTaskManager = { version: versionToWrite(persistTasks), activeTaskName, persistTasks };
 	return { status: fromVersion > CURRENT_VERSION ? 'newer' : 'ok', data, fromVersion };
 }

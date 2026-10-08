@@ -118,6 +118,23 @@ describe('Persist', () => {
 			expect(taskManager.activeTask.getFile(fileA)?.hasMark(3)).to.be.true;
 		});
 
+		it('should load the shared breakpoints of a task, with the paths in the separator of this system', () => {
+			const task: IPersistTask = { ...taskWithMark('default', '\\src\\a.ts', 3), persistBreakpoints: [{ filepath: '\\src\\a.ts', lineNumber: 12, condition: 'x' }] };
+
+			load(taskmarksJson('default', [task], 3));
+
+			expect(taskManager.activeTask.sharedBreakpoints).to.deep.equal([{ filepath: fileA, lineNumber: 12, condition: 'x' }]);
+			expect(showWarningMessage.called).to.be.false;
+			expect(writeBackup.called).to.be.false;
+		});
+
+		it('should not write a backup for a version 2 file: it is not upgraded', () => {
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3)], 2));
+			Persist.saveTaskmarksJson();
+			expect(writeBackup.called).to.be.false;
+			expect(saveTaskmarks.called).to.be.false;
+		});
+
 		it('should not write a backup for a file in the current format', () => {
 			load(taskmarksJson('default', [taskWithMark('default', fileA, 3)]));
 			expect(writeBackup.called).to.be.false;
@@ -226,6 +243,35 @@ describe('Persist', () => {
 			loadWithoutFile();
 			Persist.saveTaskmarksJson();
 			expect(saveTaskmarks.called).to.be.false;
+		});
+
+		it('should write the shared breakpoints with the path separator of the file, as version 3', () => {
+			load(taskmarksJson('default', [taskWithMark('default', '\\src\\a.ts', 3)]));
+			taskManager.activeTask.sharedBreakpoints = [{ filepath: fileA, lineNumber: 12, condition: 'x' }];
+
+			Persist.saveTaskmarksJson();
+
+			expect(lastSaved().version).to.equal(3);
+			expect(lastSaved().persistTasks[0].persistBreakpoints).to.deep.equal([{ filepath: '\\src\\a.ts', lineNumber: 12, condition: 'x' }]);
+		});
+
+		it('should write version 2 again when no task shares breakpoints anymore', () => {
+			const task: IPersistTask = { ...taskWithMark('default', fileA, 3), persistBreakpoints: [{ filepath: fileA, lineNumber: 12 }] };
+			load(taskmarksJson('default', [task], 3));
+			taskManager.activeTask.sharedBreakpoints = [];
+
+			Persist.saveTaskmarksJson();
+
+			expect(lastSaved()).to.deep.equal({ version: 2, activeTaskName: 'default', persistTasks: [taskWithMark('default', fileA, 3)] });
+		});
+
+		it('should create the file for the default task without marks when it shares breakpoints', () => {
+			loadWithoutFile();
+			taskManager.activeTask.sharedBreakpoints = [{ filepath: fileA, lineNumber: 12 }];
+
+			Persist.saveTaskmarksJson();
+
+			expect(lastSaved().persistTasks).to.deep.equal([{ name: 'default', persistFiles: [], persistBreakpoints: [{ filepath: fileA, lineNumber: 12 }] }]);
 		});
 
 		it('should create the file with the first mark', () => {
@@ -551,6 +597,13 @@ describe('Persist', () => {
 			load(taskmarksJson('default', [taskWithMark('default', '\\src\\a.ts', 3)]));
 			Persist.copyToClipboard();
 			expect(JSON.parse(clipboardText).persistFiles[0].filepath).to.equal('/src/a.ts');
+		});
+
+		it('should copy the shared breakpoints with the task', () => {
+			load(taskmarksJson('default', [taskWithMark('default', fileA, 3)]));
+			taskManager.activeTask.sharedBreakpoints = [{ filepath: fileA, lineNumber: 12 }];
+			Persist.copyToClipboard();
+			expect(JSON.parse(clipboardText).persistBreakpoints).to.deep.equal([{ filepath: fileA, lineNumber: 12 }]);
 		});
 
 		it('should put the active task on the clipboard', () => {
