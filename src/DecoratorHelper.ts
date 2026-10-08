@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { PathHelper } from './PathHelper';
+import { labelRepeatsLine } from './core/labels';
 import type { IPersistMark } from './types';
 
 export abstract class DecoratorHelper {
@@ -14,12 +15,16 @@ export abstract class DecoratorHelper {
 		context.subscriptions.push(this._vscTextEditorDecorationType);
 	}
 
-	// the gutter icon for every mark and, with showLabels, the label of a mark as faded text behind its line
+	// The gutter icon for every mark and, with showLabels, the label of a mark as faded text behind its line.
+	// Not a label that the line contains anyway, like the name of the method that was offered as label.
 	static refresh(editor: vscode.TextEditor, marks: IPersistMark[], showLabels: boolean): void {
+		const document = editor.document;
 		const decorations: vscode.DecorationOptions[] = marks.map(({ lineNumber, label }) => {
 			// at the end of the line (VS Code cuts the column down to the length of the line): that is where the label goes
 			const range = new vscode.Range(lineNumber, Number.MAX_SAFE_INTEGER, lineNumber, Number.MAX_SAFE_INTEGER);
-			if (!showLabels || !label) {
+			// a mark may be behind the last line, if the file was changed outside of VS Code
+			const lineText = lineNumber < document.lineCount ? document.lineAt(lineNumber).text : '';
+			if (!showLabels || !label || labelRepeatsLine(label, lineText)) {
 				return { range };
 			}
 			return {

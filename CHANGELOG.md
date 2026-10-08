@@ -9,6 +9,9 @@ All notable changes to the "taskmarks" extension will be documented in this file
 - Command "Taskmarks: Share Breakpoints of Active Task": puts a copy of the breakpoints that are set into taskmarks.json, for the team. Run it again to update the copy
 - Command "Taskmarks: Load Shared Breakpoints of Active Task": sets the breakpoints the task shares, in addition to your own. Shared breakpoints are never set without this command
 
+- With `taskmarks.enableLabel`, a bookmark on the line that declares a method, function, class ... is offered that name as its label. Enter takes it, typing replaces it, and clearing the box sets a bookmark without label. It needs a language support for the file that knows its symbols (what the Outline view shows)
+- A label that its line contains anyway, like such a method name, is not shown again at the end of the line. It is still used in "Select Bookmark from List"
+
 ### Changed
 - taskmarks.json has file format 3 while a task shares breakpoints, and format 2 otherwise. Taskmarks 1.2.0 and older load a format 3 file with its bookmarks, but don't save changes; "Share Breakpoints of Active Task" says so before the first breakpoints are shared
 

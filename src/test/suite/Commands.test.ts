@@ -29,6 +29,9 @@ describe('Commands', () => {
 		let enableLabel: boolean;
 		let labelAnswer: string | undefined;
 		let activeEditor: vscode.TextEditor | undefined;
+		// what the language support of the file answers when it is asked for the symbols of the document
+		let symbols: () => Promise<unknown>;
+		let executeCommand: sinon.SinonSpy;
 
 		function fakeEditor(fileName: string, line: number): vscode.TextEditor {
 			return { selection: { active: { line } }, document: { fileName, uri: { fsPath: fileName } } } as unknown as vscode.TextEditor;
@@ -75,6 +78,9 @@ describe('Commands', () => {
 			);
 			showInputBox = sinon.fake(() => Promise.resolve(labelAnswer));
 			sinon.replace(vscode.window, 'showInputBox', showInputBox as any);
+			symbols = () => Promise.resolve(undefined);
+			executeCommand = sinon.fake(() => symbols());
+			sinon.replace(vscode.commands, 'executeCommand', executeCommand as any);
 		});
 
 		afterEach(() => {
@@ -155,6 +161,49 @@ describe('Commands', () => {
 			expect(showInputBox.calledOnce).to.be.true;
 			expect(task.getFile(reducedPath)?.allPersistMarks).to.deep.equal([{ lineNumber: 4, label: 'look here' }]);
 			expect(saveTaskmarksJson.calledOnce).to.be.true;
+		});
+
+		it('should offer the name of the method that is declared in the line as label', async () => {
+			symbols = () =>
+				Promise.resolve([
+					{
+						name: 'Commands',
+						selectionRange: { start: { line: 1, character: 13 } },
+						children: [{ name: 'toggleMark', selectionRange: { start: { line: 4, character: 1 } } }],
+					},
+				]);
+			setEnableLabel(true, 'toggleMark');
+			setActiveEditor(fakeEditor(fileInWorkspace, 4));
+			await Commands.toggleMark();
+			await inputBoxAnswered();
+			expect(executeCommand.firstCall.args[0]).to.equal('vscode.executeDocumentSymbolProvider');
+			expect(showInputBox.firstCall.args[0].value).to.equal('toggleMark');
+			expect(task.getFile(reducedPath)?.allPersistMarks).to.deep.equal([{ lineNumber: 4, label: 'toggleMark' }]);
+		});
+
+		it('should offer no label in a line that declares nothing', async () => {
+			symbols = () => Promise.resolve([{ name: 'toggleMark', selectionRange: { start: { line: 3, character: 1 } } }]);
+			setEnableLabel(true, 'look here');
+			setActiveEditor(fakeEditor(fileInWorkspace, 4));
+			await Commands.toggleMark();
+			await inputBoxAnswered();
+			expect(showInputBox.firstCall.args[0].value).to.equal('');
+		});
+
+		it('should still ask for a label when the symbols of the file can not be read', async () => {
+			symbols = () => Promise.reject(new Error('no such file'));
+			setEnableLabel(true, 'look here');
+			setActiveEditor(fakeEditor(fileInWorkspace, 4));
+			await Commands.toggleMark();
+			await inputBoxAnswered();
+			expect(showInputBox.firstCall.args[0].value).to.equal('');
+			expect(task.getFile(reducedPath)?.allPersistMarks).to.deep.equal([{ lineNumber: 4, label: 'look here' }]);
+		});
+
+		it('should not ask for the symbols when labels are off', async () => {
+			setActiveEditor(fakeEditor(fileInWorkspace, 4));
+			await Commands.toggleMark();
+			expect(executeCommand.calledWith('vscode.executeDocumentSymbolProvider')).to.be.false;
 		});
 
 		it('should set a mark without label when the label input is left empty', async () => {

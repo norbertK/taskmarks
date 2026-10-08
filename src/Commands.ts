@@ -6,6 +6,7 @@ import { DecoratorHelper } from './DecoratorHelper';
 import { PathHelper } from './PathHelper';
 import { Breakpoints } from './Breakpoints';
 import { missingBreakpoints, sortBreakpoints } from './core/breakpoints';
+import { suggestLabel, type LabelSymbol } from './core/labels';
 import { findNextFileWithMarks, findNextMark, findPreviousFileWithMarks, findPreviousMark } from './core/navigation';
 import type { File } from './File';
 import type { Mark } from './Mark';
@@ -71,6 +72,8 @@ export abstract class Commands {
 			if (enableLabel && !activeTask.lineHasMark(fullName, activeLine)) {
 				const answer = await vscode.window.showInputBox({
 					prompt: 'Label for this bookmark (shown in "Select Bookmark from List"). Leave empty for a bookmark without label.',
+					// selected, so typing replaces it
+					value: await Commands.suggestedLabel(position),
 				});
 				// Escape cancels, Enter on the empty box sets a bookmark without label
 				if (answer === undefined) {
@@ -84,6 +87,20 @@ export abstract class Commands {
 			Helper.triggerChangeActiveFile();
 		} catch (error: unknown) {
 			Helper.reportError({ message: Helper.getErrorMessage(error) });
+		}
+	}
+
+	// The name of the method, class ... that is declared in the line, as the language support of the file reports it.
+	// '' if there is none - or no language support, or it fails: a bookmark can be set anyway.
+	private static async suggestedLabel(position: LinePosition): Promise<string> {
+		try {
+			const symbols = await vscode.commands.executeCommand<LabelSymbol[] | undefined>(
+				'vscode.executeDocumentSymbolProvider',
+				vscode.Uri.file(position.fullName)
+			);
+			return suggestLabel(symbols, position.line);
+		} catch {
+			return '';
 		}
 	}
 

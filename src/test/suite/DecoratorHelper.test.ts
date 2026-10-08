@@ -8,8 +8,10 @@ import { PathHelper } from '../../PathHelper';
 describe('DecoratorHelper', () => {
 	let previousBasePath: string;
 
-	function fakeEditor() {
-		return { selection: undefined as unknown, revealRange: sinon.fake(), setDecorations: sinon.fake() };
+	// lines: the text of the document, by line number
+	function fakeEditor(lines: string[] = []) {
+		const document = { lineCount: lines.length, lineAt: (line: number) => ({ text: lines[line] }) };
+		return { selection: undefined as unknown, revealRange: sinon.fake(), setDecorations: sinon.fake(), document };
 	}
 
 	beforeEach(() => {
@@ -43,6 +45,16 @@ describe('DecoratorHelper', () => {
 			const editor = fakeEditor();
 			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, marks, true);
 			expect(shownLabels(editor)).to.deep.equal(['look here', undefined]);
+		});
+
+		it('should not show a label that its line contains anyway', () => {
+			const editor = fakeEditor(['class Jobs {', '\tprivate void JobSaveEventHandler(JobsConfiguration jobConfig)', '\t{', '\t\tSave();']);
+			const methodMarks = [
+				{ lineNumber: 1, label: 'JobSaveEventHandler' },
+				{ lineNumber: 3, label: 'JobSaveEventHandler' },
+			];
+			DecoratorHelper.refresh(editor as unknown as vscode.TextEditor, methodMarks, true);
+			expect(shownLabels(editor)).to.deep.equal([undefined, 'JobSaveEventHandler']);
 		});
 
 		it('should show no labels when they are switched off', () => {

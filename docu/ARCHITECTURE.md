@@ -27,7 +27,7 @@ src/
 │
 └── core/                 # Pure modules (no VS Code deps)
     ├── navigation.ts     # Mark navigation logic
-    ├── labels.ts         # Labels of two marks on one line: conflict, combine
+    ├── labels.ts         # Label offered for a new mark; labels of two marks on one line: conflict, combine
     ├── errors.ts         # Message and stack of whatever was thrown
     ├── serialization.ts  # JSON format conversion
     ├── migration.ts      # taskmarks.json versions + upgrade
@@ -284,7 +284,9 @@ flowchart TD
 
 A label belongs to one mark (`IPersistMark.label`, `''` for none). It is set when a mark is toggled (only asked for with `taskmarks.enableLabel`) and changed with `Commands.editLabel()`.
 
-Where it is shown: as the entry text in "Select Bookmark from List", and as faded text at the end of the marked line (`DecoratorHelper.refresh()`, an `after` decoration; `taskmarks.showLabelInEditor`). It can't be shown on hovering the gutter icon: VS Code shows the hover text of an extension's decoration only over text, never over its gutter icon.
+The input box for the label of a new mark is prefilled with the name of the symbol that is declared in the marked line (`Commands.suggestedLabel()`): the symbols come from `vscode.executeDocumentSymbolProvider`, `suggestLabel()` in `core/labels.ts` picks the one whose name starts in the line (the leftmost of several) and cuts off a signature or type that the language reports with the name (C#: `Save(Config) : void`, `_path : string`). Without a symbol in the line, without language support for the file or when the provider fails, the box is empty.
+
+Where it is shown: as the entry text in "Select Bookmark from List", and as faded text at the end of the marked line (`DecoratorHelper.refresh()`, an `after` decoration; `taskmarks.showLabelInEditor`). A label that its line contains anyway is not shown there (`labelRepeatsLine()` in `core/labels.ts`): that is the case for an offered method name, without storing where a label came from. It can't be shown on hovering the gutter icon: VS Code shows the hover text of an extension's decoration only over text, never over its gutter icon.
 
 When marks are merged into a line that already has a mark (`File.mergeMarks`, rules in `core/labels.ts`): a mark without label takes over the other label, and a label is never removed. If both have a label and the labels differ, the caller's `LabelConflictChoice` decides: `keep` (default; used for load and for undo), `take` or `combine` ("mine / theirs", without repeating a label that is already contained). "Paste Task from Clipboard" counts these conflicts first (`TaskManager.countLabelConflicts`) and asks once for all of them; cancelling the question cancels the paste.
 
@@ -416,6 +418,16 @@ findNextMark(currentLine: number, lineNumbers: number[]): number | undefined
 findPreviousMark(currentLine: number, lineNumbers: number[]): number | undefined
 findNextFileWithMarks(files, currentIndex): { filepath, lineNumber } | undefined
 findPreviousFileWithMarks(files, currentIndex): { filepath, lineNumber } | undefined
+```
+
+### core/labels.ts
+
+```typescript
+suggestLabel(symbols, line): string                    // name of the symbol declared in the line, '' for none
+labelRepeatsLine(label, lineText): boolean             // such a label is not shown behind its line
+isLabelConflict(mine, theirs): boolean
+combineLabels(mine, theirs): string
+mergeLabels(mine, theirs, choice: LabelConflictChoice): string
 ```
 
 ### core/serialization.ts
