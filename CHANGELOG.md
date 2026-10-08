@@ -5,6 +5,10 @@ All notable changes to the "taskmarks" extension will be documented in this file
 ## [1.2.0] - 2026-10-08
 
 ### Added
+- Command "Taskmarks: Edit Label of Bookmark at Current Position": change, add or remove the label of an existing bookmark. Works whether or not `taskmarks.enableLabel` is on
+- Right-click on a line number (or on the bookmark icon next to it): "Toggle Bookmark (Taskmarks)" and, on a line with a bookmark, "Edit Bookmark Label (Taskmarks)"
+- The label of a bookmark is shown as faded text at the end of its line. Setting `taskmarks.showLabelInEditor` (default on) turns that off
+- "Paste Task from Clipboard" asks what to do when a pasted bookmark has another label than yours on the same line: Combine ("mine / theirs", the default), Keep mine or Take theirs. It asks once for the whole task; cancelling pastes nothing. Before, your label was kept without asking
 - "Select Active Task" has a last entry "Create new task…", which asks for the name like "Create new Task" does
 - "Create new Task" says so when a task with the entered name already exists (it switches to that task, as before)
 - New shortcut for "Select Bookmark from List": `Alt+Shift+L`, on macOS `Ctrl+Option+L`
@@ -12,20 +16,10 @@ All notable changes to the "taskmarks" extension will be documented in this file
 ### Changed
 - Keyboard shortcuts on Windows and Linux are now `Alt+Shift+M` (toggle bookmark), `Alt+Shift+N` / `Alt+Shift+P` (next / previous bookmark) and `Alt+Shift+T` (select task), instead of `Ctrl+Alt+...`. `Ctrl+Alt` is the same as `AltGr` on Windows, so `Ctrl+Alt+M` took away the `µ` of a German keyboard, for example
 - Keyboard shortcuts on macOS are now `Ctrl+Option+M` / `N` / `P` / `T`, instead of `Cmd+Option+...`. `Cmd+Option+T` is "Close Other Editors" in VS Code
+- Needs VS Code 1.78 or newer (was 1.76), for the menu of the line numbers
 
 ### Fixed
 - Next / previous bookmark also work when no text editor is active (all editors closed, or the active tab is Settings, an image ...): they open the first / the last bookmark of the task. Before, they did nothing
-
-## [1.1.1] - 2026-10-08
-
-### Added
-- Command "Taskmarks: Edit Label of Bookmark at Current Position": change, add or remove the label of an existing bookmark. Works whether or not `taskmarks.enableLabel` is on
-- Right-click on a line number (or on the bookmark icon next to it): "Toggle Bookmark (Taskmarks)" and, on a line with a bookmark, "Edit Bookmark Label (Taskmarks)"
-- The label of a bookmark is shown as faded text at the end of its line. Setting `taskmarks.showLabelInEditor` (default on) turns that off
-- "Paste Task from Clipboard" asks what to do when a pasted bookmark has another label than yours on the same line: Combine ("mine / theirs", the default), Keep mine or Take theirs. It asks once for the whole task; cancelling pastes nothing. Before, your label was kept without asking
-
-### Changed
-- Needs VS Code 1.78 or newer (was 1.76), for the menu of the line numbers
 
 ## [1.1.0] - 2026-10-07
 
